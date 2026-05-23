@@ -103,12 +103,30 @@ export default function SubmitScreen() {
         });
       if (uploadErr) throw uploadErr;
 
-      const { error: insertErr } = await supabase.from('submissions').insert({
-        chore_id: chore.id,
-        submitted_by: kid.id,
-        photo_path: path,
-      });
+      const { data: insertData, error: insertErr } = await supabase
+        .from('submissions')
+        .insert({
+          chore_id: chore.id,
+          submitted_by: kid.id,
+          photo_path: path,
+        })
+        .select('id')
+        .single();
       if (insertErr) throw insertErr;
+
+      // Fire-and-forget the AI eval. Kid doesn't wait; result lands on the
+      // parent dashboard once OpenAI responds (usually within a few seconds).
+      if (insertData?.id) {
+        supabase.functions
+          .invoke('evaluate-submission', {
+            body: { submission_id: insertData.id },
+          })
+          .catch((err) => {
+            // Eval failures don't block the submission — the parent can still
+            // review manually. Just log for diagnostics.
+            console.warn('evaluate-submission invoke failed', err);
+          });
+      }
 
       setDone(true);
     } catch (err) {

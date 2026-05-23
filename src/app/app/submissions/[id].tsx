@@ -25,7 +25,7 @@ export default function SubmissionDetailScreen() {
   const params = useLocalSearchParams<{ id: string }>();
   const { session } = useAuth();
   const { kids } = useFamily(!!session);
-  const { submissions, chores, loading } = useChores(!!session);
+  const { submissions, chores, loading, reload } = useChores(!!session);
 
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [urlError, setUrlError] = useState<string | null>(null);
@@ -36,6 +36,7 @@ export default function SubmissionDetailScreen() {
     ? kids.find((k) => k.id === submission.submitted_by)
     : null;
 
+  // Load signed URL for the kid's submission photo.
   useEffect(() => {
     let cancelled = false;
     if (!submission?.photo_path) return;
@@ -54,6 +55,17 @@ export default function SubmissionDetailScreen() {
       cancelled = true;
     };
   }, [submission?.photo_path]);
+
+  // Poll for AI eval result while it's still pending and the submission
+  // is recent (don't poll forever on old submissions where the eval failed).
+  const aiPending = submission && !submission.ai_evaluated_at;
+  const submittedAt = submission ? new Date(submission.submitted_at).getTime() : 0;
+  const recentEnough = Date.now() - submittedAt < 90 * 1000;
+  useEffect(() => {
+    if (!aiPending || !recentEnough) return;
+    const id = setInterval(() => reload(), 3000);
+    return () => clearInterval(id);
+  }, [aiPending, recentEnough, reload]);
 
   if (loading) {
     return (
@@ -76,6 +88,10 @@ export default function SubmissionDetailScreen() {
       </View>
     );
   }
+
+  const hasReference = chore?.reference_photo_path;
+  const verdict = submission.ai_verdict;
+  const feedback = submission.ai_feedback;
 
   return (
     <ScrollView
@@ -135,25 +151,121 @@ export default function SubmissionDetailScreen() {
             )}
           </View>
 
-          <View
-            style={[
-              styles.aiCard,
-              { backgroundColor: theme.infoSoft, borderColor: theme.border },
-            ]}
-          >
-            <BrandHeading level="eyebrow" themeColor="info">
-              AI review
-            </BrandHeading>
-            <ThemedText type="default" themeColor="text">
-              Coming next session. For now this is your visual review — does
-              {' '}
-              {kid?.display_name ?? 'your kid'} call this done? You can talk
-              to them about it when you&rsquo;re next together.
-            </ThemedText>
-          </View>
+          {!hasReference ? (
+            <AiCard
+              theme={theme}
+              tone="info"
+              eyebrow="AI review"
+              title="Add a reference photo to enable AI review."
+              body={`We need to know what a finished ${chore?.title.toLowerCase() ?? 'chore'} looks like before the AI can grade ${kid?.display_name ?? "your kid's"} photo.`}
+              action={
+                chore && (
+                  <BrandButton
+                    label="Set the reference photo"
+                    onPress={() => router.push(`/app/chores/${chore.id}`)}
+                  />
+                )
+              }
+            />
+          ) : verdict ? (
+            <AiCard
+              theme={theme}
+              tone={verdict === 'pass' ? 'pass' : 'needs_work'}
+              eyebrow={verdict === 'pass' ? 'AI says: looks great' : 'AI says: almost there'}
+              title={verdict === 'pass' ? '✓ Pass' : 'Not quite there yet'}
+              body={feedback ?? 'No feedback returned.'}
+              meta={
+                submission.ai_evaluated_at
+                  ? `Evaluated ${new Date(submission.ai_evaluated_at).toLocaleString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })}`
+                  : null
+              }
+            />
+          ) : aiPending && recentEnough ? (
+            <AiCard
+              theme={theme}
+              tone="info"
+              eyebrow="AI review"
+              title="Evaluating photo…"
+              body="The AI is comparing this photo to the reference. This usually takes a few seconds."
+            />
+          ) : (
+            <AiCard
+              theme={theme}
+              tone="info"
+              eyebrow="AI review"
+              title="No AI verdict yet."
+              body="The evaluator hasn't responded. You can review the photo manually, or reload to retry."
+              action={
+                <BrandButton variant="ghost" label="Reload" onPress={() => reload()} />
+              }
+            />
+          )}
         </View>
       </SafeAreaView>
     </ScrollView>
+  );
+}
+
+function AiCard({
+  theme,
+  tone,
+  eyebrow,
+  title,
+  body,
+  meta,
+  action,
+}: {
+  theme: ReturnType<typeof useTheme>;
+  tone: 'info' | 'pass' | 'needs_work';
+  eyebrow: string;
+  title: string;
+  body: string;
+  meta?: string | null;
+  action?: React.ReactNode;
+}) {
+  const bg =
+    tone === 'pass'
+      ? theme.accentSoft
+      : tone === 'needs_work'
+        ? '#F3E8D6'
+        : theme.infoSoft;
+  const accent =
+    tone === 'pass'
+      ? theme.accent
+      : tone === 'needs_work'
+        ? '#8A5A1F'
+        : theme.info;
+  return (
+    <View
+      style={[
+        styles.aiCard,
+        { backgroundColor: bg, borderColor: theme.border },
+      ]}
+    >
+      <ThemedText
+        type="smallBold"
+        style={{ color: accent, textTransform: 'uppercase', letterSpacing: 1 }}
+      >
+        {eyebrow}
+      </ThemedText>
+      <BrandHeading level="h2" style={{ marginBottom: Spacing.one }}>
+        {title}
+      </BrandHeading>
+      <ThemedText type="default" themeColor="text" style={{ lineHeight: 26 }}>
+        {body}
+      </ThemedText>
+      {meta && (
+        <ThemedText type="small" themeColor="textMuted">
+          {meta}
+        </ThemedText>
+      )}
+      {action}
+    </View>
   );
 }
 
@@ -174,11 +286,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingBottom: Spacing.three,
   },
-  wordmark: { letterSpacing: 0.5 },
-  header: {
-    gap: Spacing.two,
-    maxWidth: ReadableContentWidth,
-  },
+  header: { gap: Spacing.two, maxWidth: ReadableContentWidth },
   title: { marginTop: Spacing.one },
   photoFrame: {
     borderRadius: Radius.lg,

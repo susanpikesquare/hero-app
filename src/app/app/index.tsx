@@ -148,9 +148,11 @@ export default function DashboardScreen() {
                     <View style={styles.choresList}>
                       {kidChores.map((chore) => {
                         const subs = submissionsForChore(submissions, chore.id);
+                        const hasRef = !!chore.reference_photo_path;
                         return (
-                          <View
+                          <Pressable
                             key={chore.id}
+                            onPress={() => router.push(`/app/chores/${chore.id}`)}
                             style={[
                               styles.choreRow,
                               {
@@ -165,9 +167,13 @@ export default function DashboardScreen() {
                                 {subs.length === 0
                                   ? 'No submissions yet'
                                   : `${subs.length} submission${subs.length === 1 ? '' : 's'}`}
+                                {hasRef ? ' · reference set' : ' · no reference yet'}
                               </ThemedText>
                             </View>
-                          </View>
+                            <ThemedText type="small" themeColor="textSecondary">
+                              {hasRef ? 'Edit →' : 'Set up →'}
+                            </ThemedText>
+                          </Pressable>
                         );
                       })}
                     </View>
