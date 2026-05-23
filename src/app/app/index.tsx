@@ -15,6 +15,7 @@ import {
   Spacing,
 } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { articleForAge, ARTICLES } from '@/lib/articles';
 import { useAuth } from '@/lib/auth-context';
 import { choresForKid, submissionsForChore, useChores } from '@/lib/use-chores';
 import { useFamily } from '@/lib/use-family';
@@ -247,6 +248,57 @@ export default function DashboardScreen() {
               </View>
             </View>
           )}
+
+          {/* For parents — coaching content */}
+          {(() => {
+            const youngestWithAge = kids.find((k) => k.age != null);
+            const featured =
+              articleForAge(youngestWithAge?.age ?? null) ?? ARTICLES[1];
+            if (!featured) return null;
+            return (
+              <Card theme={theme} tone="elevated">
+                <ThemedText
+                  type="smallBold"
+                  themeColor="accent"
+                  style={{ textTransform: 'uppercase', letterSpacing: 1 }}
+                >
+                  For parents
+                </ThemedText>
+                <BrandHeading level="h2" style={styles.cardTitle}>
+                  {featured.title}
+                </BrandHeading>
+                <ThemedText
+                  type="default"
+                  themeColor="textSecondary"
+                  style={{ lineHeight: 26 }}
+                >
+                  {featured.blurb}
+                </ThemedText>
+                <View style={styles.actionsRow}>
+                  <Pressable
+                    onPress={() => router.push(`/app/articles/${featured.slug}`)}
+                    style={[
+                      styles.actionBtn,
+                      { backgroundColor: theme.accent, borderColor: theme.accent },
+                    ]}
+                  >
+                    <ThemedText type="smallBold" style={{ color: theme.background }}>
+                      Read article
+                    </ThemedText>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => router.push('/app/articles')}
+                    style={[
+                      styles.actionBtn,
+                      { borderColor: theme.border, backgroundColor: theme.backgroundElement },
+                    ]}
+                  >
+                    <ThemedText type="smallBold">Browse all articles</ThemedText>
+                  </Pressable>
+                </View>
+              </Card>
+            );
+          })()}
 
           {/* Recent submissions */}
           <Card theme={theme} tone="info">

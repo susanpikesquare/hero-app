@@ -28,6 +28,7 @@ import {
 } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
+import { articleForAge } from '@/lib/articles';
 import {
   type ChoreSuggestion,
   suggestChoresForAge,
@@ -59,6 +60,10 @@ export default function KidSetupScreen() {
 
   const bucket = useMemo(
     () => suggestChoresForAge(kid?.age ?? null),
+    [kid?.age]
+  );
+  const ageArticle = useMemo(
+    () => articleForAge(kid?.age ?? null),
     [kid?.age]
   );
 
@@ -196,6 +201,32 @@ export default function KidSetupScreen() {
             >
               {bucket.framing} You can change any of this later.
             </ThemedText>
+            {ageArticle && (
+              <Pressable
+                onPress={() => router.push(`/app/articles/${ageArticle.slug}`)}
+                style={({ pressed }) => [
+                  styles.articleCallout,
+                  {
+                    backgroundColor: pressed ? theme.backgroundSelected : theme.infoSoft,
+                    borderColor: theme.border,
+                  },
+                ]}
+              >
+                <ThemedText
+                  type="smallBold"
+                  themeColor="info"
+                  style={{ textTransform: 'uppercase', letterSpacing: 1 }}
+                >
+                  Coaching for parents
+                </ThemedText>
+                <ThemedText type="default" themeColor="text" style={{ marginTop: 4 }}>
+                  Read: <ThemedText type="default" style={{ fontWeight: '600' }}>{ageArticle.title}</ThemedText>
+                </ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {ageArticle.blurb}
+                </ThemedText>
+              </Pressable>
+            )}
           </View>
 
           <View
@@ -445,4 +476,12 @@ const styles = StyleSheet.create({
   },
   customAddCta: { paddingBottom: Spacing.half },
   saveRow: { gap: Spacing.two, alignItems: 'flex-start' },
+  articleCallout: {
+    marginTop: Spacing.three,
+    padding: Spacing.four,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    maxWidth: ReadableContentWidth,
+    gap: 2,
+  },
 });
