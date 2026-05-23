@@ -51,7 +51,7 @@ export default function KidProgressScreen() {
     [submissions, kid]
   );
   const weeks = useMemo(() => weeklyBuckets(buckets), [buckets]);
-  const totalEarned = kid ? earnedCountFor(kid.id, submissions) : 0;
+  const totalEarned = kid ? earnedCountFor(kid.id, submissions, chores) : 0;
   const badge = latestBadge(totalEarned);
   const next = nextBadge(totalEarned);
   const longest = longestStreak(buckets);

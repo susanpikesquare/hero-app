@@ -20,6 +20,47 @@ export function isWin(s: Submission): boolean {
   return s.ai_verdict === 'pass' || s.parent_override === 'approved';
 }
 
+export type ChoreTodayStatus = 'done' | 'waiting' | 'try_again' | 'not_yet';
+
+/**
+ * Today's state for a chore, viewed from the kid's perspective. Used to
+ * render the "to-dos for today" status on each chore tile.
+ *
+ *   done       → a win today (AI pass with no rejection, or parent approval)
+ *   try_again  → parent rejected today's submission
+ *   waiting    → submitted today but no decision yet
+ *   not_yet    → no submission for today, ready for the kid to act
+ */
+export function choreStatusToday(
+  choreId: string,
+  kidId: string,
+  submissions: Submission[]
+): ChoreTodayStatus {
+  const todayKey = localDateKey(new Date());
+  const todaySubs = submissions
+    .filter(
+      (s) =>
+        s.chore_id === choreId &&
+        s.submitted_by === kidId &&
+        localDateKey(new Date(s.submitted_at)) === todayKey
+    )
+    // Newest first
+    .sort(
+      (a, b) =>
+        new Date(b.submitted_at).getTime() -
+        new Date(a.submitted_at).getTime()
+    );
+
+  if (todaySubs.length === 0) return 'not_yet';
+
+  const latest = todaySubs[0];
+  if (latest.parent_override === 'approved') return 'done';
+  if (latest.parent_override === 'rejected') return 'try_again';
+  if (latest.ai_verdict === 'pass') return 'done';
+  // ai needs_work without an override, or no AI verdict yet → waiting
+  return 'waiting';
+}
+
 /**
  * Returns a list of N consecutive days (oldest → newest), each with
  * the count of wins and total submissions on that day.

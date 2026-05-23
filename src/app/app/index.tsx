@@ -154,7 +154,7 @@ export default function DashboardScreen() {
           ) : (
             kids.map((kid) => {
               const kidChores = choresForKid(chores, kid.id);
-              const earned = earnedCountFor(kid.id, submissions);
+              const earned = earnedCountFor(kid.id, submissions, chores);
               const badge = latestBadge(earned);
               const rewardDescriptor = descriptorFor(family?.reward_mode);
               const showRewardChip =

@@ -1,7 +1,11 @@
 /**
- * Family-level settings. v0 surface is just the reward mode picker —
- * the page exists so future settings (notifications, privacy, integrations)
- * can land here without rewriting nav.
+ * Family settings — three stacked sections:
+ *   - Account  (your login info, password, sign out)
+ *   - Family   (family name editor)
+ *   - Rewards  (per-family reward mode picker)
+ *
+ * Every form here is independently editable and only saves the section
+ * you submit.
  */
 
 import { useRouter } from 'expo-router';
@@ -12,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BrandButton } from '@/components/brand-button';
 import { BrandHeading } from '@/components/brand-heading';
 import { BrandLogo } from '@/components/brand-logo';
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import {
   MaxContentWidth,
@@ -26,29 +31,63 @@ import { supabase } from '@/lib/supabase';
 import { useFamily } from '@/lib/use-family';
 
 const MODE_ORDER: RewardMode[] = ['hops', 'stars', 'badges', 'off'];
+const MIN_PASSWORD = 8;
 
 export default function SettingsScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { session } = useAuth();
+  const { session, signOut } = useAuth();
   const { family, loading, reload } = useFamily(!!session);
 
-  const [mode, setMode] = useState<RewardMode>('hops');
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  // --- Family name ---
+  const [familyName, setFamilyName] = useState('');
+  const [savingFamily, setSavingFamily] = useState(false);
+  const [familyError, setFamilyError] = useState<string | null>(null);
+  const [familySaved, setFamilySaved] = useState(false);
 
   useEffect(() => {
-    if (family) {
-      setMode((family.reward_mode as RewardMode) ?? 'hops');
-    }
+    if (family) setFamilyName(family.name);
   }, [family]);
 
-  const save = async () => {
+  const saveFamily = async () => {
     if (!family) return;
-    setError(null);
-    setSaved(false);
-    setSaving(true);
+    setFamilyError(null);
+    setFamilySaved(false);
+    if (!familyName.trim()) {
+      setFamilyError("Family name can't be empty.");
+      return;
+    }
+    setSavingFamily(true);
+    try {
+      const { error: updErr } = await supabase
+        .from('families')
+        .update({ name: familyName.trim() })
+        .eq('id', family.id);
+      if (updErr) throw updErr;
+      await reload();
+      setFamilySaved(true);
+    } catch (err) {
+      setFamilyError(err instanceof Error ? err.message : 'Could not save.');
+    } finally {
+      setSavingFamily(false);
+    }
+  };
+
+  // --- Reward mode ---
+  const [mode, setMode] = useState<RewardMode>('hops');
+  const [savingMode, setSavingMode] = useState(false);
+  const [modeError, setModeError] = useState<string | null>(null);
+  const [modeSaved, setModeSaved] = useState(false);
+
+  useEffect(() => {
+    if (family) setMode((family.reward_mode as RewardMode) ?? 'hops');
+  }, [family]);
+
+  const saveMode = async () => {
+    if (!family) return;
+    setModeError(null);
+    setModeSaved(false);
+    setSavingMode(true);
     try {
       const { error: updErr } = await supabase
         .from('families')
@@ -56,12 +95,51 @@ export default function SettingsScreen() {
         .eq('id', family.id);
       if (updErr) throw updErr;
       await reload();
-      setSaved(true);
+      setModeSaved(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save.');
+      setModeError(err instanceof Error ? err.message : 'Could not save.');
     } finally {
-      setSaving(false);
+      setSavingMode(false);
     }
+  };
+
+  // --- Password change ---
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSaved, setPasswordSaved] = useState(false);
+
+  const savePassword = async () => {
+    setPasswordError(null);
+    setPasswordSaved(false);
+    if (newPassword.length < MIN_PASSWORD) {
+      setPasswordError(`Password needs at least ${MIN_PASSWORD} characters.`);
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Passwords don't match.");
+      return;
+    }
+    setSavingPassword(true);
+    try {
+      const { error: updErr } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      if (updErr) throw updErr;
+      setPasswordSaved(true);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : 'Could not change password.');
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  const onSignOut = async () => {
+    await signOut();
+    router.replace('/');
   };
 
   if (loading) {
@@ -73,6 +151,8 @@ export default function SettingsScreen() {
       </View>
     );
   }
+
+  const email = session?.user?.email ?? '—';
 
   return (
     <ScrollView
@@ -95,29 +175,171 @@ export default function SettingsScreen() {
               {family?.name ?? 'Your family'} · Settings
             </BrandHeading>
             <BrandHeading level="h1" style={styles.title}>
-              Family settings
+              Settings
             </BrandHeading>
-            <ThemedText
-              type="default"
-              themeColor="textSecondary"
-              style={styles.lead}
-            >
-              Tune how rewards work for your kids. You can change this anytime.
-            </ThemedText>
           </View>
 
+          {/* ACCOUNT */}
           <View
             style={[
               styles.card,
               { backgroundColor: theme.backgroundElement, borderColor: theme.border },
             ]}
           >
-            <BrandHeading level="h2" style={styles.cardTitle}>
-              Reward mode
-            </BrandHeading>
-            <ThemedText type="small" themeColor="textMuted">
-              How each completed chore celebrates with your kid.
+            <View style={styles.sectionHead}>
+              <ThemedText
+                type="smallBold"
+                themeColor="accent"
+                style={{ textTransform: 'uppercase', letterSpacing: 1 }}
+              >
+                Account
+              </ThemedText>
+              <BrandHeading level="h2" style={styles.cardTitle}>
+                Your login
+              </BrandHeading>
+            </View>
+
+            <View style={styles.kvRow}>
+              <ThemedText type="smallBold" themeColor="textSecondary">
+                Signed in as
+              </ThemedText>
+              <ThemedText type="default" style={{ marginTop: 2 }}>
+                {email}
+              </ThemedText>
+              <ThemedText type="small" themeColor="textMuted">
+                Email changes aren&rsquo;t supported yet — get in touch if you
+                need to switch.
+              </ThemedText>
+            </View>
+
+            <View style={styles.divider} />
+
+            <ThemedText type="smallBold" themeColor="textSecondary">
+              Change password
             </ThemedText>
+            <TextField
+              label="New password"
+              value={newPassword}
+              onChangeText={setNewPassword}
+              secureTextEntry
+              autoComplete="new-password"
+              autoCapitalize="none"
+              placeholder="At least 8 characters"
+            />
+            <TextField
+              label="Confirm new password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+              autoComplete="new-password"
+              autoCapitalize="none"
+              placeholder="Type it again"
+            />
+            {passwordError && (
+              <ThemedText type="small" style={{ color: '#B23A48' }}>
+                {passwordError}
+              </ThemedText>
+            )}
+            {passwordSaved && !passwordError && (
+              <ThemedText type="small" themeColor="accent">
+                Password updated ✓
+              </ThemedText>
+            )}
+            <View style={styles.actions}>
+              <BrandButton
+                label={savingPassword ? 'Saving…' : 'Save new password'}
+                onPress={savePassword}
+                disabled={savingPassword || !newPassword || !confirmPassword}
+              />
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.actions}>
+              <Pressable
+                onPress={onSignOut}
+                style={({ pressed }) => [
+                  styles.signoutBtn,
+                  {
+                    borderColor: theme.border,
+                    backgroundColor: pressed ? theme.background : 'transparent',
+                  },
+                ]}
+              >
+                <ThemedText type="smallBold">Sign out</ThemedText>
+              </Pressable>
+            </View>
+          </View>
+
+          {/* FAMILY */}
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+            ]}
+          >
+            <View style={styles.sectionHead}>
+              <ThemedText
+                type="smallBold"
+                themeColor="accent"
+                style={{ textTransform: 'uppercase', letterSpacing: 1 }}
+              >
+                Family
+              </ThemedText>
+              <BrandHeading level="h2" style={styles.cardTitle}>
+                Family details
+              </BrandHeading>
+            </View>
+
+            <TextField
+              label="Family name"
+              value={familyName}
+              onChangeText={setFamilyName}
+              placeholder="The Bamberger family"
+              autoComplete="off"
+              hint="Shown at the top of your dashboard and to your kids."
+            />
+            {familyError && (
+              <ThemedText type="small" style={{ color: '#B23A48' }}>
+                {familyError}
+              </ThemedText>
+            )}
+            {familySaved && !familyError && (
+              <ThemedText type="small" themeColor="accent">
+                Saved ✓
+              </ThemedText>
+            )}
+            <View style={styles.actions}>
+              <BrandButton
+                label={savingFamily ? 'Saving…' : 'Save family name'}
+                onPress={saveFamily}
+                disabled={savingFamily}
+              />
+            </View>
+          </View>
+
+          {/* REWARDS */}
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+            ]}
+          >
+            <View style={styles.sectionHead}>
+              <ThemedText
+                type="smallBold"
+                themeColor="accent"
+                style={{ textTransform: 'uppercase', letterSpacing: 1 }}
+              >
+                Rewards
+              </ThemedText>
+              <BrandHeading level="h2" style={styles.cardTitle}>
+                Reward mode
+              </BrandHeading>
+              <ThemedText type="small" themeColor="textMuted">
+                How each completed chore celebrates with your kid.
+              </ThemedText>
+            </View>
 
             <View style={styles.optionsList}>
               {MODE_ORDER.map((m) => {
@@ -173,22 +395,21 @@ export default function SettingsScreen() {
               })}
             </View>
 
-            {error && (
+            {modeError && (
               <ThemedText type="small" style={{ color: '#B23A48' }}>
-                {error}
+                {modeError}
               </ThemedText>
             )}
-            {saved && !error && (
+            {modeSaved && !modeError && (
               <ThemedText type="small" themeColor="accent">
                 Saved ✓
               </ThemedText>
             )}
-
             <View style={styles.actions}>
               <BrandButton
-                label={saving ? 'Saving…' : 'Save reward mode'}
-                onPress={save}
-                disabled={saving}
+                label={savingMode ? 'Saving…' : 'Save reward mode'}
+                onPress={saveMode}
+                disabled={savingMode}
               />
             </View>
           </View>
@@ -217,14 +438,20 @@ const styles = StyleSheet.create({
   },
   header: { gap: Spacing.two, maxWidth: ReadableContentWidth + Spacing.seven },
   title: { marginTop: Spacing.one },
-  lead: { maxWidth: ReadableContentWidth, fontSize: 17, lineHeight: 28 },
   card: {
     borderRadius: Radius.lg,
     borderWidth: 1,
     padding: Spacing.six,
     gap: Spacing.three,
   },
-  cardTitle: { marginBottom: Spacing.one },
+  sectionHead: { gap: 2, marginBottom: Spacing.one },
+  cardTitle: { marginTop: 4 },
+  kvRow: { gap: 2 },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(0,0,0,0.08)',
+    marginVertical: Spacing.two,
+  },
   optionsList: { gap: Spacing.two, marginTop: Spacing.two },
   option: {
     flexDirection: 'row',
@@ -248,4 +475,10 @@ const styles = StyleSheet.create({
   optionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   optionEmoji: { fontSize: 22 },
   actions: { marginTop: Spacing.two, alignItems: 'flex-start' },
+  signoutBtn: {
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+  },
 });

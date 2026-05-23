@@ -15,7 +15,7 @@
  *   - off:    no reward UI at all. For families who don't want gamification.
  */
 
-import type { Submission } from './use-chores';
+import type { Chore, Submission } from './use-chores';
 
 export type RewardMode = 'hops' | 'stars' | 'badges' | 'off';
 
@@ -100,18 +100,27 @@ export function descriptorFor(mode: string | null | undefined): ModeDescriptor {
 }
 
 /**
- * "Earned" is the count of submissions for a kid that count as a win.
- * A win is either an AI pass OR a parent override = approved.
+ * "Earned" is the sum of reward weights for all winning submissions a kid
+ * has logged. A win is either an AI pass OR a parent override = approved.
+ *
+ * Each chore carries a `reward_weight` (default 1; optional "extra jobs"
+ * tend to be 2-3). If `chores` is omitted (or the chore isn't found),
+ * each win counts as 1.
  */
 export function earnedCountFor(
   kidId: string,
-  submissions: Submission[]
+  submissions: Submission[],
+  chores?: Chore[]
 ): number {
-  return submissions.filter(
-    (s) =>
-      s.submitted_by === kidId &&
-      (s.ai_verdict === 'pass' || s.parent_override === 'approved')
-  ).length;
+  let total = 0;
+  for (const s of submissions) {
+    if (s.submitted_by !== kidId) continue;
+    if (!(s.ai_verdict === 'pass' || s.parent_override === 'approved'))
+      continue;
+    const chore = chores?.find((c) => c.id === s.chore_id);
+    total += chore?.reward_weight ?? 1;
+  }
+  return total;
 }
 
 export function badgesUnlocked(earned: number): Badge[] {

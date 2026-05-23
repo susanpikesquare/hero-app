@@ -21,6 +21,8 @@ export default function NewChoreScreen() {
 
   const [title, setTitle] = useState('Bedroom');
   const [kidId, setKidId] = useState<string | null>(null);
+  const [isOptional, setIsOptional] = useState(false);
+  const [rewardWeight, setRewardWeight] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,6 +48,8 @@ export default function NewChoreScreen() {
         kidId,
         title,
         kind: title.toLowerCase().includes('bedroom') ? 'bedroom' : 'custom',
+        isOptional,
+        rewardWeight: isOptional ? rewardWeight : 1,
       });
       router.replace('/app');
     } catch (err) {
@@ -123,6 +127,89 @@ export default function NewChoreScreen() {
           })}
         </View>
       </View>
+
+      <View style={styles.pickWrap}>
+        <ThemedText type="smallBold" themeColor="textSecondary">
+          Type of chore
+        </ThemedText>
+        <View style={styles.kidGrid}>
+          <Pressable
+            onPress={() => setIsOptional(false)}
+            style={[
+              styles.kidChip,
+              {
+                backgroundColor: !isOptional ? theme.accent : 'transparent',
+                borderColor: !isOptional ? theme.accent : theme.border,
+              },
+            ]}
+          >
+            <ThemedText
+              type="default"
+              style={{ color: !isOptional ? theme.background : theme.text }}
+            >
+              Required (daily)
+            </ThemedText>
+          </Pressable>
+          <Pressable
+            onPress={() => setIsOptional(true)}
+            style={[
+              styles.kidChip,
+              {
+                backgroundColor: isOptional ? theme.info : 'transparent',
+                borderColor: isOptional ? theme.info : theme.border,
+              },
+            ]}
+          >
+            <ThemedText
+              type="default"
+              style={{ color: isOptional ? theme.background : theme.text }}
+            >
+              Optional extra job
+            </ThemedText>
+          </Pressable>
+        </View>
+        <ThemedText type="small" themeColor="textMuted">
+          {isOptional
+            ? 'Extra jobs show up in a separate section for your kid. They&rsquo;re opt-in and worth bonus rewards.'
+            : 'Required chores show on the daily to-do list, worth 1 reward each.'}
+        </ThemedText>
+      </View>
+
+      {isOptional && (
+        <View style={styles.pickWrap}>
+          <ThemedText type="smallBold" themeColor="textSecondary">
+            Reward weight
+          </ThemedText>
+          <View style={styles.kidGrid}>
+            {[1, 2, 3, 5].map((w) => {
+              const selected = w === rewardWeight;
+              return (
+                <Pressable
+                  key={w}
+                  onPress={() => setRewardWeight(w)}
+                  style={[
+                    styles.kidChip,
+                    {
+                      backgroundColor: selected ? theme.info : 'transparent',
+                      borderColor: selected ? theme.info : theme.border,
+                    },
+                  ]}
+                >
+                  <ThemedText
+                    type="default"
+                    style={{ color: selected ? theme.background : theme.text }}
+                  >
+                    +{w}
+                  </ThemedText>
+                </Pressable>
+              );
+            })}
+          </View>
+          <ThemedText type="small" themeColor="textMuted">
+            How much this job is worth when your kid completes it.
+          </ThemedText>
+        </View>
+      )}
 
       {error && (
         <ThemedText type="small" style={{ color: '#B23A48' }}>

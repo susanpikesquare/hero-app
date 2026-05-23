@@ -55,12 +55,21 @@ export function useChores(enabled: boolean) {
   }, [reload]);
 
   const addChore = useCallback(
-    async (opts: { familyId: string; kidId: string; title: string; kind: string }) => {
+    async (opts: {
+      familyId: string;
+      kidId: string;
+      title: string;
+      kind: string;
+      isOptional?: boolean;
+      rewardWeight?: number;
+    }) => {
       const { error: insertErr } = await supabase.from('chores').insert({
         family_id: opts.familyId,
         kid_id: opts.kidId,
         title: opts.title.trim(),
         kind: opts.kind,
+        is_optional: opts.isOptional ?? false,
+        reward_weight: opts.rewardWeight ?? 1,
       });
       if (insertErr) throw insertErr;
       await reload();

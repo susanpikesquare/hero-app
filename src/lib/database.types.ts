@@ -18,9 +18,11 @@ export type Database = {
           created_at: string;
           family_id: string;
           id: string;
+          is_optional: boolean;
           kid_id: string;
           kind: string;
           reference_photo_path: string | null;
+          reward_weight: number;
           title: string;
         };
         Insert: {
@@ -28,9 +30,11 @@ export type Database = {
           created_at?: string;
           family_id: string;
           id?: string;
+          is_optional?: boolean;
           kid_id: string;
           kind?: string;
           reference_photo_path?: string | null;
+          reward_weight?: number;
           title: string;
         };
         Update: {
@@ -38,9 +42,11 @@ export type Database = {
           created_at?: string;
           family_id?: string;
           id?: string;
+          is_optional?: boolean;
           kid_id?: string;
           kind?: string;
           reference_photo_path?: string | null;
+          reward_weight?: number;
           title?: string;
         };
         Relationships: [
