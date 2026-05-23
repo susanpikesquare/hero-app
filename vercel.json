@@ -5,5 +5,39 @@
   "installCommand": "npm install",
   "framework": null,
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/app/kid/:kidId/submit/:choreId",
+      "destination": "/app/kid/[kid_id]/submit/[chore_id]"
+    },
+    {
+      "source": "/app/kid/:kidId/setup",
+      "destination": "/app/kid/[kid_id]/setup"
+    },
+    {
+      "source": "/app/kid/:kidId/settings",
+      "destination": "/app/kid/[kid_id]/settings"
+    },
+    {
+      "source": "/app/kid/:kidId",
+      "destination": "/app/kid/[kid_id]"
+    },
+    {
+      "source": "/app/chores/new",
+      "destination": "/app/chores/new"
+    },
+    {
+      "source": "/app/chores/:choreId",
+      "destination": "/app/chores/[chore_id]"
+    },
+    {
+      "source": "/app/submissions/:id",
+      "destination": "/app/submissions/[id]"
+    },
+    {
+      "source": "/app/articles/:slug",
+      "destination": "/app/articles/[slug]"
+    }
+  ]
 }
