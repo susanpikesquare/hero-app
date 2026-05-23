@@ -73,7 +73,7 @@ export default function DashboardScreen() {
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.page}>
           <View style={styles.nav}>
-            <BrandLogo height={64} />
+            <BrandLogo height={96} />
             <BrandButton variant="ghost" label="Sign out" onPress={onSignOut} />
           </View>
 

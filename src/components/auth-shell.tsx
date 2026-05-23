@@ -26,7 +26,7 @@ export function AuthShell({ eyebrow, title, subtitle, children, footer }: Props)
     >
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.page}>
-          <BrandLogo height={64} />
+          <BrandLogo height={96} />
 
           <View
             style={[
