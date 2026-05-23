@@ -66,18 +66,21 @@ export type Database = {
           id: string;
           invite_code_used: string | null;
           name: string;
+          reward_mode: string;
         };
         Insert: {
           created_at?: string;
           id?: string;
           invite_code_used?: string | null;
           name: string;
+          reward_mode?: string;
         };
         Update: {
           created_at?: string;
           id?: string;
           invite_code_used?: string | null;
           name?: string;
+          reward_mode?: string;
         };
         Relationships: [
           {

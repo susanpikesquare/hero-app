@@ -17,6 +17,11 @@ import {
 import { useTheme } from '@/hooks/use-theme';
 import { articleForAge, ARTICLES } from '@/lib/articles';
 import { useAuth } from '@/lib/auth-context';
+import {
+  descriptorFor,
+  earnedCountFor,
+  latestBadge,
+} from '@/lib/rewards';
 import { choresForKid, submissionsForChore, useChores } from '@/lib/use-chores';
 import { useFamily } from '@/lib/use-family';
 
@@ -93,7 +98,14 @@ export default function DashboardScreen() {
         <View style={styles.page}>
           <View style={styles.nav}>
             <BrandLogo height={96} />
-            <BrandButton variant="ghost" label="Sign out" onPress={onSignOut} />
+            <View style={styles.navActions}>
+              <BrandButton
+                variant="ghost"
+                label="Settings"
+                onPress={() => router.push('/app/settings')}
+              />
+              <BrandButton variant="ghost" label="Sign out" onPress={onSignOut} />
+            </View>
           </View>
 
           <View style={styles.header}>
@@ -142,6 +154,15 @@ export default function DashboardScreen() {
           ) : (
             kids.map((kid) => {
               const kidChores = choresForKid(chores, kid.id);
+              const earned = earnedCountFor(kid.id, submissions);
+              const badge = latestBadge(earned);
+              const rewardDescriptor = descriptorFor(family?.reward_mode);
+              const showRewardChip =
+                rewardDescriptor.mode !== 'off' &&
+                (rewardDescriptor.mode === 'hops' ||
+                  rewardDescriptor.mode === 'stars'
+                  ? earned > 0
+                  : !!badge);
               return (
                 <Card key={kid.id} theme={theme} tone="elevated">
                   <View style={styles.kidHeader}>
@@ -178,6 +199,49 @@ export default function DashboardScreen() {
                       onPress={() => router.push(`/app/kid/${kid.id}`)}
                     />
                   </View>
+
+                  {showRewardChip && (
+                    <View style={styles.rewardChipRow}>
+                      {(rewardDescriptor.mode === 'hops' ||
+                        rewardDescriptor.mode === 'stars') && (
+                        <View
+                          style={[
+                            styles.rewardChip,
+                            {
+                              backgroundColor: theme.accentSoft,
+                              borderColor: theme.border,
+                            },
+                          ]}
+                        >
+                          <ThemedText type="default" style={styles.rewardChipEmoji}>
+                            {rewardDescriptor.emoji}
+                          </ThemedText>
+                          <ThemedText type="smallBold">
+                            {earned}{' '}
+                            {earned === 1
+                              ? rewardDescriptor.unitSingular
+                              : rewardDescriptor.unitPlural}
+                          </ThemedText>
+                        </View>
+                      )}
+                      {badge && (
+                        <View
+                          style={[
+                            styles.rewardChip,
+                            {
+                              backgroundColor: theme.infoSoft,
+                              borderColor: theme.border,
+                            },
+                          ]}
+                        >
+                          <ThemedText type="default" style={styles.rewardChipEmoji}>
+                            {badge.emoji}
+                          </ThemedText>
+                          <ThemedText type="smallBold">{badge.label}</ThemedText>
+                        </View>
+                      )}
+                    </View>
+                  )}
 
                   {kidChores.length === 0 ? (
                     <ThemedText type="default" themeColor="textSecondary">
@@ -484,6 +548,28 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
     flexWrap: 'wrap',
   },
+  navActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    flexWrap: 'wrap',
+  },
+  rewardChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+    marginTop: Spacing.one,
+  },
+  rewardChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+  },
+  rewardChipEmoji: { fontSize: 16 },
   choresList: { gap: Spacing.two },
   choreRow: {
     flexDirection: 'row',
