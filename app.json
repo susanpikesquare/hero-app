@@ -8,9 +8,18 @@
     "scheme": "homehero",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "co.pikesquare.homehero",
+      "buildNumber": "1",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Home Hero needs the camera so kids can submit a photo of their finished chore.",
+        "NSPhotoLibraryUsageDescription": "Home Hero needs your photo library so kids can choose a finished-chore photo to submit.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "co.pikesquare.homehero",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -28,17 +37,27 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#5E7A5C",
           "android": {
             "image": "./assets/images/splash-icon.png",
             "imageWidth": 76
           }
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Home Hero needs your photo library so kids can choose a finished-chore photo to submit.",
+          "cameraPermission": "Home Hero needs the camera so kids can submit a photo of their finished chore."
         }
       ]
     ],
     "experiments": {
       "typedRoutes": false,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {}
     }
   }
 }
