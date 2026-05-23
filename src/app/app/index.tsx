@@ -1,6 +1,6 @@
-import { useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrandButton } from '@/components/brand-button';
@@ -15,13 +15,16 @@ import {
 } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
+import { choresForKid, submissionsForChore, useChores } from '@/lib/use-chores';
 import { useFamily } from '@/lib/use-family';
 
 export default function DashboardScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { session, signOut } = useAuth();
-  const { family, parent, kids, loading, error, addKid } = useFamily(!!session);
+  const { family, parent, kids, loading: famLoading, error: famError, addKid } =
+    useFamily(!!session);
+  const { chores, submissions, loading: choresLoading } = useChores(!!session);
 
   const [newKidName, setNewKidName] = useState('');
   const [adding, setAdding] = useState(false);
@@ -49,17 +52,17 @@ export default function DashboardScreen() {
     router.replace('/');
   };
 
-  if (loading) {
+  if (famLoading) {
     return (
-      <View
-        style={[styles.center, { backgroundColor: theme.background }]}
-      >
+      <View style={[styles.center, { backgroundColor: theme.background }]}>
         <ThemedText type="default" themeColor="textSecondary">
           Loading your family…
         </ThemedText>
       </View>
     );
   }
+
+  const recentSubmissions = submissions.slice(0, 5);
 
   return (
     <ScrollView
@@ -87,98 +90,242 @@ export default function DashboardScreen() {
               themeColor="textSecondary"
               style={styles.lead}
             >
-              This is your parental control surface. Add the kids in your
-              household, then set up the bedroom chore. Photo submissions
-              and AI feedback land next.
+              This is your parental control surface. Add kids, give each one a
+              chore, then hand the device over and tap &ldquo;Hand to&nbsp;…&rdquo;
+              so they can submit a photo.
             </ThemedText>
           </View>
 
-          {error && (
+          {famError && (
             <ThemedText type="small" style={{ color: '#B23A48' }}>
-              {error}
+              {famError}
             </ThemedText>
           )}
 
-          <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: theme.backgroundElement,
-                borderColor: theme.border,
-              },
-            ]}
-          >
-            <BrandHeading level="h2" style={styles.cardTitle}>
-              Kids in {family?.name ?? 'your family'}
-            </BrandHeading>
-            {kids.length === 0 ? (
+          {/* Kids + their chores */}
+          {kids.length === 0 ? (
+            <Card theme={theme} tone="elevated">
+              <BrandHeading level="h2" style={styles.cardTitle}>
+                Add your first kid
+              </BrandHeading>
               <ThemedText type="default" themeColor="textSecondary">
-                No kids added yet. Add the first one below.
+                You haven&rsquo;t added anyone yet. Type a name and tap Add.
               </ThemedText>
-            ) : (
-              <View style={styles.kidsList}>
-                {kids.map((kid) => (
-                  <View
-                    key={kid.id}
-                    style={[
-                      styles.kidRow,
-                      { borderColor: theme.border, backgroundColor: theme.background },
-                    ]}
-                  >
-                    <ThemedText type="default">{kid.display_name}</ThemedText>
-                    <ThemedText type="small" themeColor="textMuted">
-                      added{' '}
-                      {new Date(kid.created_at).toLocaleDateString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </ThemedText>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            <View style={styles.addRow}>
-              <TextField
-                label="Add a kid"
+              <AddKidRow
                 value={newKidName}
-                onChangeText={setNewKidName}
-                placeholder="e.g. Theo"
-                autoComplete="off"
-                autoCorrect={false}
-                error={addError ?? undefined}
-                style={{ minWidth: 220 }}
+                onChange={setNewKidName}
+                onSubmit={onAddKid}
+                disabled={adding}
+                error={addError}
               />
-              <View style={styles.addCta}>
-                <BrandButton
-                  label={adding ? 'Adding…' : 'Add kid'}
-                  onPress={onAddKid}
+            </Card>
+          ) : (
+            kids.map((kid) => {
+              const kidChores = choresForKid(chores, kid.id);
+              return (
+                <Card key={kid.id} theme={theme} tone="elevated">
+                  <View style={styles.kidHeader}>
+                    <View style={{ gap: 4 }}>
+                      <BrandHeading level="h2" style={styles.cardTitle}>
+                        {kid.display_name}
+                      </BrandHeading>
+                      <ThemedText type="small" themeColor="textMuted">
+                        {kidChores.length === 0
+                          ? 'No chores yet'
+                          : `${kidChores.length} chore${kidChores.length === 1 ? '' : 's'}`}
+                      </ThemedText>
+                    </View>
+                    <BrandButton
+                      label={`Hand to ${kid.display_name}`}
+                      onPress={() => router.push(`/app/kid/${kid.id}`)}
+                    />
+                  </View>
+
+                  {kidChores.length === 0 ? (
+                    <ThemedText type="default" themeColor="textSecondary">
+                      Give {kid.display_name} a chore to start.
+                    </ThemedText>
+                  ) : (
+                    <View style={styles.choresList}>
+                      {kidChores.map((chore) => {
+                        const subs = submissionsForChore(submissions, chore.id);
+                        return (
+                          <View
+                            key={chore.id}
+                            style={[
+                              styles.choreRow,
+                              {
+                                backgroundColor: theme.background,
+                                borderColor: theme.border,
+                              },
+                            ]}
+                          >
+                            <View style={{ flex: 1 }}>
+                              <ThemedText type="default">{chore.title}</ThemedText>
+                              <ThemedText type="small" themeColor="textMuted">
+                                {subs.length === 0
+                                  ? 'No submissions yet'
+                                  : `${subs.length} submission${subs.length === 1 ? '' : 's'}`}
+                              </ThemedText>
+                            </View>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
+                </Card>
+              );
+            })
+          )}
+
+          {/* Add chore + add kid actions */}
+          {kids.length > 0 && (
+            <View style={styles.actionsRow}>
+              <Link href="/app/chores/new" asChild>
+                <Pressable
+                  style={[
+                    styles.actionBtn,
+                    { borderColor: theme.border, backgroundColor: theme.backgroundElement },
+                  ]}
+                >
+                  <ThemedText type="smallBold">+ New chore</ThemedText>
+                </Pressable>
+              </Link>
+              <View style={styles.addKidInline}>
+                <AddKidRow
+                  value={newKidName}
+                  onChange={setNewKidName}
+                  onSubmit={onAddKid}
                   disabled={adding}
+                  error={addError}
+                  variant="inline"
                 />
               </View>
             </View>
-          </View>
+          )}
 
-          <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: theme.accentSoft,
-                borderColor: theme.border,
-              },
-            ]}
-          >
+          {/* Recent submissions */}
+          <Card theme={theme} tone="info">
             <BrandHeading level="h2" style={styles.cardTitle}>
-              Bedroom chore
+              Recent submissions
             </BrandHeading>
-            <ThemedText type="default" themeColor="text">
-              Coming next session: upload the reference photo for each kid&rsquo;s
-              clean bedroom and start receiving AI-validated submissions.
-            </ThemedText>
-          </View>
+            {choresLoading ? (
+              <ThemedText type="default" themeColor="textSecondary">
+                Loading…
+              </ThemedText>
+            ) : recentSubmissions.length === 0 ? (
+              <ThemedText type="default" themeColor="text">
+                Nothing yet. When your kid submits a photo, it appears here.
+              </ThemedText>
+            ) : (
+              <View style={styles.submissionsList}>
+                {recentSubmissions.map((sub) => {
+                  const chore = chores.find((c) => c.id === sub.chore_id);
+                  const submittedKid = kids.find(
+                    (k) => k.id === sub.submitted_by
+                  );
+                  return (
+                    <Link
+                      key={sub.id}
+                      href={`/app/submissions/${sub.id}`}
+                      asChild
+                    >
+                      <Pressable
+                        style={[
+                          styles.submissionRow,
+                          {
+                            backgroundColor: theme.background,
+                            borderColor: theme.border,
+                          },
+                        ]}
+                      >
+                        <View style={{ flex: 1 }}>
+                          <ThemedText type="default">
+                            {submittedKid?.display_name ?? 'A kid'} —{' '}
+                            {chore?.title ?? 'a chore'}
+                          </ThemedText>
+                          <ThemedText type="small" themeColor="textMuted">
+                            {new Date(sub.submitted_at).toLocaleString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })}
+                          </ThemedText>
+                        </View>
+                        <ThemedText type="small" themeColor="textSecondary">
+                          View →
+                        </ThemedText>
+                      </Pressable>
+                    </Link>
+                  );
+                })}
+              </View>
+            )}
+          </Card>
         </View>
       </SafeAreaView>
     </ScrollView>
+  );
+}
+
+function AddKidRow({
+  value,
+  onChange,
+  onSubmit,
+  disabled,
+  error,
+  variant = 'block',
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit: () => void;
+  disabled: boolean;
+  error: string | null;
+  variant?: 'block' | 'inline';
+}) {
+  return (
+    <View style={[styles.addRow, variant === 'inline' && { marginTop: 0 }]}>
+      <TextField
+        label={variant === 'inline' ? 'Add another kid' : 'Add a kid'}
+        value={value}
+        onChangeText={onChange}
+        placeholder="e.g. Theo"
+        autoComplete="off"
+        autoCorrect={false}
+        error={error ?? undefined}
+        style={{ minWidth: 220 }}
+      />
+      <View style={styles.addCta}>
+        <BrandButton
+          label={disabled ? 'Adding…' : 'Add kid'}
+          onPress={onSubmit}
+          disabled={disabled}
+        />
+      </View>
+    </View>
+  );
+}
+
+function Card({
+  theme,
+  tone,
+  children,
+}: {
+  theme: ReturnType<typeof useTheme>;
+  tone: 'elevated' | 'info';
+  children: React.ReactNode;
+}) {
+  const bg = tone === 'info' ? theme.accentSoft : theme.backgroundElement;
+  return (
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: bg, borderColor: theme.border },
+      ]}
+    >
+      {children}
+    </View>
   );
 }
 
@@ -214,8 +361,15 @@ const styles = StyleSheet.create({
     gap: Spacing.four,
   },
   cardTitle: { marginBottom: Spacing.one },
-  kidsList: { gap: Spacing.two },
-  kidRow: {
+  kidHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: Spacing.three,
+    flexWrap: 'wrap',
+  },
+  choresList: { gap: Spacing.two },
+  choreRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -229,6 +383,31 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: Spacing.three,
     flexWrap: 'wrap',
+    marginTop: Spacing.three,
   },
   addCta: { paddingBottom: Spacing.half },
+  actionsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: Spacing.four,
+    flexWrap: 'wrap',
+  },
+  actionBtn: {
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+  },
+  addKidInline: { flex: 1, minWidth: 280 },
+  submissionsList: { gap: Spacing.two },
+  submissionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.three,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    gap: Spacing.three,
+  },
 });
