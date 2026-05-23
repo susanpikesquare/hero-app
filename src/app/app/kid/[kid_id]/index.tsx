@@ -1,4 +1,4 @@
-import { Link, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { KidShell, KidStyles } from '@/components/kid-shell';
@@ -10,6 +10,7 @@ import { useFamily } from '@/lib/use-family';
 
 export default function KidHomeScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const { session } = useAuth();
   const params = useLocalSearchParams<{ kid_id: string }>();
   const kidId = params.kid_id;
@@ -78,46 +79,42 @@ export default function KidHomeScreen() {
             const subs = submissionsForChore(submissions, chore.id);
             const last = subs[0];
             return (
-              <Link
+              <Pressable
                 key={chore.id}
-                href={`/app/kid/${kidId}/submit/${chore.id}`}
-                asChild
+                onPress={() => router.push(`/app/kid/${kidId}/submit/${chore.id}`)}
+                style={({ pressed }) => [
+                  KidStyles.card,
+                  {
+                    backgroundColor: pressed ? theme.accentSoft : theme.backgroundElement,
+                    borderColor: theme.border,
+                  },
+                ]}
               >
-                <Pressable
-                  style={({ pressed }) => [
-                    KidStyles.card,
-                    {
-                      backgroundColor: pressed ? theme.accentSoft : theme.backgroundElement,
-                      borderColor: theme.border,
-                    },
+                <Text style={[KidStyles.choreTitle, { color: theme.text }]}>
+                  {chore.title}
+                </Text>
+                <Text style={[KidStyles.choreBody, { color: theme.textSecondary }]}>
+                  {last
+                    ? `Last hop: ${new Date(last.submitted_at).toLocaleString(undefined, {
+                        weekday: 'short',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })}`
+                    : 'No hops yet — ready when you are.'}
+                </Text>
+                <View
+                  style={[
+                    KidStyles.bigButton,
+                    { backgroundColor: theme.accent, alignSelf: 'flex-start', paddingHorizontal: Spacing.four },
                   ]}
                 >
-                  <Text style={[KidStyles.choreTitle, { color: theme.text }]}>
-                    {chore.title}
-                  </Text>
-                  <Text style={[KidStyles.choreBody, { color: theme.textSecondary }]}>
-                    {last
-                      ? `Last hop: ${new Date(last.submitted_at).toLocaleString(undefined, {
-                          weekday: 'short',
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        })}`
-                      : 'No hops yet — ready when you are.'}
-                  </Text>
-                  <View
-                    style={[
-                      KidStyles.bigButton,
-                      { backgroundColor: theme.accent, alignSelf: 'flex-start', paddingHorizontal: Spacing.four },
-                    ]}
+                  <Text
+                    style={[KidStyles.bigButtonLabel, { color: theme.background }]}
                   >
-                    <Text
-                      style={[KidStyles.bigButtonLabel, { color: theme.background }]}
-                    >
-                      📸 Take a photo
-                    </Text>
-                  </View>
-                </Pressable>
-              </Link>
+                    📸 Take a photo
+                  </Text>
+                </View>
+              </Pressable>
             );
           })}
         </View>

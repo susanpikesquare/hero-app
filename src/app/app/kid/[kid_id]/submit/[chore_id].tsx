@@ -1,5 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
-import { Link, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   Image,
@@ -143,15 +143,14 @@ export default function SubmitScreen() {
           </Text>
         </View>
 
-        <Link href={`/app/kid/${kid.id}`} asChild>
-          <Pressable
-            style={[KidStyles.bigButton, { backgroundColor: theme.accent }]}
-          >
-            <Text style={[KidStyles.bigButtonLabel, { color: theme.background }]}>
-              ← Back to my chores
-            </Text>
-          </Pressable>
-        </Link>
+        <Pressable
+          onPress={() => router.replace(`/app/kid/${kid.id}`)}
+          style={[KidStyles.bigButton, { backgroundColor: theme.accent }]}
+        >
+          <Text style={[KidStyles.bigButtonLabel, { color: theme.background }]}>
+            ← Back to my chores
+          </Text>
+        </Pressable>
       </KidShell>
     );
   }

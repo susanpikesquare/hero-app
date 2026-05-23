@@ -1,4 +1,4 @@
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -181,16 +181,15 @@ export default function DashboardScreen() {
           {/* Add chore + add kid actions */}
           {kids.length > 0 && (
             <View style={styles.actionsRow}>
-              <Link href="/app/chores/new" asChild>
-                <Pressable
-                  style={[
-                    styles.actionBtn,
-                    { borderColor: theme.border, backgroundColor: theme.backgroundElement },
-                  ]}
-                >
-                  <ThemedText type="smallBold">+ New chore</ThemedText>
-                </Pressable>
-              </Link>
+              <Pressable
+                onPress={() => router.push('/app/chores/new')}
+                style={[
+                  styles.actionBtn,
+                  { borderColor: theme.border, backgroundColor: theme.backgroundElement },
+                ]}
+              >
+                <ThemedText type="smallBold">+ New chore</ThemedText>
+              </Pressable>
               <View style={styles.addKidInline}>
                 <AddKidRow
                   value={newKidName}
@@ -225,39 +224,35 @@ export default function DashboardScreen() {
                     (k) => k.id === sub.submitted_by
                   );
                   return (
-                    <Link
+                    <Pressable
                       key={sub.id}
-                      href={`/app/submissions/${sub.id}`}
-                      asChild
+                      onPress={() => router.push(`/app/submissions/${sub.id}`)}
+                      style={[
+                        styles.submissionRow,
+                        {
+                          backgroundColor: theme.background,
+                          borderColor: theme.border,
+                        },
+                      ]}
                     >
-                      <Pressable
-                        style={[
-                          styles.submissionRow,
-                          {
-                            backgroundColor: theme.background,
-                            borderColor: theme.border,
-                          },
-                        ]}
-                      >
-                        <View style={{ flex: 1 }}>
-                          <ThemedText type="default">
-                            {submittedKid?.display_name ?? 'A kid'} —{' '}
-                            {chore?.title ?? 'a chore'}
-                          </ThemedText>
-                          <ThemedText type="small" themeColor="textMuted">
-                            {new Date(sub.submitted_at).toLocaleString(undefined, {
-                              month: 'short',
-                              day: 'numeric',
-                              hour: 'numeric',
-                              minute: '2-digit',
-                            })}
-                          </ThemedText>
-                        </View>
-                        <ThemedText type="small" themeColor="textSecondary">
-                          View →
+                      <View style={{ flex: 1 }}>
+                        <ThemedText type="default">
+                          {submittedKid?.display_name ?? 'A kid'} —{' '}
+                          {chore?.title ?? 'a chore'}
                         </ThemedText>
-                      </Pressable>
-                    </Link>
+                        <ThemedText type="small" themeColor="textMuted">
+                          {new Date(sub.submitted_at).toLocaleString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          })}
+                        </ThemedText>
+                      </View>
+                      <ThemedText type="small" themeColor="textSecondary">
+                        View →
+                      </ThemedText>
+                    </Pressable>
                   );
                 })}
               </View>
