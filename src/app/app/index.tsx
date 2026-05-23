@@ -148,12 +148,29 @@ export default function DashboardScreen() {
                       <BrandHeading level="h2" style={styles.cardTitle}>
                         {kid.display_name}
                       </BrandHeading>
-                      <ThemedText type="small" themeColor="textMuted">
-                        {kid.age != null ? `Age ${kid.age} · ` : ''}
-                        {kidChores.length === 0
-                          ? 'no chores yet'
-                          : `${kidChores.length} chore${kidChores.length === 1 ? '' : 's'}`}
-                      </ThemedText>
+                      <View style={styles.kidMetaRow}>
+                        <ThemedText type="small" themeColor="textMuted">
+                          {kid.age != null ? `Age ${kid.age} · ` : ''}
+                          {kidChores.length === 0
+                            ? 'no chores yet'
+                            : `${kidChores.length} chore${kidChores.length === 1 ? '' : 's'}`}
+                        </ThemedText>
+                        <ThemedText type="small" themeColor="textMuted">
+                          ·
+                        </ThemedText>
+                        <Pressable
+                          onPress={() => router.push(`/app/kid/${kid.id}/settings`)}
+                          hitSlop={8}
+                        >
+                          <ThemedText
+                            type="small"
+                            themeColor="info"
+                            style={{ textDecorationLine: 'underline' }}
+                          >
+                            Manage
+                          </ThemedText>
+                        </Pressable>
+                      </View>
                     </View>
                     <BrandButton
                       label={`Hand to ${kid.display_name}`}
@@ -407,6 +424,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: Spacing.three,
+    flexWrap: 'wrap',
+  },
+  kidMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
     flexWrap: 'wrap',
   },
   choresList: { gap: Spacing.two },
