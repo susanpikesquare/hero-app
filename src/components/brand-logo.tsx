@@ -12,7 +12,9 @@
 
 import { Image, StyleSheet, type ImageStyle, type StyleProp } from 'react-native';
 
-const SOURCE_ASPECT = 1.5; // 1536 / 1024
+// Aspect ratio of the cropped, tight-bbox logo (icon + wordmark + tagline).
+// If you swap the PNG, recompute this as image.width / image.height.
+const SOURCE_ASPECT = 3.522;
 
 type Props = {
   height?: number;
