@@ -1,24 +1,27 @@
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AuthShell } from '@/components/auth-shell';
 import { BrandButton } from '@/components/brand-button';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { supabase } from '@/lib/supabase';
 
 const MIN_PASSWORD = 8;
 
 export default function SignupScreen() {
   const router = useRouter();
+  const theme = useTheme();
 
   const [inviteCode, setInviteCode] = useState('');
   const [familyName, setFamilyName] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,6 +34,12 @@ export default function SignupScreen() {
     }
     if (password.length < MIN_PASSWORD) {
       setError(`Password needs at least ${MIN_PASSWORD} characters.`);
+      return;
+    }
+    if (!acceptedTerms) {
+      setError(
+        'Please confirm you accept the Privacy Policy and Terms of Service and that you are authorizing your children’s use of the app.'
+      );
       return;
     }
 
@@ -151,6 +160,57 @@ export default function SignupScreen() {
         hint="Pick something you'll remember. You can change it later."
       />
 
+      <Pressable
+        onPress={() => setAcceptedTerms((prev) => !prev)}
+        style={[
+          styles.consent,
+          {
+            backgroundColor: acceptedTerms ? theme.accentSoft : theme.background,
+            borderColor: acceptedTerms ? theme.accent : theme.border,
+          },
+        ]}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: acceptedTerms }}
+      >
+        <View
+          style={[
+            styles.checkbox,
+            {
+              borderColor: acceptedTerms ? theme.accent : theme.textMuted,
+              backgroundColor: acceptedTerms ? theme.accent : 'transparent',
+            },
+          ]}
+        >
+          {acceptedTerms && (
+            <ThemedText type="smallBold" style={{ color: theme.background }}>
+              ✓
+            </ThemedText>
+          )}
+        </View>
+        <ThemedText
+          type="small"
+          themeColor="text"
+          style={{ flex: 1, lineHeight: 20 }}
+        >
+          I am 18 or older, I am the parent or legal guardian of any children
+          who will use this app, and I agree to the{' '}
+          <Link
+            href="/privacy"
+            style={{ textDecorationLine: 'underline', color: theme.info }}
+          >
+            Privacy Policy
+          </Link>{' '}
+          and{' '}
+          <Link
+            href="/terms"
+            style={{ textDecorationLine: 'underline', color: theme.info }}
+          >
+            Terms of Service
+          </Link>
+          . I authorize my children&rsquo;s use of the app under my supervision.
+        </ThemedText>
+      </Pressable>
+
       {error && (
         <ThemedText type="small" style={{ color: '#B23A48' }}>
           {error}
@@ -161,7 +221,7 @@ export default function SignupScreen() {
         <BrandButton
           label={submitting ? 'Setting things up…' : 'Create my family'}
           onPress={submit}
-          disabled={submitting}
+          disabled={submitting || !acceptedTerms}
         />
       </View>
     </AuthShell>
@@ -172,5 +232,23 @@ const styles = StyleSheet.create({
   cta: {
     marginTop: Spacing.two,
     alignItems: 'flex-start',
+  },
+  consent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.three,
+    padding: Spacing.three,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    marginTop: Spacing.two,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
   },
 });

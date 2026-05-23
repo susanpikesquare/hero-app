@@ -248,6 +248,23 @@ export default function LandingScreen() {
               © {new Date().getFullYear()} Home Hero. Made for the families
               already doing the hard part.
             </ThemedText>
+            <View style={styles.footerLinks}>
+              <Link
+                href="/privacy"
+                style={[styles.footerLink, { color: theme.textSecondary }]}
+              >
+                Privacy
+              </Link>
+              <ThemedText type="small" themeColor="textMuted">
+                ·
+              </ThemedText>
+              <Link
+                href="/terms"
+                style={[styles.footerLink, { color: theme.textSecondary }]}
+              >
+                Terms
+              </Link>
+            </View>
           </View>
         </View>
       </SafeAreaView>
@@ -379,5 +396,16 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.five,
     marginTop: Spacing.four,
     alignItems: 'flex-start',
+    gap: Spacing.two,
+  },
+  footerLinks: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  footerLink: {
+    fontSize: 14,
+    fontWeight: '500',
+    textDecorationLine: 'none',
   },
 });
