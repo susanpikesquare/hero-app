@@ -8,7 +8,7 @@
     "scheme": "homehero",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon",
+      "icon": "./assets/images/icon.png",
       "bundleIdentifier": "co.pikesquare.homehero",
       "buildNumber": "1",
       "supportsTablet": true,
