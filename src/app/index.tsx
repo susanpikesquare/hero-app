@@ -13,7 +13,7 @@ import {
 } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-const INVITE_EMAIL = 'erica@homehero.app';
+const INVITE_EMAIL = 'susan@pikesquare.co';
 const INVITE_SUBJECT = 'Home Hero — invite request';
 const INVITE_BODY =
   "Hi Erica,\n\nI'd like an invite code for Home Hero. A bit about my family:\n\n— ";
