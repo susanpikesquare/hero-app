@@ -1,6 +1,6 @@
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AuthShell } from '@/components/auth-shell';
 import { BrandButton } from '@/components/brand-button';
@@ -9,35 +9,17 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 
-const PENDING_SIGNUP_KEY = 'homehero:pending-signup';
-
-type PendingSignup = {
-  inviteCode: string;
-  familyName: string;
-  displayName: string;
-  email: string;
-};
-
-function stashPendingSignup(data: PendingSignup) {
-  if (Platform.OS !== 'web') return;
-  try {
-    window.localStorage.setItem(PENDING_SIGNUP_KEY, JSON.stringify(data));
-  } catch {
-    // ignore
-  }
-}
-
-function getRedirectUrl() {
-  if (Platform.OS !== 'web') return undefined;
-  return `${window.location.origin}/app`;
-}
+const MIN_PASSWORD = 8;
 
 export default function SignupScreen() {
+  const router = useRouter();
+
   const [inviteCode, setInviteCode] = useState('');
   const [familyName, setFamilyName] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'submitting' | 'sent'>('idle');
+  const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
@@ -47,78 +29,73 @@ export default function SignupScreen() {
       setError('All fields are required.');
       return;
     }
+    if (password.length < MIN_PASSWORD) {
+      setError(`Password needs at least ${MIN_PASSWORD} characters.`);
+      return;
+    }
 
-    setStatus('submitting');
+    setSubmitting(true);
 
-    // 1. Pre-validate the invite code so we don't waste a magic-link email
-    //    on a bad code.
-    const { data: codeOk, error: peekErr } = await supabase.rpc('peek_invite_code', {
-      p_code: inviteCode.trim(),
-    });
+    // 1. Pre-validate the invite code so we don't create an auth user
+    //    only to discover the code is bad.
+    const { data: codeOk, error: peekErr } = await supabase.rpc(
+      'peek_invite_code',
+      { p_code: inviteCode.trim() }
+    );
     if (peekErr) {
-      setStatus('idle');
+      setSubmitting(false);
       setError(peekErr.message);
       return;
     }
     if (!codeOk) {
-      setStatus('idle');
+      setSubmitting(false);
       setError("That invite code isn't valid or has already been used.");
       return;
     }
 
-    // 2. Stash the form so we can redeem after the magic link returns.
-    stashPendingSignup({
-      inviteCode: inviteCode.trim(),
-      familyName: familyName.trim(),
-      displayName: displayName.trim(),
+    // 2. Create the auth user with email + password.
+    const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
       email: email.trim(),
+      password,
     });
-
-    // 3. Send the magic link.
-    const redirect = getRedirectUrl();
-    const { error: otpErr } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: redirect ? { emailRedirectTo: redirect } : undefined,
-    });
-
-    if (otpErr) {
-      setStatus('idle');
-      setError(otpErr.message);
+    if (signUpErr) {
+      setSubmitting(false);
+      setError(signUpErr.message);
+      return;
+    }
+    if (!signUpData.session) {
+      // Supabase still has "Confirm email" turned ON. For v0 we need it off
+      // so we can run the redemption RPC inside the same session.
+      setSubmitting(false);
+      setError(
+        'Email confirmation is still required on this Supabase project. Disable Auth → Providers → Email → Confirm email, then try again.'
+      );
       return;
     }
 
-    setStatus('sent');
-  };
-
-  if (status === 'sent') {
-    return (
-      <AuthShell
-        eyebrow="Check your inbox"
-        title="We just sent you a magic link."
-        subtitle={`Open the email at ${email} and click the link. It signs you in and finishes setting up your family.`}
-        footer={
-          <ThemedText type="small" themeColor="textMuted">
-            Wrong email?{' '}
-            <Link href="/signup" style={{ textDecorationLine: 'underline' }}>
-              Start over
-            </Link>
-            .
-          </ThemedText>
-        }
-      >
-        <ThemedText type="small" themeColor="textSecondary">
-          The link expires in about an hour. You can close this tab — we&rsquo;ll
-          take it from there.
-        </ThemedText>
-      </AuthShell>
+    // 3. Redeem the invite + create the family.
+    const { error: redeemErr } = await supabase.rpc(
+      'redeem_invite_and_create_family',
+      {
+        p_code: inviteCode.trim(),
+        p_family_name: familyName.trim(),
+        p_parent_display_name: displayName.trim(),
+      }
     );
-  }
+    if (redeemErr) {
+      setSubmitting(false);
+      setError(redeemErr.message);
+      return;
+    }
+
+    router.replace('/app');
+  };
 
   return (
     <AuthShell
       eyebrow="Founding family · invite-only"
       title="Set up your Home Hero family."
-      subtitle="Use the invite code Erica sent you. We&rsquo;ll email you a one-tap sign-in link."
+      subtitle="Use the invite code Erica sent you. Pick a password you'll remember — that and your email are how you'll sign back in."
       footer={
         <ThemedText type="small" themeColor="textMuted">
           Already have an account?{' '}
@@ -136,7 +113,7 @@ export default function SignupScreen() {
         autoCorrect={false}
         value={inviteCode}
         onChangeText={setInviteCode}
-        placeholder="e.g. HOMEHERO-A4F3-9KX2"
+        placeholder="HOMEY"
       />
       <TextField
         label="Family name"
@@ -163,6 +140,16 @@ export default function SignupScreen() {
         onChangeText={setEmail}
         placeholder="you@example.com"
       />
+      <TextField
+        label="Password"
+        autoComplete="new-password"
+        autoCapitalize="none"
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+        placeholder="At least 8 characters"
+        hint="Pick something you'll remember. You can change it later."
+      />
 
       {error && (
         <ThemedText type="small" style={{ color: '#B23A48' }}>
@@ -172,9 +159,9 @@ export default function SignupScreen() {
 
       <View style={styles.cta}>
         <BrandButton
-          label={status === 'submitting' ? 'Sending link…' : 'Send me the link'}
+          label={submitting ? 'Setting things up…' : 'Create my family'}
           onPress={submit}
-          disabled={status === 'submitting'}
+          disabled={submitting}
         />
       </View>
     </AuthShell>

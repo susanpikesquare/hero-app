@@ -1,6 +1,6 @@
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { AuthShell } from '@/components/auth-shell';
 import { BrandButton } from '@/components/brand-button';
@@ -9,59 +9,45 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 
-function getRedirectUrl() {
-  if (Platform.OS !== 'web') return undefined;
-  return `${window.location.origin}/app`;
-}
-
 export default function LoginScreen() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'submitting' | 'sent'>('idle');
+  const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
     setError(null);
-    if (!email.trim()) {
-      setError('Email is required.');
+    if (!email.trim() || !password) {
+      setError('Email and password are required.');
       return;
     }
 
-    setStatus('submitting');
+    setSubmitting(true);
 
-    const redirect = getRedirectUrl();
-    const { error: otpErr } = await supabase.auth.signInWithOtp({
+    const { error: signInErr } = await supabase.auth.signInWithPassword({
       email: email.trim(),
-      options: redirect ? { emailRedirectTo: redirect } : undefined,
+      password,
     });
 
-    if (otpErr) {
-      setStatus('idle');
-      setError(otpErr.message);
+    if (signInErr) {
+      setSubmitting(false);
+      setError(
+        signInErr.message === 'Invalid login credentials'
+          ? "That email and password don't match — try again."
+          : signInErr.message
+      );
       return;
     }
 
-    setStatus('sent');
+    router.replace('/app');
   };
-
-  if (status === 'sent') {
-    return (
-      <AuthShell
-        eyebrow="Check your inbox"
-        title="Magic link on its way."
-        subtitle={`Open the email at ${email} and click the link to sign back in.`}
-      >
-        <ThemedText type="small" themeColor="textSecondary">
-          You can close this tab — we&rsquo;ll take it from there.
-        </ThemedText>
-      </AuthShell>
-    );
-  }
 
   return (
     <AuthShell
       eyebrow="Welcome back"
       title="Sign in to Home Hero."
-      subtitle="Enter the email you used to set up your family and we&rsquo;ll send you a one-tap sign-in link."
+      subtitle="Enter the email and password you set up when you created your family."
       footer={
         <ThemedText type="small" themeColor="textMuted">
           Don&rsquo;t have an account yet?{' '}
@@ -81,6 +67,15 @@ export default function LoginScreen() {
         onChangeText={setEmail}
         placeholder="you@example.com"
       />
+      <TextField
+        label="Password"
+        autoComplete="current-password"
+        autoCapitalize="none"
+        secureTextEntry
+        value={password}
+        onChangeText={setPassword}
+        placeholder="Your password"
+      />
 
       {error && (
         <ThemedText type="small" style={{ color: '#B23A48' }}>
@@ -90,9 +85,9 @@ export default function LoginScreen() {
 
       <View style={styles.cta}>
         <BrandButton
-          label={status === 'submitting' ? 'Sending link…' : 'Send me the link'}
+          label={submitting ? 'Signing in…' : 'Sign in'}
           onPress={submit}
-          disabled={status === 'submitting'}
+          disabled={submitting}
         />
       </View>
     </AuthShell>
