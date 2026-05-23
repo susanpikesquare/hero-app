@@ -76,6 +76,12 @@ export default function LandingScreen() {
             <BrandLogo height={isWide ? 96 : 64} />
             <View style={styles.navActions}>
               <Link
+                href="/kid/join"
+                style={[styles.navLink, { color: theme.textSecondary }]}
+              >
+                I&rsquo;m a kid
+              </Link>
+              <Link
                 href="/login"
                 style={[styles.navLink, { color: theme.textSecondary }]}
               >

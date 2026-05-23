@@ -42,6 +42,10 @@
     {
       "source": "/app/articles/:slug",
       "destination": "/app/articles/[slug]"
+    },
+    {
+      "source": "/kid/submit/:choreId",
+      "destination": "/kid/submit/[chore_id]"
     }
   ]
 }
