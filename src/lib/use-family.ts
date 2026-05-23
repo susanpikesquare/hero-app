@@ -82,15 +82,21 @@ export function useFamily(enabled: boolean) {
   }, [reload]);
 
   const addKid = useCallback(
-    async (displayName: string) => {
+    async (opts: { displayName: string; age: number | null }) => {
       if (!state.family) throw new Error('No family loaded.');
-      const { error: insertErr } = await supabase.from('family_members').insert({
-        family_id: state.family.id,
-        role: 'kid',
-        display_name: displayName.trim(),
-      });
+      const { data, error: insertErr } = await supabase
+        .from('family_members')
+        .insert({
+          family_id: state.family.id,
+          role: 'kid',
+          display_name: opts.displayName.trim(),
+          age: opts.age,
+        })
+        .select('id')
+        .single();
       if (insertErr) throw insertErr;
       await reload();
+      return data?.id ?? null;
     },
     [state.family, reload]
   );

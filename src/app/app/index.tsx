@@ -28,6 +28,7 @@ export default function DashboardScreen() {
   const { chores, submissions, loading: choresLoading } = useChores(!!session);
 
   const [newKidName, setNewKidName] = useState('');
+  const [newKidAge, setNewKidAge] = useState('');
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
@@ -37,10 +38,27 @@ export default function DashboardScreen() {
       setAddError('Give your kid a name to show in the app.');
       return;
     }
+    const trimmedAge = newKidAge.trim();
+    let age: number | null = null;
+    if (trimmedAge) {
+      const parsed = Number.parseInt(trimmedAge, 10);
+      if (!Number.isFinite(parsed) || parsed < 4 || parsed > 18) {
+        setAddError("Age should be a number between 4 and 18 — we'll suggest chores for it.");
+        return;
+      }
+      age = parsed;
+    } else {
+      setAddError("Add your kid's age so we can suggest age-appropriate chores.");
+      return;
+    }
     setAdding(true);
     try {
-      await addKid(newKidName);
+      const newKidId = await addKid({ displayName: newKidName, age });
       setNewKidName('');
+      setNewKidAge('');
+      if (newKidId) {
+        router.push(`/app/kid/${newKidId}/setup`);
+      }
     } catch (err) {
       setAddError(err instanceof Error ? err.message : 'Could not add kid.');
     } finally {
@@ -111,8 +129,10 @@ export default function DashboardScreen() {
                 You haven&rsquo;t added anyone yet. Type a name and tap Add.
               </ThemedText>
               <AddKidRow
-                value={newKidName}
-                onChange={setNewKidName}
+                name={newKidName}
+                age={newKidAge}
+                onChangeName={setNewKidName}
+                onChangeAge={setNewKidAge}
                 onSubmit={onAddKid}
                 disabled={adding}
                 error={addError}
@@ -129,8 +149,9 @@ export default function DashboardScreen() {
                         {kid.display_name}
                       </BrandHeading>
                       <ThemedText type="small" themeColor="textMuted">
+                        {kid.age != null ? `Age ${kid.age} · ` : ''}
                         {kidChores.length === 0
-                          ? 'No chores yet'
+                          ? 'no chores yet'
                           : `${kidChores.length} chore${kidChores.length === 1 ? '' : 's'}`}
                       </ThemedText>
                     </View>
@@ -197,8 +218,10 @@ export default function DashboardScreen() {
               </Pressable>
               <View style={styles.addKidInline}>
                 <AddKidRow
-                  value={newKidName}
-                  onChange={setNewKidName}
+                  name={newKidName}
+                  age={newKidAge}
+                  onChangeName={setNewKidName}
+                  onChangeAge={setNewKidAge}
                   onSubmit={onAddKid}
                   disabled={adding}
                   error={addError}
@@ -270,15 +293,19 @@ export default function DashboardScreen() {
 }
 
 function AddKidRow({
-  value,
-  onChange,
+  name,
+  age,
+  onChangeName,
+  onChangeAge,
   onSubmit,
   disabled,
   error,
   variant = 'block',
 }: {
-  value: string;
-  onChange: (v: string) => void;
+  name: string;
+  age: string;
+  onChangeName: (v: string) => void;
+  onChangeAge: (v: string) => void;
   onSubmit: () => void;
   disabled: boolean;
   error: string | null;
@@ -287,14 +314,23 @@ function AddKidRow({
   return (
     <View style={[styles.addRow, variant === 'inline' && { marginTop: 0 }]}>
       <TextField
-        label={variant === 'inline' ? 'Add another kid' : 'Add a kid'}
-        value={value}
-        onChangeText={onChange}
+        label={variant === 'inline' ? "Kid's name" : "Add a kid — name"}
+        value={name}
+        onChangeText={onChangeName}
         placeholder="e.g. Theo"
         autoComplete="off"
         autoCorrect={false}
-        error={error ?? undefined}
-        style={{ minWidth: 220 }}
+        style={{ minWidth: 180 }}
+      />
+      <TextField
+        label="Age"
+        value={age}
+        onChangeText={onChangeAge}
+        placeholder="9"
+        keyboardType="number-pad"
+        autoComplete="off"
+        autoCorrect={false}
+        style={{ minWidth: 80 }}
       />
       <View style={styles.addCta}>
         <BrandButton
@@ -303,6 +339,11 @@ function AddKidRow({
           disabled={disabled}
         />
       </View>
+      {error && (
+        <ThemedText type="small" style={{ color: '#B23A48', width: '100%' }}>
+          {error}
+        </ThemedText>
+      )}
     </View>
   );
 }

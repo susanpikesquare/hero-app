@@ -91,6 +91,7 @@ export type Database = {
       };
       family_members: {
         Row: {
+          age: number | null;
           auth_user_id: string | null;
           created_at: string;
           display_name: string;
@@ -99,6 +100,7 @@ export type Database = {
           role: Database['public']['Enums']['member_role'];
         };
         Insert: {
+          age?: number | null;
           auth_user_id?: string | null;
           created_at?: string;
           display_name: string;
@@ -107,6 +109,7 @@ export type Database = {
           role: Database['public']['Enums']['member_role'];
         };
         Update: {
+          age?: number | null;
           auth_user_id?: string | null;
           created_at?: string;
           display_name?: string;
