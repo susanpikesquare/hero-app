@@ -46,6 +46,45 @@ export default function KidSettingsScreen() {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // Kid join code state
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+  const [generatingCode, setGeneratingCode] = useState(false);
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const generateJoinCode = async () => {
+    if (!kid) return;
+    setCodeError(null);
+    setCopied(false);
+    setGeneratingCode(true);
+    try {
+      const { data, error: rpcErr } = await supabase.rpc(
+        'generate_kid_join_code',
+        { p_kid_id: kid.id }
+      );
+      if (rpcErr) throw rpcErr;
+      setGeneratedCode(data ?? null);
+      await reload();
+    } catch (err) {
+      setCodeError(err instanceof Error ? err.message : 'Could not generate code.');
+    } finally {
+      setGeneratingCode(false);
+    }
+  };
+
+  const copyCode = async () => {
+    if (!generatedCode) return;
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(generatedCode);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
   useEffect(() => {
     if (!kid) return;
     setName(kid.display_name);
@@ -199,6 +238,87 @@ export default function KidSettingsScreen() {
             </View>
           </View>
 
+          {/* Kid login */}
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+            ]}
+          >
+            <BrandHeading level="h2" style={styles.cardTitle}>
+              {kid.display_name}&rsquo;s login
+            </BrandHeading>
+            <ThemedText type="default" themeColor="textSecondary">
+              {kid.kid_joined_at
+                ? `${kid.display_name} has joined the app on their own device (since ${new Date(kid.kid_joined_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}). Generate a new code if they're switching devices.`
+                : `${kid.display_name} doesn't have their own login yet. Generate a join code, share it with them, and they can use the app on their own device.`}
+            </ThemedText>
+
+            {generatedCode ? (
+              <View
+                style={[
+                  styles.codeCard,
+                  { backgroundColor: theme.accentSoft, borderColor: theme.accent },
+                ]}
+              >
+                <ThemedText
+                  type="smallBold"
+                  themeColor="accent"
+                  style={{ textTransform: 'uppercase', letterSpacing: 1 }}
+                >
+                  {kid.display_name}&rsquo;s join code
+                </ThemedText>
+                <ThemedText
+                  type="default"
+                  style={[styles.codeMono, { color: theme.text }]}
+                >
+                  {generatedCode}
+                </ThemedText>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    gap: Spacing.three,
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <BrandButton
+                    label={copied ? '✓ Copied' : 'Copy code'}
+                    onPress={copyCode}
+                  />
+                  <ThemedText type="small" themeColor="textMuted">
+                    Expires in 24 hours
+                  </ThemedText>
+                </View>
+                <ThemedText type="small" themeColor="textSecondary">
+                  On {kid.display_name}&rsquo;s device, open the Home Hero app
+                  → tap <ThemedText type="smallBold">I&rsquo;m a kid</ThemedText> →
+                  enter this code.
+                </ThemedText>
+              </View>
+            ) : null}
+
+            {codeError && (
+              <ThemedText type="small" style={{ color: '#B23A48' }}>
+                {codeError}
+              </ThemedText>
+            )}
+
+            <View style={styles.actions}>
+              <BrandButton
+                label={
+                  generatingCode
+                    ? 'Generating…'
+                    : kid.kid_joined_at
+                      ? 'Generate new code'
+                      : 'Generate join code'
+                }
+                onPress={generateJoinCode}
+                disabled={generatingCode || saving || deleting}
+              />
+            </View>
+          </View>
+
           <View
             style={[
               styles.card,
@@ -311,5 +431,19 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.three,
     borderRadius: Radius.pill,
     borderWidth: 1,
+  },
+  codeCard: {
+    padding: Spacing.five,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    gap: Spacing.three,
+    marginTop: Spacing.two,
+  },
+  codeMono: {
+    fontSize: 32,
+    lineHeight: 40,
+    fontFamily: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace',
+    fontWeight: '700',
+    letterSpacing: 4,
   },
 });

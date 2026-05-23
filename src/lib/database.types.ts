@@ -106,6 +106,9 @@ export type Database = {
           display_name: string;
           family_id: string;
           id: string;
+          kid_join_code: string | null;
+          kid_join_code_expires_at: string | null;
+          kid_joined_at: string | null;
           role: Database['public']['Enums']['member_role'];
         };
         Insert: {
@@ -115,6 +118,9 @@ export type Database = {
           display_name: string;
           family_id: string;
           id?: string;
+          kid_join_code?: string | null;
+          kid_join_code_expires_at?: string | null;
+          kid_joined_at?: string | null;
           role: Database['public']['Enums']['member_role'];
         };
         Update: {
@@ -124,6 +130,9 @@ export type Database = {
           display_name?: string;
           family_id?: string;
           id?: string;
+          kid_join_code?: string | null;
+          kid_join_code_expires_at?: string | null;
+          kid_joined_at?: string | null;
           role?: Database['public']['Enums']['member_role'];
         };
         Relationships: [
@@ -259,6 +268,18 @@ export type Database = {
       };
       current_user_family_id: { Args: never; Returns: string };
       current_user_is_parent: { Args: never; Returns: boolean };
+      generate_kid_join_code: {
+        Args: { p_kid_id: string };
+        Returns: string;
+      };
+      kid_link_with_join_code: {
+        Args: { p_code: string };
+        Returns: {
+          family_member_id: string;
+          family_id: string;
+          display_name: string;
+        }[];
+      };
       peek_invite_code: { Args: { p_code: string }; Returns: boolean };
       redeem_invite_and_create_family: {
         Args: {
