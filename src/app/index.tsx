@@ -73,7 +73,7 @@ export default function LandingScreen() {
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.page}>
           <View style={styles.nav}>
-            <BrandLogo height={42} />
+            <BrandLogo height={64} />
             <View style={styles.navActions}>
               <Link
                 href="/login"
