@@ -384,6 +384,28 @@ export default function DashboardScreen() {
                   const submittedKid = kids.find(
                     (k) => k.id === sub.submitted_by
                   );
+                  const statusChip =
+                    sub.parent_override === 'approved'
+                      ? { label: 'Approved', tone: 'pass' as const }
+                      : sub.parent_override === 'rejected'
+                        ? { label: 'Try again', tone: 'warn' as const }
+                        : sub.ai_verdict === 'pass'
+                          ? { label: 'AI: pass', tone: 'pass' as const }
+                          : sub.ai_verdict === 'needs_work'
+                            ? { label: 'AI: needs work', tone: 'warn' as const }
+                            : { label: 'Pending', tone: 'pending' as const };
+                  const chipBg =
+                    statusChip.tone === 'pass'
+                      ? theme.accentSoft
+                      : statusChip.tone === 'warn'
+                        ? '#F3E8D6'
+                        : theme.backgroundElement;
+                  const chipFg =
+                    statusChip.tone === 'pass'
+                      ? theme.accent
+                      : statusChip.tone === 'warn'
+                        ? '#8A5A1F'
+                        : theme.textSecondary;
                   return (
                     <Pressable
                       key={sub.id}
@@ -408,6 +430,19 @@ export default function DashboardScreen() {
                             hour: 'numeric',
                             minute: '2-digit',
                           })}
+                        </ThemedText>
+                      </View>
+                      <View
+                        style={[
+                          styles.statusChip,
+                          { backgroundColor: chipBg, borderColor: theme.border },
+                        ]}
+                      >
+                        <ThemedText
+                          type="smallBold"
+                          style={{ color: chipFg }}
+                        >
+                          {statusChip.label}
                         </ThemedText>
                       </View>
                       <ThemedText type="small" themeColor="textSecondary">
@@ -570,6 +605,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   rewardChipEmoji: { fontSize: 16 },
+  statusChip: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+    marginRight: Spacing.two,
+  },
   choresList: { gap: Spacing.two },
   choreRow: {
     flexDirection: 'row',

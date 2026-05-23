@@ -5,6 +5,7 @@ import { KidShell, KidStyles } from '@/components/kid-shell';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
+import { overrideKidMessage } from '@/lib/override-copy';
 import {
   descriptorFor,
   earnedCountFor,
@@ -169,6 +170,9 @@ export default function KidHomeScreen() {
           {kidChores.map((chore) => {
             const subs = submissionsForChore(submissions, chore.id);
             const last = subs[0];
+            const lastOverride = last
+              ? overrideKidMessage(last.parent_override, last.parent_override_reason)
+              : null;
             return (
               <Pressable
                 key={chore.id}
@@ -193,6 +197,22 @@ export default function KidHomeScreen() {
                       })}`
                     : 'No hops yet — ready when you are.'}
                 </Text>
+                {lastOverride && (
+                  <View
+                    style={[
+                      styles.overrideMessage,
+                      {
+                        backgroundColor: theme.background,
+                        borderColor: theme.border,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.overrideEmoji}>{lastOverride.emoji}</Text>
+                    <Text style={[styles.overrideText, { color: theme.text }]}>
+                      {lastOverride.message}
+                    </Text>
+                  </View>
+                )}
                 <View
                   style={[
                     KidStyles.bigButton,
@@ -267,5 +287,23 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
+  },
+  overrideMessage: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    marginTop: Spacing.one,
+  },
+  overrideEmoji: { fontSize: 22 },
+  overrideText: {
+    fontFamily: 'system-ui',
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '600',
+    flex: 1,
   },
 });

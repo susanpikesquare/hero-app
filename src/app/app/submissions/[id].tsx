@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrandButton } from '@/components/brand-button';
@@ -15,6 +15,11 @@ import {
 } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
+import {
+  APPROVAL_REASONS,
+  approvalReasonFor,
+  REJECTION,
+} from '@/lib/override-copy';
 import { supabase } from '@/lib/supabase';
 import { useChores } from '@/lib/use-chores';
 import { useFamily } from '@/lib/use-family';
@@ -29,6 +34,49 @@ export default function SubmissionDetailScreen() {
 
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [urlError, setUrlError] = useState<string | null>(null);
+  const [overrideBusy, setOverrideBusy] = useState(false);
+  const [overrideError, setOverrideError] = useState<string | null>(null);
+
+  const applyOverride = async (
+    kind: 'approved' | 'rejected',
+    reason: 'good_enough_today' | 'worked_hard' | 'help_with_rest' | null
+  ) => {
+    setOverrideBusy(true);
+    setOverrideError(null);
+    try {
+      const { error: rpcErr } = await supabase.rpc('apply_parent_override', {
+        p_submission_id: params.id as string,
+        p_override: kind,
+        p_reason: reason,
+      });
+      if (rpcErr) throw rpcErr;
+      await reload();
+    } catch (err) {
+      setOverrideError(
+        err instanceof Error ? err.message : 'Could not save your decision.'
+      );
+    } finally {
+      setOverrideBusy(false);
+    }
+  };
+
+  const clearOverride = async () => {
+    setOverrideBusy(true);
+    setOverrideError(null);
+    try {
+      const { error: rpcErr } = await supabase.rpc('clear_parent_override', {
+        p_submission_id: params.id as string,
+      });
+      if (rpcErr) throw rpcErr;
+      await reload();
+    } catch (err) {
+      setOverrideError(
+        err instanceof Error ? err.message : 'Could not clear your decision.'
+      );
+    } finally {
+      setOverrideBusy(false);
+    }
+  };
 
   const submission = submissions.find((s) => s.id === params.id);
   const chore = submission ? chores.find((c) => c.id === submission.chore_id) : null;
@@ -92,6 +140,8 @@ export default function SubmissionDetailScreen() {
   const hasReference = chore?.reference_photo_path;
   const verdict = submission.ai_verdict;
   const feedback = submission.ai_feedback;
+  const parentOverride = submission.parent_override;
+  const parentOverrideReason = approvalReasonFor(submission.parent_override_reason);
 
   return (
     <ScrollView
@@ -205,6 +255,194 @@ export default function SubmissionDetailScreen() {
               }
             />
           )}
+
+          {/* Parent override — always available, regardless of AI verdict */}
+          <View
+            style={[
+              styles.overrideCard,
+              {
+                backgroundColor: theme.backgroundElement,
+                borderColor: theme.border,
+              },
+            ]}
+          >
+            <ThemedText
+              type="smallBold"
+              themeColor="accent"
+              style={{ textTransform: 'uppercase', letterSpacing: 1 }}
+            >
+              Your call
+            </ThemedText>
+
+            {parentOverride === 'approved' && parentOverrideReason ? (
+              <>
+                <BrandHeading level="h2" style={{ marginBottom: Spacing.one }}>
+                  {parentOverrideReason.emoji} You said: {parentOverrideReason.parentLabel}
+                </BrandHeading>
+                <ThemedText
+                  type="default"
+                  themeColor="textSecondary"
+                  style={{ lineHeight: 26 }}
+                >
+                  {kid?.display_name ?? 'They'} will see:{' '}
+                  <ThemedText type="default" style={{ fontStyle: 'italic' }}>
+                    “{parentOverrideReason.kidMessage}”
+                  </ThemedText>
+                </ThemedText>
+                {submission.parent_override_at && (
+                  <ThemedText type="small" themeColor="textMuted">
+                    Decided{' '}
+                    {new Date(submission.parent_override_at).toLocaleString(
+                      undefined,
+                      {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      }
+                    )}
+                  </ThemedText>
+                )}
+                <Pressable
+                  onPress={clearOverride}
+                  disabled={overrideBusy}
+                  hitSlop={6}
+                >
+                  <ThemedText
+                    type="small"
+                    themeColor="info"
+                    style={{ textDecorationLine: 'underline' }}
+                  >
+                    {overrideBusy ? 'Clearing…' : 'Change my mind'}
+                  </ThemedText>
+                </Pressable>
+              </>
+            ) : parentOverride === 'rejected' ? (
+              <>
+                <BrandHeading level="h2" style={{ marginBottom: Spacing.one }}>
+                  {REJECTION.emoji} You said: {REJECTION.parentLabel}
+                </BrandHeading>
+                <ThemedText
+                  type="default"
+                  themeColor="textSecondary"
+                  style={{ lineHeight: 26 }}
+                >
+                  {kid?.display_name ?? 'They'} will see:{' '}
+                  <ThemedText type="default" style={{ fontStyle: 'italic' }}>
+                    “{REJECTION.kidMessage.replace('&rsquo;', "'")}”
+                  </ThemedText>
+                </ThemedText>
+                {submission.parent_override_at && (
+                  <ThemedText type="small" themeColor="textMuted">
+                    Decided{' '}
+                    {new Date(submission.parent_override_at).toLocaleString(
+                      undefined,
+                      {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      }
+                    )}
+                  </ThemedText>
+                )}
+                <Pressable
+                  onPress={clearOverride}
+                  disabled={overrideBusy}
+                  hitSlop={6}
+                >
+                  <ThemedText
+                    type="small"
+                    themeColor="info"
+                    style={{ textDecorationLine: 'underline' }}
+                  >
+                    {overrideBusy ? 'Clearing…' : 'Change my mind'}
+                  </ThemedText>
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <BrandHeading level="h2" style={{ marginBottom: Spacing.one }}>
+                  What do you want {kid?.display_name ?? 'them'} to hear?
+                </BrandHeading>
+                <ThemedText
+                  type="default"
+                  themeColor="textSecondary"
+                  style={{ lineHeight: 26 }}
+                >
+                  Your call lands on {kid?.display_name ?? 'their'} chore tile
+                  the next time they open the app. It also counts toward their
+                  rewards.
+                </ThemedText>
+
+                <View style={styles.overrideBtnGrid}>
+                  {APPROVAL_REASONS.map((r) => (
+                    <Pressable
+                      key={r.value}
+                      onPress={() => applyOverride('approved', r.value)}
+                      disabled={overrideBusy}
+                      style={({ pressed }) => [
+                        styles.overrideBtn,
+                        {
+                          backgroundColor: pressed
+                            ? theme.accent
+                            : theme.accentSoft,
+                          borderColor: theme.accent,
+                          opacity: overrideBusy ? 0.6 : 1,
+                        },
+                      ]}
+                    >
+                      <ThemedText
+                        type="default"
+                        style={{
+                          fontSize: 22,
+                          marginRight: Spacing.one,
+                        }}
+                      >
+                        {r.emoji}
+                      </ThemedText>
+                      <ThemedText
+                        type="smallBold"
+                        style={{ color: theme.text }}
+                      >
+                        {r.parentLabel}
+                      </ThemedText>
+                    </Pressable>
+                  ))}
+                  <Pressable
+                    onPress={() => applyOverride('rejected', null)}
+                    disabled={overrideBusy}
+                    style={({ pressed }) => [
+                      styles.overrideBtn,
+                      {
+                        backgroundColor: pressed ? '#F3DDD8' : theme.background,
+                        borderColor: '#D6A89E',
+                        opacity: overrideBusy ? 0.6 : 1,
+                      },
+                    ]}
+                  >
+                    <ThemedText
+                      type="default"
+                      style={{ fontSize: 22, marginRight: Spacing.one }}
+                    >
+                      {REJECTION.emoji}
+                    </ThemedText>
+                    <ThemedText type="smallBold" style={{ color: theme.text }}>
+                      {REJECTION.parentLabel}
+                    </ThemedText>
+                  </Pressable>
+                </View>
+              </>
+            )}
+
+            {overrideError && (
+              <ThemedText type="small" style={{ color: '#B23A48' }}>
+                {overrideError}
+              </ThemedText>
+            )}
+          </View>
         </View>
       </SafeAreaView>
     </ScrollView>
@@ -302,5 +540,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: Spacing.five,
     gap: Spacing.two,
+  },
+  overrideCard: {
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    padding: Spacing.five,
+    gap: Spacing.two,
+  },
+  overrideBtnGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+    marginTop: Spacing.three,
+  },
+  overrideBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
   },
 });

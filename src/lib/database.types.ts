@@ -239,6 +239,18 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      apply_parent_override: {
+        Args: {
+          p_submission_id: string;
+          p_override: Database['public']['Enums']['override_kind'];
+          p_reason: Database['public']['Enums']['override_reason'] | null;
+        };
+        Returns: void;
+      };
+      clear_parent_override: {
+        Args: { p_submission_id: string };
+        Returns: void;
+      };
       current_user_family_id: { Args: never; Returns: string };
       current_user_is_parent: { Args: never; Returns: boolean };
       peek_invite_code: { Args: { p_code: string }; Returns: boolean };
