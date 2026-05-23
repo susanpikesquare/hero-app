@@ -17,6 +17,7 @@ import {
 import { useTheme } from '@/hooks/use-theme';
 import { articleForAge, ARTICLES } from '@/lib/articles';
 import { useAuth } from '@/lib/auth-context';
+import { computeKidPulse } from '@/lib/progress-stats';
 import {
   descriptorFor,
   earnedCountFor,
@@ -101,6 +102,11 @@ export default function DashboardScreen() {
             <View style={styles.navActions}>
               <BrandButton
                 variant="ghost"
+                label="Articles"
+                onPress={() => router.push('/app/articles')}
+              />
+              <BrandButton
+                variant="ghost"
                 label="Settings"
                 onPress={() => router.push('/app/settings')}
               />
@@ -131,6 +137,180 @@ export default function DashboardScreen() {
               {famError}
             </ThemedText>
           )}
+
+          {/* Today's family pulse */}
+          {kids.length > 0 && (() => {
+            const choreWeights = new Map(chores.map((c) => [c.id, c.reward_weight]));
+            const pulses = kids.map((k) => {
+              const required = choresForKid(chores, k.id).filter((c) => !c.is_optional);
+              return {
+                kid: k,
+                pulse: computeKidPulse(
+                  k.id,
+                  required.map((c) => c.id),
+                  submissions,
+                  choreWeights
+                ),
+              };
+            });
+            const familyHops = pulses.reduce((sum, p) => sum + p.pulse.hopsToday, 0);
+            const familyDone = pulses.reduce((sum, p) => sum + p.pulse.doneToday, 0);
+            const familyRequired = pulses.reduce(
+              (sum, p) => sum + p.pulse.requiredToday,
+              0
+            );
+            const familyAwaiting = pulses.reduce(
+              (sum, p) => sum + p.pulse.awaitingReview,
+              0
+            );
+            const today = new Date().toLocaleDateString(undefined, {
+              weekday: 'long',
+              month: 'long',
+              day: 'numeric',
+            });
+            const descriptor = descriptorFor(family?.reward_mode);
+            return (
+              <Card theme={theme} tone="elevated">
+                <View style={styles.pulseHeader}>
+                  <ThemedText
+                    type="smallBold"
+                    themeColor="accent"
+                    style={{ textTransform: 'uppercase', letterSpacing: 1 }}
+                  >
+                    Today &middot; {today}
+                  </ThemedText>
+                  {familyAwaiting > 0 && (
+                    <Pressable
+                      onPress={() => {
+                        // No standalone submissions index yet — scroll to the
+                        // Recent submissions card below, where they're listed.
+                      }}
+                      hitSlop={6}
+                    >
+                      <View
+                        style={[
+                          styles.awaitingChip,
+                          { backgroundColor: '#F3E8D6', borderColor: '#D6B98E' },
+                        ]}
+                      >
+                        <ThemedText
+                          type="smallBold"
+                          style={{ color: '#8A5A1F' }}
+                        >
+                          {familyAwaiting} awaiting your review
+                        </ThemedText>
+                      </View>
+                    </Pressable>
+                  )}
+                </View>
+
+                <View style={styles.pulseStatsRow}>
+                  <PulseStat
+                    theme={theme}
+                    value={String(familyHops)}
+                    label={
+                      familyHops === 1
+                        ? `${descriptor.unitSingular} today`
+                        : `${descriptor.unitPlural || 'rewards'} today`
+                    }
+                    emoji={descriptor.emoji}
+                  />
+                  <PulseStat
+                    theme={theme}
+                    value={
+                      familyRequired === 0
+                        ? '—'
+                        : `${familyDone}/${familyRequired}`
+                    }
+                    label="chores done today"
+                  />
+                  <PulseStat
+                    theme={theme}
+                    value={String(familyAwaiting)}
+                    label="need your call"
+                  />
+                </View>
+
+                <View style={styles.pulseKidsList}>
+                  {pulses.map(({ kid, pulse }) => {
+                    const fraction =
+                      pulse.requiredToday === 0
+                        ? null
+                        : pulse.doneToday / pulse.requiredToday;
+                    const allDone =
+                      pulse.requiredToday > 0 &&
+                      pulse.doneToday === pulse.requiredToday;
+                    return (
+                      <Pressable
+                        key={kid.id}
+                        onPress={() => router.push(`/app/kid/${kid.id}/progress`)}
+                        style={[
+                          styles.pulseKidRow,
+                          {
+                            backgroundColor: theme.background,
+                            borderColor: allDone ? theme.accent : theme.border,
+                          },
+                        ]}
+                      >
+                        <View style={{ flex: 1 }}>
+                          <ThemedText type="default" style={{ fontWeight: '600' }}>
+                            {kid.display_name}
+                            {kid.age != null ? ` · ${kid.age}` : ''}
+                          </ThemedText>
+                          <ThemedText type="small" themeColor="textMuted">
+                            {pulse.requiredToday === 0
+                              ? 'No required chores today'
+                              : allDone
+                                ? `✓ All ${pulse.requiredToday} done`
+                                : `${pulse.doneToday} of ${pulse.requiredToday} done${pulse.awaitingReview > 0 ? ` · ${pulse.awaitingReview} awaiting your call` : ''}`}
+                          </ThemedText>
+                          {fraction !== null && !allDone && (
+                            <View
+                              style={[
+                                styles.pulseBar,
+                                { backgroundColor: theme.backgroundElement },
+                              ]}
+                            >
+                              <View
+                                style={[
+                                  styles.pulseBarFill,
+                                  {
+                                    backgroundColor: theme.accent,
+                                    width: `${Math.round(fraction * 100)}%`,
+                                  },
+                                ]}
+                              />
+                            </View>
+                          )}
+                        </View>
+                        {pulse.hopsToday > 0 && (
+                          <View
+                            style={[
+                              styles.pulseHopsChip,
+                              {
+                                backgroundColor: theme.accentSoft,
+                                borderColor: theme.border,
+                              },
+                            ]}
+                          >
+                            <ThemedText type="default" style={{ fontSize: 16 }}>
+                              {descriptor.emoji}
+                            </ThemedText>
+                            <ThemedText type="smallBold">
+                              +{pulse.hopsToday}
+                            </ThemedText>
+                          </View>
+                        )}
+                        <ThemedText type="small" themeColor="textSecondary">
+                          View →
+                        </ThemedText>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </Card>
+            );
+          })()}
 
           {/* Kids + their chores */}
           {kids.length === 0 ? (
@@ -531,6 +711,44 @@ function AddKidRow({
   );
 }
 
+function PulseStat({
+  theme,
+  value,
+  label,
+  emoji,
+}: {
+  theme: ReturnType<typeof useTheme>;
+  value: string;
+  label: string;
+  emoji?: string;
+}) {
+  return (
+    <View style={styles.pulseStat}>
+      <View style={styles.pulseStatValueRow}>
+        {emoji ? (
+          <ThemedText type="default" style={{ fontSize: 28 }}>
+            {emoji}
+          </ThemedText>
+        ) : null}
+        <ThemedText
+          type="default"
+          style={{
+            fontSize: 36,
+            lineHeight: 40,
+            fontWeight: '700',
+            color: theme.text,
+          }}
+        >
+          {value}
+        </ThemedText>
+      </View>
+      <ThemedText type="small" themeColor="textMuted">
+        {label}
+      </ThemedText>
+    </View>
+  );
+}
+
 function Card({
   theme,
   tone,
@@ -626,6 +844,67 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     borderWidth: 1,
     marginRight: Spacing.two,
+  },
+  pulseHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
+  awaitingChip: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+  },
+  pulseStatsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.four,
+    marginTop: Spacing.two,
+  },
+  pulseStat: {
+    flexGrow: 1,
+    minWidth: 140,
+    gap: 4,
+  },
+  pulseStatValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  pulseKidsList: {
+    gap: Spacing.two,
+    marginTop: Spacing.three,
+  },
+  pulseKidRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.three,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+  },
+  pulseBar: {
+    height: 6,
+    borderRadius: 3,
+    marginTop: 6,
+    overflow: 'hidden',
+  },
+  pulseBarFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  pulseHopsChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.one,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
   },
   choresList: { gap: Spacing.two },
   choreRow: {

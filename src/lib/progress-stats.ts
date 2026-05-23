@@ -156,6 +156,60 @@ export function winRate(buckets: DayBucket[]): number {
   return wins / total;
 }
 
+/**
+ * Today's pulse for one kid — used by the parent dashboard's family pulse.
+ *
+ *   doneToday        — required chores in status 'done' today
+ *   requiredToday    — count of required (non-optional) chores
+ *   hopsToday        — sum of reward_weight across winning submissions today
+ *                      (counts optional jobs too)
+ *   awaitingReview   — kid's submissions today with no parent_override
+ */
+export type KidDailyPulse = {
+  kidId: string;
+  doneToday: number;
+  requiredToday: number;
+  hopsToday: number;
+  awaitingReview: number;
+};
+
+export function computeKidPulse(
+  kidId: string,
+  requiredChoreIds: string[],
+  submissions: Submission[],
+  choreWeights: Map<string, number>
+): KidDailyPulse {
+  const todayKey = localDateKey(new Date());
+
+  let doneToday = 0;
+  for (const choreId of requiredChoreIds) {
+    if (choreStatusToday(choreId, kidId, submissions) === 'done') {
+      doneToday += 1;
+    }
+  }
+
+  let hopsToday = 0;
+  let awaitingReview = 0;
+  for (const s of submissions) {
+    if (s.submitted_by !== kidId) continue;
+    if (localDateKey(new Date(s.submitted_at)) !== todayKey) continue;
+    if (isWin(s)) {
+      hopsToday += choreWeights.get(s.chore_id) ?? 1;
+    }
+    if (!s.parent_override) {
+      awaitingReview += 1;
+    }
+  }
+
+  return {
+    kidId,
+    doneToday,
+    requiredToday: requiredChoreIds.length,
+    hopsToday,
+    awaitingReview,
+  };
+}
+
 /** Submissions per chore in this window. */
 export function perChoreBreakdown(
   submissions: Submission[],
