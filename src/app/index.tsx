@@ -17,12 +17,12 @@ import { useTheme } from '@/hooks/use-theme';
 const INVITE_EMAIL = 'susan@pikesquare.co';
 const INVITE_SUBJECT = 'Home Hero — invite request';
 const INVITE_BODY =
-  "Hi Erica,\n\nI'd like an invite code for Home Hero. A bit about my family:\n\n— ";
+  "Hi,\n\nI'd like an invite code for Home Hero. A bit about my family:\n\n— ";
 
 const PILLARS = [
   {
     title: 'Clinical standards, in your kitchen.',
-    body: 'Therapist-built reference photos define what "done" looks like — the same way Erica would in session.',
+    body: 'Therapist-built reference photos define what "done" looks like — the same way our therapist would in session.',
   },
   {
     title: 'Less nagging, more nervous-system rest.',
@@ -109,7 +109,7 @@ export default function LandingScreen() {
               stops landing on one exhausted nervous system.
             </ThemedText>
             <View style={styles.heroCTA}>
-              <BrandButton label="Get an invite from Erica" onPress={requestInvite} />
+              <BrandButton label="Get an invite" onPress={requestInvite} />
               <BrandButton
                 variant="ghost"
                 label="I have a code"
@@ -210,14 +210,14 @@ export default function LandingScreen() {
               Founding 100
             </BrandHeading>
             <BrandHeading level="h2" style={styles.sectionTitle}>
-              The first 100 families get a 30-minute parent session with Erica.
+              The first 100 families get a 30-minute parent session with our founding therapist.
             </BrandHeading>
             <ThemedText type="default" themeColor="text" style={styles.lead}>
               Real coaching from a licensed therapist, one-to-one, included
               with founding-family status. We can credibly only do this once —
               and only for the families who help us shape v1.
             </ThemedText>
-            <BrandButton label="Get an invite from Erica" onPress={requestInvite} />
+            <BrandButton label="Get an invite" onPress={requestInvite} />
           </View>
 
           <View style={styles.section}>

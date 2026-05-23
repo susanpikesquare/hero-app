@@ -95,7 +95,7 @@ export default function SignupScreen() {
     <AuthShell
       eyebrow="Founding family · invite-only"
       title="Set up your Home Hero family."
-      subtitle="Use the invite code Erica sent you. Pick a password you'll remember — that and your email are how you'll sign back in."
+      subtitle="Use the invite code you received. Pick a password you'll remember — that and your email are how you'll sign back in."
       footer={
         <ThemedText type="small" themeColor="textMuted">
           Already have an account?{' '}
