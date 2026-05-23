@@ -2,6 +2,7 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { useColorScheme } from 'react-native';
 
 import { Colors } from '@/constants/theme';
+import { AuthProvider } from '@/lib/auth-context';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -21,8 +22,10 @@ export default function RootLayout() {
   };
 
   return (
-    <ThemeProvider value={navTheme}>
-      <Stack screenOptions={{ headerShown: false }} />
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider value={navTheme}>
+        <Stack screenOptions={{ headerShown: false }} />
+      </ThemeProvider>
+    </AuthProvider>
   );
 }

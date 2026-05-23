@@ -1,3 +1,4 @@
+import { Link, useRouter } from 'expo-router';
 import { Linking, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -52,6 +53,7 @@ const STEPS = [
 
 export default function LandingScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const { width } = useWindowDimensions();
   const isWide = width >= 900;
 
@@ -60,6 +62,7 @@ export default function LandingScreen() {
     const body = encodeURIComponent(INVITE_BODY);
     Linking.openURL(`mailto:${INVITE_EMAIL}?subject=${subject}&body=${body}`);
   };
+  const goToSignup = () => router.push('/signup');
 
   return (
     <ScrollView
@@ -72,11 +75,19 @@ export default function LandingScreen() {
             <BrandHeading level="h3" style={styles.wordmark}>
               Home Hero
             </BrandHeading>
-            <BrandButton
-              variant="ghost"
-              label="Get an invite"
-              onPress={requestInvite}
-            />
+            <View style={styles.navActions}>
+              <Link
+                href="/login"
+                style={[styles.navLink, { color: theme.textSecondary }]}
+              >
+                Sign in
+              </Link>
+              <BrandButton
+                variant="ghost"
+                label="Get an invite"
+                onPress={requestInvite}
+              />
+            </View>
           </View>
 
           <View style={[styles.hero, isWide && styles.heroWide]}>
@@ -100,10 +111,15 @@ export default function LandingScreen() {
             </ThemedText>
             <View style={styles.heroCTA}>
               <BrandButton label="Get an invite from Erica" onPress={requestInvite} />
-              <ThemedText type="small" themeColor="textMuted">
-                Invite-only while we work with our first cohort of families.
-              </ThemedText>
+              <BrandButton
+                variant="ghost"
+                label="I have a code"
+                onPress={goToSignup}
+              />
             </View>
+            <ThemedText type="small" themeColor="textMuted" style={styles.heroFootnote}>
+              Invite-only while we work with our first cohort of families.
+            </ThemedText>
           </View>
 
           <View
@@ -256,6 +272,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: Spacing.three,
     paddingBottom: Spacing.five,
+  },
+  navActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+  },
+  navLink: {
+    fontSize: 14,
+    fontWeight: '500',
+    textDecorationLine: 'none',
+  },
+  heroFootnote: {
+    marginTop: Spacing.one,
   },
   wordmark: {
     letterSpacing: 0.5,
