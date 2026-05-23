@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrandButton } from '@/components/brand-button';
 import { BrandHeading } from '@/components/brand-heading';
+import { BrandLogo } from '@/components/brand-logo';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import {
@@ -72,9 +73,7 @@ export default function DashboardScreen() {
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.page}>
           <View style={styles.nav}>
-            <BrandHeading level="h3" style={styles.wordmark}>
-              Home Hero
-            </BrandHeading>
+            <BrandLogo height={42} />
             <BrandButton variant="ghost" label="Sign out" onPress={onSignOut} />
           </View>
 

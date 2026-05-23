@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrandButton } from '@/components/brand-button';
 import { BrandHeading } from '@/components/brand-heading';
+import { BrandLogo } from '@/components/brand-logo';
 import { ThemedText } from '@/components/themed-text';
 import {
   MaxContentWidth,
@@ -84,9 +85,7 @@ export default function SubmissionDetailScreen() {
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.page}>
           <View style={styles.nav}>
-            <BrandHeading level="h3" style={styles.wordmark}>
-              Home Hero
-            </BrandHeading>
+            <BrandLogo height={42} />
             <BrandButton
               variant="ghost"
               label="← Dashboard"

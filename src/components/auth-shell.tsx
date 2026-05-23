@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrandHeading } from '@/components/brand-heading';
+import { BrandLogo } from '@/components/brand-logo';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, ReadableContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -25,9 +26,7 @@ export function AuthShell({ eyebrow, title, subtitle, children, footer }: Props)
     >
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.page}>
-          <BrandHeading level="h3" style={styles.wordmark}>
-            Home Hero
-          </BrandHeading>
+          <BrandLogo height={42} />
 
           <View
             style={[
