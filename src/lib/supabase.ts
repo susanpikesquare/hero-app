@@ -7,6 +7,11 @@
  * EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY env vars.
  */
 
+// React Native's URL implementation is incomplete; supabase-js needs the
+// polyfill to construct Request URLs without throwing. Must be imported
+// BEFORE createClient runs. Harmless on web.
+import 'react-native-url-polyfill/auto';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
