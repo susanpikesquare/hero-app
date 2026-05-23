@@ -6,15 +6,27 @@
  * auth.uid() is stored as family_members.auth_user_id, which means RLS
  * naturally scopes their queries to their family.
  *
- * useKidSession resolves "who is this kid?" by reading the current auth
- * user and looking up their family_member row. Returns null kidRow if
- * the device hasn't joined yet (anon session exists but isn't linked).
+ * Architecture note: the session lives in a React Context (one instance per
+ * /kid/* subtree) so that the layout gate, the join screen, and the kid
+ * home all read from the same state. If each `useKidSession()` call had
+ * its own internal `useState`, the join screen could redeem the code and
+ * update its own state to "ready", but the layout's stale "unlinked"
+ * state would redirect right back to /kid/join — a redirect loop on a
+ * white screen, which is exactly the bug this provider exists to prevent.
  *
  * The /kid layout uses this to decide between rendering the kid home and
  * redirecting to /kid/join.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 
 import type { Database } from './database.types';
 import { supabase } from './supabase';
@@ -38,12 +50,20 @@ export type KidSessionState =
       family: FamilyRow;
     };
 
-export function useKidSession() {
+type KidSessionContextValue = {
+  state: KidSessionState;
+  reload: () => Promise<void>;
+};
+
+const KidSessionContext = createContext<KidSessionContextValue | null>(null);
+
+export function KidSessionProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<KidSessionState>({ status: 'loading' });
 
   const load = useCallback(async () => {
-    setState({ status: 'loading' });
-
+    // Don't flip back to "loading" on every reload — that would flash the
+    // spinner every time the join screen redeems a code. Only the initial
+    // mount shows the loading state (that's the default).
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -105,7 +125,22 @@ export function useKidSession() {
     };
   }, [load]);
 
-  return { state, reload: load };
+  const value = useMemo(() => ({ state, reload: load }), [state, load]);
+  return (
+    <KidSessionContext.Provider value={value}>
+      {children}
+    </KidSessionContext.Provider>
+  );
+}
+
+export function useKidSession(): KidSessionContextValue {
+  const ctx = useContext(KidSessionContext);
+  if (!ctx) {
+    throw new Error(
+      'useKidSession must be used inside a <KidSessionProvider>. Wrap the /kid layout with it.'
+    );
+  }
+  return ctx;
 }
 
 /**

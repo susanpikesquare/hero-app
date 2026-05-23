@@ -13,7 +13,7 @@
 
 export const EFFECTIVE_DATE = 'May 24, 2026';
 export const COMPANY_NAME = 'Home Hero';
-export const CONTACT_EMAIL = 'susan@pikesquare.co';
+export const CONTACT_EMAIL = 'info@homehero.co';
 
 export const REVIEW_BANNER =
   'This page is a working draft prepared as a starting point. It has not been reviewed by legal counsel and is not legal advice. Before opening Home Hero to real customers, the operator must replace this content with a version reviewed by a qualified attorney familiar with COPPA and applicable state privacy law.';

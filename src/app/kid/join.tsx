@@ -179,7 +179,7 @@ export default function KidJoinScreen() {
       {state.status === 'unlinked' && (
         <View style={styles.startFreshRow}>
           <Text style={[KidStyles.choreBody, { color: theme.textMuted }]}>
-            Used a code on this device before but it&rsquo;s not working?
+            Used a code on this device before but it’s not working?
           </Text>
           <Text
             onPress={startFresh}

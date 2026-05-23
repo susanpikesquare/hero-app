@@ -50,7 +50,7 @@ export default function LoginScreen() {
       subtitle="Enter the email and password you set up when you created your family."
       footer={
         <ThemedText type="small" themeColor="textMuted">
-          Don&rsquo;t have an account yet?{' '}
+          Don’t have an account yet?{' '}
           <Link href="/signup" style={{ textDecorationLine: 'underline' }}>
             Set up your family
           </Link>

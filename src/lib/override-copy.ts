@@ -50,7 +50,7 @@ export const REJECTION = {
   value: 'rejected' as OverrideKind,
   parentLabel: 'Needs another go',
   kidMessage:
-    'Your grown-up wants you to try once more. You&rsquo;ve got this.',
+    'Your grown-up wants you to try once more. You’ve got this.',
   emoji: '🔁',
 };
 

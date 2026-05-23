@@ -85,7 +85,7 @@ export default function NewChoreScreen() {
     <AuthShell
       eyebrow="New chore"
       title="What should they tackle?"
-      subtitle="For v0 we&rsquo;re focused on Bedroom — tidy + bed made — but you can name this whatever fits your home."
+      subtitle="For v0 we’re focused on Bedroom — tidy + bed made — but you can name this whatever fits your home."
     >
       <TextField
         label="Chore title"
@@ -170,7 +170,7 @@ export default function NewChoreScreen() {
         </View>
         <ThemedText type="small" themeColor="textMuted">
           {isOptional
-            ? 'Extra jobs show up in a separate section for your kid. They&rsquo;re opt-in and worth bonus rewards.'
+            ? 'Extra jobs show up in a separate section for your kid. They’re opt-in and worth bonus rewards.'
             : 'Required chores show on the daily to-do list, worth 1 reward each.'}
         </ThemedText>
       </View>

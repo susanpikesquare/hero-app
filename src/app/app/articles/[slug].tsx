@@ -30,7 +30,7 @@ export default function ArticleScreen() {
         ]}
       >
         <ThemedText type="default" themeColor="textSecondary">
-          Couldn&rsquo;t find that article.
+          Couldn’t find that article.
         </ThemedText>
         <View style={{ height: Spacing.three }} />
         <BrandButton

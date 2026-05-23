@@ -157,7 +157,7 @@ export default function KidSettingsScreen() {
     return (
       <View style={[styles.center, { backgroundColor: theme.background }]}>
         <ThemedText type="default" themeColor="textSecondary">
-          We couldn&rsquo;t find that kid.
+          We couldn’t find that kid.
         </ThemedText>
         <View style={{ height: Spacing.three }} />
         <BrandButton label="Back to dashboard" onPress={() => router.replace('/app')} />
@@ -246,7 +246,7 @@ export default function KidSettingsScreen() {
             ]}
           >
             <BrandHeading level="h2" style={styles.cardTitle}>
-              {kid.display_name}&rsquo;s login
+              {kid.display_name}’s login
             </BrandHeading>
             <ThemedText type="default" themeColor="textSecondary">
               {kid.kid_joined_at
@@ -266,7 +266,7 @@ export default function KidSettingsScreen() {
                   themeColor="accent"
                   style={{ textTransform: 'uppercase', letterSpacing: 1 }}
                 >
-                  {kid.display_name}&rsquo;s join code
+                  {kid.display_name}’s join code
                 </ThemedText>
                 <ThemedText
                   type="default"
@@ -291,8 +291,8 @@ export default function KidSettingsScreen() {
                   </ThemedText>
                 </View>
                 <ThemedText type="small" themeColor="textSecondary">
-                  On {kid.display_name}&rsquo;s device, open the Home Hero app
-                  → tap <ThemedText type="smallBold">I&rsquo;m a kid</ThemedText> →
+                  On {kid.display_name}’s device, open the Home Hero app
+                  → tap <ThemedText type="smallBold">I’m a kid</ThemedText> →
                   enter this code.
                 </ThemedText>
               </View>
@@ -331,7 +331,7 @@ export default function KidSettingsScreen() {
             </BrandHeading>
             <ThemedText type="default" themeColor="text">
               Deletes {kid.display_name} from your family, along with their
-              chores and all submission photos they sent. This can&rsquo;t be
+              chores and all submission photos they sent. This can’t be
               undone.
             </ThemedText>
 

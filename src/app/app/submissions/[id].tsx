@@ -131,7 +131,7 @@ export default function SubmissionDetailScreen() {
     return (
       <View style={[styles.center, { backgroundColor: theme.background }]}>
         <ThemedText type="default" themeColor="textSecondary">
-          Couldn&rsquo;t find that submission.
+          Couldn’t find that submission.
         </ThemedText>
         <View style={{ height: Spacing.three }} />
         <BrandButton label="Back to dashboard" onPress={() => router.replace('/app')} />
@@ -345,7 +345,7 @@ export default function SubmissionDetailScreen() {
                 >
                   {kid?.display_name ?? 'They'} will see:{' '}
                   <ThemedText type="default" style={{ fontStyle: 'italic' }}>
-                    “{REJECTION.kidMessage.replace('&rsquo;', "'")}”
+                    “{REJECTION.kidMessage}”
                   </ThemedText>
                 </ThemedText>
                 {submission.parent_override_at && (

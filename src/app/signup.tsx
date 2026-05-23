@@ -131,7 +131,7 @@ export default function SignupScreen() {
         value={familyName}
         onChangeText={setFamilyName}
         placeholder="The Bamberger family"
-        hint="What you&rsquo;d like the household called inside the app."
+        hint="What you’d like the household called inside the app."
       />
       <TextField
         label="Your name"
@@ -207,7 +207,7 @@ export default function SignupScreen() {
           >
             Terms of Service
           </Link>
-          . I authorize my children&rsquo;s use of the app under my supervision.
+          . I authorize my children’s use of the app under my supervision.
         </ThemedText>
       </Pressable>
 

@@ -157,7 +157,7 @@ export default function SubmitScreen() {
           </Text>
           <Text style={[KidStyles.greetingSub, { color: theme.text }]}>
             We sent your {chore.title.toLowerCase()} photo to your grown-up.
-            They&rsquo;ll have a look and let you know.
+            They’ll have a look and let you know.
           </Text>
         </View>
 
@@ -177,7 +177,7 @@ export default function SubmitScreen() {
     return (
       <KidShell>
         <Text style={[KidStyles.greetingTitle, { color: theme.text }]}>
-          We couldn&rsquo;t find that chore.
+          We couldn’t find that chore.
         </Text>
       </KidShell>
     );

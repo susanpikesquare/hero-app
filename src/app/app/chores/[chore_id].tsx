@@ -148,7 +148,7 @@ export default function ChoreDetailScreen() {
     return (
       <View style={[styles.center, { backgroundColor: theme.background }]}>
         <ThemedText type="default" themeColor="textSecondary">
-          Couldn&rsquo;t find that chore.
+          Couldn’t find that chore.
         </ThemedText>
         <View style={{ height: Spacing.three }} />
         <BrandButton label="Back to dashboard" onPress={() => router.replace('/app')} />
@@ -191,9 +191,9 @@ export default function ChoreDetailScreen() {
               Reference photo
             </BrandHeading>
             <ThemedText type="default" themeColor="textSecondary">
-              Show the AI what {assignedKid?.display_name ?? 'your kid'}&rsquo;s
+              Show the AI what {assignedKid?.display_name ?? 'your kid'}’s
               {' '}
-              {chore.title.toLowerCase()} looks like when it&rsquo;s done. The AI
+              {chore.title.toLowerCase()} looks like when it’s done. The AI
               compares submitted photos against this one and gives kid-friendly
               feedback.
             </ThemedText>

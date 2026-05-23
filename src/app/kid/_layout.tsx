@@ -10,15 +10,28 @@
  * The /kid/join page itself uses a different layout (it can be reached
  * without auth), so we let it render even when state isn't "ready" by
  * checking the route inside this gate.
+ *
+ * The whole subtree is wrapped in <KidSessionProvider> so the gate, the
+ * join screen, and the kid home read from a single shared state — without
+ * the provider, each call site has its own useState and the gate's stale
+ * state can redirect-loop after a successful join (blank white page).
  */
 
 import { Redirect, Stack, usePathname } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
-import { useKidSession } from '@/lib/kid-session';
+import { KidSessionProvider, useKidSession } from '@/lib/kid-session';
 
 export default function KidLayout() {
+  return (
+    <KidSessionProvider>
+      <KidLayoutGate />
+    </KidSessionProvider>
+  );
+}
+
+function KidLayoutGate() {
   const theme = useTheme();
   const { state } = useKidSession();
   const pathname = usePathname();

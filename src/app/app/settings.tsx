@@ -213,7 +213,7 @@ export default function SettingsScreen() {
                 {email}
               </ThemedText>
               <ThemedText type="small" themeColor="textMuted">
-                Email changes aren&rsquo;t supported yet — get in touch if you
+                Email changes aren’t supported yet — get in touch if you
                 need to switch.
               </ThemedText>
             </View>

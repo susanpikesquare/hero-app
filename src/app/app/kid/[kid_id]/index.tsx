@@ -51,7 +51,7 @@ export default function KidHomeScreen() {
     return (
       <KidShell>
         <Text style={[KidStyles.greetingTitle, { color: theme.text }]}>
-          Hmm — we couldn&rsquo;t find you.
+          Hmm — we couldn’t find you.
         </Text>
         <Text style={[KidStyles.greetingSub, { color: theme.textSecondary }]}>
           Ask a grown-up to hand you the device again.
@@ -85,7 +85,7 @@ export default function KidHomeScreen() {
         <Text style={[KidStyles.greetingTitle, { color: theme.text }]}>
           {remaining === 0 && requiredChores.length > 0
             ? "You're all done for today!"
-            : 'Today&rsquo;s to-dos'}
+            : 'Today’s to-dos'}
         </Text>
         <Text style={[KidStyles.greetingSub, { color: theme.textSecondary }]}>
           {requiredChores.length === 0

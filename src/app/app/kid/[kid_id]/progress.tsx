@@ -76,7 +76,7 @@ export default function KidProgressScreen() {
     return (
       <View style={[styles.center, { backgroundColor: theme.background }]}>
         <ThemedText type="default" themeColor="textSecondary">
-          Couldn&rsquo;t find that kid.
+          Couldn’t find that kid.
         </ThemedText>
         <View style={{ height: Spacing.three }} />
         <BrandButton label="Back to dashboard" onPress={() => router.replace('/app')} />
@@ -110,7 +110,7 @@ export default function KidProgressScreen() {
               {kid.age != null ? ` · Age ${kid.age}` : ''} · Progress
             </BrandHeading>
             <BrandHeading level="h1" style={styles.title}>
-              {kid.display_name}&rsquo;s last 13 weeks
+              {kid.display_name}’s last 13 weeks
             </BrandHeading>
             <ThemedText
               type="default"

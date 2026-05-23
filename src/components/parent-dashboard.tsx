@@ -127,7 +127,7 @@ export function ParentDashboard() {
               style={styles.lead}
             >
               This is your parental control surface. Add kids, give each one a
-              chore, then hand the device over and tap &ldquo;Hand to&nbsp;…&rdquo;
+              chore, then hand the device over and tap “Hand to …”
               so they can submit a photo.
             </ThemedText>
           </View>
@@ -319,7 +319,7 @@ export function ParentDashboard() {
                 Add your first kid
               </BrandHeading>
               <ThemedText type="default" themeColor="textSecondary">
-                You haven&rsquo;t added anyone yet. Type a name and tap Add.
+                You haven’t added anyone yet. Type a name and tap Add.
               </ThemedText>
               <AddKidRow
                 name={newKidName}

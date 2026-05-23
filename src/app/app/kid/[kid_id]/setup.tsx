@@ -162,7 +162,7 @@ export default function KidSetupScreen() {
     return (
       <View style={[styles.center, { backgroundColor: theme.background }]}>
         <ThemedText type="default" themeColor="textSecondary">
-          We couldn&rsquo;t find that kid.
+          We couldn’t find that kid.
         </ThemedText>
         <View style={{ height: Spacing.three }} />
         <BrandButton label="Back to dashboard" onPress={() => router.replace('/app')} />
@@ -239,7 +239,7 @@ export default function KidSetupScreen() {
               Suggested for {bucket.label.toLowerCase()}
             </BrandHeading>
             <ThemedText type="small" themeColor="textMuted">
-              Tap to deselect anything that doesn&rsquo;t fit your home.
+              Tap to deselect anything that doesn’t fit your home.
             </ThemedText>
 
             <View style={styles.suggList}>

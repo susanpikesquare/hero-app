@@ -79,7 +79,7 @@ export default function LandingScreen() {
                 href="/kid/join"
                 style={[styles.navLink, { color: theme.textSecondary }]}
               >
-                I&rsquo;m a kid
+                I’m a kid
               </Link>
               <Link
                 href="/login"
