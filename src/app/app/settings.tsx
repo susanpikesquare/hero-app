@@ -59,11 +59,14 @@ export default function SettingsScreen() {
     }
     setSavingFamily(true);
     try {
-      const { error: updErr } = await supabase
+      const { data, error: updErr } = await supabase
         .from('families')
         .update({ name: familyName.trim() })
-        .eq('id', family.id);
+        .eq('id', family.id)
+        .select('id, name')
+        .maybeSingle();
       if (updErr) throw updErr;
+      if (!data) throw new Error('No row was updated — likely a permissions issue.');
       await reload();
       setFamilySaved(true);
     } catch (err) {
@@ -89,11 +92,14 @@ export default function SettingsScreen() {
     setModeSaved(false);
     setSavingMode(true);
     try {
-      const { error: updErr } = await supabase
+      const { data, error: updErr } = await supabase
         .from('families')
         .update({ reward_mode: mode })
-        .eq('id', family.id);
+        .eq('id', family.id)
+        .select('id, reward_mode')
+        .maybeSingle();
       if (updErr) throw updErr;
+      if (!data) throw new Error('No row was updated — likely a permissions issue.');
       await reload();
       setModeSaved(true);
     } catch (err) {
