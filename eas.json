@@ -29,9 +29,7 @@
   },
   "submit": {
     "production": {
-      "ios": {
-        "ascAppId": "REPLACE_AFTER_FIRST_BUILD"
-      }
+      "ios": {}
     }
   }
 }
