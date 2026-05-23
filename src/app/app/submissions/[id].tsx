@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BrandButton } from '@/components/brand-button';
 import { BrandHeading } from '@/components/brand-heading';
 import { BrandLogo } from '@/components/brand-logo';
+import { PhotoViewer } from '@/components/photo-viewer';
 import { ThemedText } from '@/components/themed-text';
 import {
   MaxContentWidth,
@@ -36,6 +37,7 @@ export default function SubmissionDetailScreen() {
   const [urlError, setUrlError] = useState<string | null>(null);
   const [overrideBusy, setOverrideBusy] = useState(false);
   const [overrideError, setOverrideError] = useState<string | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
 
   const applyOverride = async (
     kind: 'approved' | 'rejected',
@@ -178,18 +180,31 @@ export default function SubmissionDetailScreen() {
             </ThemedText>
           </View>
 
-          <View
+          <Pressable
+            onPress={() => signedUrl && setViewerOpen(true)}
             style={[
               styles.photoFrame,
               { backgroundColor: theme.backgroundElement, borderColor: theme.border },
             ]}
           >
             {signedUrl ? (
-              <Image
-                source={{ uri: signedUrl }}
-                style={styles.photo}
-                resizeMode="cover"
-              />
+              <>
+                <Image
+                  source={{ uri: signedUrl }}
+                  style={styles.photo}
+                  resizeMode="contain"
+                />
+                <View
+                  style={[
+                    styles.zoomHint,
+                    { backgroundColor: theme.background, borderColor: theme.border },
+                  ]}
+                >
+                  <ThemedText type="small" themeColor="textSecondary">
+                    Tap to enlarge
+                  </ThemedText>
+                </View>
+              </>
             ) : urlError ? (
               <ThemedText type="small" style={{ color: '#B23A48', textAlign: 'center' }}>
                 {urlError}
@@ -199,7 +214,7 @@ export default function SubmissionDetailScreen() {
                 Loading photo…
               </ThemedText>
             )}
-          </View>
+          </Pressable>
 
           {!hasReference ? (
             <AiCard
@@ -445,6 +460,13 @@ export default function SubmissionDetailScreen() {
           </View>
         </View>
       </SafeAreaView>
+
+      <PhotoViewer
+        visible={viewerOpen}
+        uri={signedUrl}
+        alt={`${kid?.display_name ?? 'Kid'} submission for ${chore?.title ?? 'chore'}`}
+        onClose={() => setViewerOpen(false)}
+      />
     </ScrollView>
   );
 }
@@ -533,8 +555,18 @@ const styles = StyleSheet.create({
     aspectRatio: 4 / 3,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: Spacing.two,
   },
   photo: { width: '100%', height: '100%' },
+  zoomHint: {
+    position: 'absolute',
+    bottom: Spacing.two,
+    right: Spacing.two,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.one,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+  },
   aiCard: {
     borderRadius: Radius.lg,
     borderWidth: 1,

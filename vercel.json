@@ -20,6 +20,10 @@
       "destination": "/app/kid/[kid_id]/settings"
     },
     {
+      "source": "/app/kid/:kidId/progress",
+      "destination": "/app/kid/[kid_id]/progress"
+    },
+    {
       "source": "/app/kid/:kidId",
       "destination": "/app/kid/[kid_id]"
     },

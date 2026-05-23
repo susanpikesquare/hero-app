@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BrandButton } from '@/components/brand-button';
 import { BrandHeading } from '@/components/brand-heading';
 import { BrandLogo } from '@/components/brand-logo';
+import { PhotoViewer } from '@/components/photo-viewer';
 import { ThemedText } from '@/components/themed-text';
 import {
   MaxContentWidth,
@@ -68,6 +69,7 @@ export default function ChoreDetailScreen() {
   } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [viewerOpen, setViewerOpen] = useState(false);
 
   // Load signed URL for any existing reference photo.
   useEffect(() => {
@@ -196,26 +198,41 @@ export default function ChoreDetailScreen() {
               feedback.
             </ThemedText>
 
-            <View
+            <Pressable
+              onPress={() => {
+                if (picked || referenceUrl) setViewerOpen(true);
+              }}
               style={[
                 styles.preview,
                 { backgroundColor: theme.background, borderColor: theme.border },
               ]}
             >
               {picked ? (
-                <Image source={{ uri: picked.uri }} style={styles.previewImg} resizeMode="cover" />
+                <Image source={{ uri: picked.uri }} style={styles.previewImg} resizeMode="contain" />
               ) : referenceUrl ? (
                 <Image
                   source={{ uri: referenceUrl }}
                   style={styles.previewImg}
-                  resizeMode="cover"
+                  resizeMode="contain"
                 />
               ) : (
                 <ThemedText type="default" themeColor="textMuted">
                   No reference photo yet.
                 </ThemedText>
               )}
-            </View>
+              {(picked || referenceUrl) && (
+                <View
+                  style={[
+                    styles.zoomHint,
+                    { backgroundColor: theme.background, borderColor: theme.border },
+                  ]}
+                >
+                  <ThemedText type="small" themeColor="textSecondary">
+                    Tap to enlarge
+                  </ThemedText>
+                </View>
+              )}
+            </Pressable>
 
             <View style={styles.pickRow}>
               {Platform.OS !== 'web' && (
@@ -269,6 +286,13 @@ export default function ChoreDetailScreen() {
           </View>
         </View>
       </SafeAreaView>
+
+      <PhotoViewer
+        visible={viewerOpen}
+        uri={picked?.uri ?? referenceUrl}
+        alt="Reference photo"
+        onClose={() => setViewerOpen(false)}
+      />
     </ScrollView>
   );
 }
@@ -300,14 +324,24 @@ const styles = StyleSheet.create({
   },
   cardTitle: { marginBottom: Spacing.one },
   preview: {
-    height: 280,
+    minHeight: 360,
     borderRadius: Radius.lg,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+    padding: Spacing.two,
   },
-  previewImg: { width: '100%', height: '100%' },
+  previewImg: { width: '100%', height: 360 },
+  zoomHint: {
+    position: 'absolute',
+    bottom: Spacing.two,
+    right: Spacing.two,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.one,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+  },
   pickRow: { flexDirection: 'row', gap: Spacing.three, flexWrap: 'wrap' },
   pickBtn: {
     flexGrow: 1,

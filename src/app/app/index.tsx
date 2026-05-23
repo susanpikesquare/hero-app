@@ -181,6 +181,21 @@ export default function DashboardScreen() {
                           ·
                         </ThemedText>
                         <Pressable
+                          onPress={() => router.push(`/app/kid/${kid.id}/progress`)}
+                          hitSlop={8}
+                        >
+                          <ThemedText
+                            type="small"
+                            themeColor="info"
+                            style={{ textDecorationLine: 'underline' }}
+                          >
+                            Progress
+                          </ThemedText>
+                        </Pressable>
+                        <ThemedText type="small" themeColor="textMuted">
+                          ·
+                        </ThemedText>
+                        <Pressable
                           onPress={() => router.push(`/app/kid/${kid.id}/settings`)}
                           hitSlop={8}
                         >
