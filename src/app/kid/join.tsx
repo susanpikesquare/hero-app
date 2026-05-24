@@ -58,6 +58,10 @@ export default function KidJoinScreen() {
         { p_code: cleaned }
       );
       if (rpcErr) {
+        // Log the full PostgrestError so dev tools shows code/hint/details.
+        // The generic-fallback string in the catch below was hiding these.
+        console.error('kid_link_with_join_code failed:', rpcErr);
+
         // Surface the most actionable error message.
         const msg = rpcErr.message.toLowerCase();
         if (msg.includes('invalid_join_code')) {
@@ -71,14 +75,26 @@ export default function KidJoinScreen() {
             'This device is already signed in as someone else. Tap "Start fresh" below first.'
           );
         }
-        throw rpcErr;
+        // PostgrestError isn't an Error instance, so `instanceof Error` in the
+        // catch below would skip its .message. Wrap it before throwing so the
+        // real reason shows up in the UI instead of "Could not join."
+        throw new Error(
+          rpcErr.message || rpcErr.code || 'Server rejected the join code.'
+        );
       }
 
       // 3. Pull the new state and route to the kid home.
       await reload();
       router.replace('/kid');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not join. Try again.');
+      console.error('Kid join flow failed:', err);
+      const displayMsg =
+        err instanceof Error
+          ? err.message
+          : err && typeof err === 'object' && 'message' in err && typeof (err as { message: unknown }).message === 'string'
+            ? (err as { message: string }).message
+            : 'Could not join. Try again.';
+      setError(displayMsg);
     } finally {
       setSubmitting(false);
     }
