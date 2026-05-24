@@ -173,23 +173,48 @@ export default function KidJoinScreen() {
       )}
 
       {alreadyLinked ? (
-        <View
-          style={[
-            KidStyles.bigButton,
-            {
-              backgroundColor: theme.accent,
-              alignSelf: 'flex-start',
-              paddingHorizontal: Spacing.four,
-            },
-          ]}
-        >
-          <Text
-            onPress={() => router.replace('/kid')}
-            style={[KidStyles.bigButtonLabel, { color: theme.background }]}
+        <>
+          <View
+            style={[
+              KidStyles.bigButton,
+              {
+                backgroundColor: theme.accent,
+                alignSelf: 'flex-start',
+                paddingHorizontal: Spacing.four,
+              },
+            ]}
           >
-            → To my chores
-          </Text>
-        </View>
+            <Text
+              onPress={() => router.replace('/kid')}
+              style={[KidStyles.bigButtonLabel, { color: theme.background }]}
+            >
+              → To my chores
+            </Text>
+          </View>
+
+          {/* Escape hatch: sign out the current anon session so a different
+              kid (or the same kid on a different account) can join with a
+              new code. Without this, "Switch user" from the kid home is a
+              dead end — it lands here but offers no way to actually swap. */}
+          <View style={styles.startFreshRow}>
+            <Text style={[KidStyles.choreBody, { color: theme.textMuted }]}>
+              Not you? Want to use a different code?
+            </Text>
+            <Text
+              onPress={startFresh}
+              style={[
+                KidStyles.choreBody,
+                {
+                  color: theme.info,
+                  textDecorationLine: 'underline',
+                  fontWeight: '700',
+                },
+              ]}
+            >
+              Sign out →
+            </Text>
+          </View>
+        </>
       ) : null}
 
       {state.status === 'unlinked' && (
