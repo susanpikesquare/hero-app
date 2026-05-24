@@ -1,5 +1,13 @@
 import { Link, useRouter } from 'expo-router';
-import { Linking, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import {
+  Linking,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrandButton } from '@/components/brand-button';
@@ -53,6 +61,110 @@ const STEPS = [
 ];
 
 export default function LandingScreen() {
+  // Native iOS surface gets a stripped-down chooser instead of the full
+  // marketing page. Someone who downloaded the iOS app already knows what
+  // Home Hero is — they need to act, not read. Web users (often arriving
+  // from a link or search) still get the full pitch.
+  if (Platform.OS === 'ios') {
+    return <IOSChooserLanding />;
+  }
+  return <WebMarketingLanding />;
+}
+
+function IOSChooserLanding() {
+  const theme = useTheme();
+  const router = useRouter();
+
+  const requestInvite = () => {
+    const subject = encodeURIComponent(INVITE_SUBJECT);
+    const body = encodeURIComponent(INVITE_BODY);
+    Linking.openURL(`mailto:${INVITE_EMAIL}?subject=${subject}&body=${body}`);
+  };
+
+  return (
+    <SafeAreaView
+      style={[styles.iosRoot, { backgroundColor: theme.background }]}
+      edges={['top', 'bottom']}
+    >
+      <View style={styles.iosContainer}>
+        {/* Top: logo + greeting. Sized so the action stack always fits
+            on the smallest supported iPhone (SE 4.7") without scrolling. */}
+        <View style={styles.iosHero}>
+          <BrandLogo height={56} />
+          <View style={styles.iosHeroText}>
+            <BrandHeading level="eyebrow" themeColor="accent">
+              Welcome
+            </BrandHeading>
+            <BrandHeading level="h1" style={styles.iosTitle}>
+              Home Hero
+            </BrandHeading>
+            <ThemedText
+              type="default"
+              themeColor="textSecondary"
+              style={styles.iosSub}
+            >
+              AI-validated chores for ADHD families.
+            </ThemedText>
+          </View>
+        </View>
+
+        {/* Three primary actions, stacked full-width for tappability. */}
+        <View style={styles.iosActions}>
+          <BrandButton
+            label="I have a code"
+            onPress={() => router.push('/signup')}
+          />
+          <BrandButton
+            variant="ghost"
+            label="I'm a kid"
+            onPress={() => router.push('/kid/join')}
+          />
+          <BrandButton
+            variant="ghost"
+            label="Sign in"
+            onPress={() => router.push('/login')}
+          />
+        </View>
+
+        {/* Footer: invite-request link + legal. The invite link is below
+            the primary actions because most parents arriving here will
+            already have a code from us. */}
+        <View style={styles.iosFooter}>
+          <Pressable onPress={requestInvite} hitSlop={8}>
+            <ThemedText
+              type="small"
+              style={[
+                styles.iosInviteLink,
+                { color: theme.info },
+              ]}
+            >
+              Don&apos;t have a code yet? Request an invite →
+            </ThemedText>
+          </Pressable>
+          <View style={styles.iosLegalRow}>
+            <Link
+              href="/privacy"
+              style={[styles.iosLegalLink, { color: theme.textMuted }]}
+            >
+              Privacy
+            </Link>
+            <ThemedText type="small" themeColor="textMuted">
+              ·
+            </ThemedText>
+            <Link
+              href="/terms"
+              style={[styles.iosLegalLink, { color: theme.textMuted }]}
+            >
+              Terms
+            </Link>
+          </View>
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+function WebMarketingLanding() {
   const theme = useTheme();
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -411,6 +523,56 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 14,
+    fontWeight: '500',
+    textDecorationLine: 'none',
+  },
+
+  // iOS chooser landing — stripped-down entry surface for the native app.
+  // Goal: hero + 3 action buttons + tiny footer, all visible on a 4.7"
+  // iPhone SE without scrolling. No marketing copy, no heatmap, no pillars.
+  iosRoot: {
+    flex: 1,
+  },
+  iosContainer: {
+    flex: 1,
+    paddingHorizontal: Spacing.five,
+    paddingTop: Spacing.four,
+    paddingBottom: Spacing.four,
+    justifyContent: 'space-between',
+  },
+  iosHero: {
+    alignItems: 'flex-start',
+    gap: Spacing.four,
+    marginTop: Spacing.three,
+  },
+  iosHeroText: {
+    gap: Spacing.two,
+  },
+  iosTitle: {
+    marginTop: Spacing.one,
+  },
+  iosSub: {
+    fontSize: 17,
+    lineHeight: 26,
+  },
+  iosActions: {
+    gap: Spacing.three,
+  },
+  iosFooter: {
+    gap: Spacing.three,
+    alignItems: 'flex-start',
+  },
+  iosInviteLink: {
+    textDecorationLine: 'underline',
+    fontWeight: '600',
+  },
+  iosLegalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  iosLegalLink: {
+    fontSize: 13,
     fontWeight: '500',
     textDecorationLine: 'none',
   },
