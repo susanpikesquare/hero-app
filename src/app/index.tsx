@@ -143,6 +143,15 @@ function IOSChooserLanding() {
           </Pressable>
           <View style={styles.iosLegalRow}>
             <Link
+              href="/guide"
+              style={[styles.iosLegalLink, { color: theme.textMuted }]}
+            >
+              How it works
+            </Link>
+            <ThemedText type="small" themeColor="textMuted">
+              ·
+            </ThemedText>
+            <Link
               href="/privacy"
               style={[styles.iosLegalLink, { color: theme.textMuted }]}
             >
@@ -367,6 +376,15 @@ function WebMarketingLanding() {
               already doing the hard part.
             </ThemedText>
             <View style={styles.footerLinks}>
+              <Link
+                href="/guide"
+                style={[styles.footerLink, { color: theme.textSecondary }]}
+              >
+                How it works
+              </Link>
+              <ThemedText type="small" themeColor="textMuted">
+                ·
+              </ThemedText>
               <Link
                 href="/privacy"
                 style={[styles.footerLink, { color: theme.textSecondary }]}
