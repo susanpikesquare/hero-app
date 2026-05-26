@@ -67,9 +67,7 @@
       "router": {}
     },
     "owner": "susanpikesquare",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "0.0.1",
     "updates": {
       "url": "https://u.expo.dev/c57d21d9-4a51-4d3d-b657-2dd4cb045b5a"
     }
