@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { KidChoreTile } from '@/components/kid-chore-tile';
@@ -14,6 +15,7 @@ import {
   latestBadge,
   nextBadgeProgress,
 } from '@/lib/rewards';
+import { supabase } from '@/lib/supabase';
 import { choresForKid, submissionsForChore, useChores } from '@/lib/use-chores';
 import { useFamily } from '@/lib/use-family';
 import { useReferenceUrls } from '@/lib/use-reference-urls';
@@ -26,12 +28,40 @@ export default function KidHomeScreen() {
   const kidId = params.kid_id;
 
   const { kids, family, loading: famLoading } = useFamily(!!session);
-  const { chores, submissions, loading: choresLoading } = useChores(!!session);
+  const { chores, submissions, loading: choresLoading, reload: reloadChores } =
+    useChores(!!session);
   // Batch-fetch signed URLs for reference photos so each chore tile can
   // show "what 'done' looks like" inline.
   const referenceUrls = useReferenceUrls(
     chores.map((c) => c.reference_photo_path)
   );
+
+  // Inline mark-done for self-care (checklist) chores — no photo, no AI eval.
+  // Same shape as the kid-own-device version in /kid/index.tsx; the
+  // difference here is submitted_by comes from the URL param, not the
+  // anonymous kid session.
+  const [markingDoneId, setMarkingDoneId] = useState<string | null>(null);
+  const markChoreDone = async (choreId: string) => {
+    if (markingDoneId) return;
+    setMarkingDoneId(choreId);
+    try {
+      const { error: insertErr } = await supabase.from('submissions').insert({
+        chore_id: choreId,
+        submitted_by: kidId,
+        photo_path: null,
+        status: 'complete',
+        ai_verdict: 'pass',
+        ai_feedback: 'Self-reported as done.',
+        ai_evaluated_at: new Date().toISOString(),
+      });
+      if (insertErr) throw insertErr;
+      await reloadChores();
+    } catch (err) {
+      console.error('mark chore done failed:', err);
+    } finally {
+      setMarkingDoneId(null);
+    }
+  };
 
   if (famLoading || choresLoading) {
     return (
@@ -184,6 +214,7 @@ export default function KidHomeScreen() {
             const refUrl = chore.reference_photo_path
               ? (referenceUrls[chore.reference_photo_path] ?? null)
               : null;
+            const isChecklist = chore.verification_kind === 'checklist';
             return (
               <KidChoreTile
                 key={chore.id}
@@ -195,15 +226,23 @@ export default function KidHomeScreen() {
                         hour: 'numeric',
                         minute: '2-digit',
                       })}`
-                    : 'No hops yet — ready when you are.'
+                    : isChecklist
+                      ? 'Tap when you’re done — no photo needed.'
+                      : 'No hops yet — ready when you are.'
                 }
                 overrideLine={lastOverride}
                 status={status}
                 rewardWeight={chore.reward_weight}
-                onPress={() => router.push(`/app/kid/${kidId}/submit/${chore.id}`)}
+                onPress={
+                  isChecklist
+                    ? () => markChoreDone(chore.id)
+                    : () => router.push(`/app/kid/${kidId}/submit/${chore.id}`)
+                }
                 isOptional={false}
                 referenceUrl={refUrl}
                 tips={chore.coaching_tips}
+                verification={chore.verification_kind}
+                busy={markingDoneId === chore.id}
               />
             );
           })}
@@ -232,6 +271,7 @@ export default function KidHomeScreen() {
             const refUrl = chore.reference_photo_path
               ? (referenceUrls[chore.reference_photo_path] ?? null)
               : null;
+            const isChecklist = chore.verification_kind === 'checklist';
             return (
               <KidChoreTile
                 key={chore.id}
@@ -248,10 +288,16 @@ export default function KidHomeScreen() {
                 overrideLine={lastOverride}
                 status={status}
                 rewardWeight={chore.reward_weight}
-                onPress={() => router.push(`/app/kid/${kidId}/submit/${chore.id}`)}
+                onPress={
+                  isChecklist
+                    ? () => markChoreDone(chore.id)
+                    : () => router.push(`/app/kid/${kidId}/submit/${chore.id}`)
+                }
                 isOptional
                 referenceUrl={refUrl}
                 tips={chore.coaching_tips}
+                verification={chore.verification_kind}
+                busy={markingDoneId === chore.id}
               />
             );
           })}

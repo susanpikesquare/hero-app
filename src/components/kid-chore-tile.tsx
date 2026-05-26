@@ -48,6 +48,15 @@ type Props = {
   referenceUrl: string | null;
   /** Up to 3 short coaching tips. Empty array = none configured. */
   tips: string[];
+  /**
+   * 'photo' (default) = navigates to the photo submit page on press.
+   * 'checklist' = self-care chore; CTA reads "Mark done →" and the
+   * parent screen's onPress handler should insert a complete submission
+   * inline (no photo, no AI).
+   */
+  verification: 'photo' | 'checklist';
+  /** Whether the inline checklist submission is in flight. */
+  busy?: boolean;
 };
 
 export function KidChoreTile({
@@ -60,6 +69,8 @@ export function KidChoreTile({
   isOptional,
   referenceUrl,
   tips,
+  verification,
+  busy = false,
 }: Props) {
   const theme = useTheme();
   const meta = STATUS_META[status];
@@ -205,20 +216,33 @@ export function KidChoreTile({
       )}
 
       {/* Single clear CTA. The arrow makes the action unambiguous; no
-          conflicting status emoji on the button. */}
+          conflicting status emoji on the button. Checklist chores get a
+          "Mark done" label since there is no photo to take. */}
       {showCTA && (
         <View
           style={[
             KidStyles.bigButton,
             {
-              backgroundColor: isOptional ? theme.info : theme.accent,
+              backgroundColor: busy
+                ? theme.textMuted
+                : isOptional
+                  ? theme.info
+                  : theme.accent,
               alignSelf: 'flex-start',
               paddingHorizontal: Spacing.four,
             },
           ]}
         >
           <Text style={[KidStyles.bigButtonLabel, { color: theme.background }]}>
-            {status === 'try_again' ? 'Try again →' : 'Take a photo →'}
+            {busy
+              ? 'One sec…'
+              : verification === 'checklist'
+                ? status === 'try_again'
+                  ? 'Mark done again →'
+                  : 'Mark done →'
+                : status === 'try_again'
+                  ? 'Try again →'
+                  : 'Take a photo →'}
           </Text>
         </View>
       )}

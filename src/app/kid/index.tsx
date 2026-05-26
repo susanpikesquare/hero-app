@@ -8,6 +8,7 @@
  */
 
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { KidChoreTile } from '@/components/kid-chore-tile';
@@ -23,6 +24,7 @@ import {
   latestBadge,
   nextBadgeProgress,
 } from '@/lib/rewards';
+import { supabase } from '@/lib/supabase';
 import { choresForKid, submissionsForChore, useChores } from '@/lib/use-chores';
 import { useReferenceUrls } from '@/lib/use-reference-urls';
 
@@ -30,15 +32,42 @@ export default function KidHomeScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { state } = useKidSession();
-  const { chores, submissions, loading: choresLoading } = useChores(
-    state.status === 'ready'
-  );
+  const { chores, submissions, loading: choresLoading, reload: reloadChores } =
+    useChores(state.status === 'ready');
   // Batch-fetch signed URLs for every chore's reference photo so the tiles
   // can show "what 'done' looks like" inline. Returns empty map until the
   // chores load, which is fine — KidChoreTile falls back to a 📸 placeholder.
   const referenceUrls = useReferenceUrls(
     chores.map((c) => c.reference_photo_path)
   );
+
+  // For self-care / checklist chores the kid taps "Mark done" right on the
+  // tile — no photo, no AI eval. We auto-approve the submission server-side
+  // (status='complete', ai_verdict='pass') so it lands the same way an
+  // AI-approved photo would: counts for rewards, fills the heatmap, doesn't
+  // sit in the parent's review queue.
+  const [markingDoneId, setMarkingDoneId] = useState<string | null>(null);
+  const markChoreDone = async (choreId: string) => {
+    if (state.status !== 'ready' || markingDoneId) return;
+    setMarkingDoneId(choreId);
+    try {
+      const { error: insertErr } = await supabase.from('submissions').insert({
+        chore_id: choreId,
+        submitted_by: state.kid.id,
+        photo_path: null,
+        status: 'complete',
+        ai_verdict: 'pass',
+        ai_feedback: 'Self-reported as done.',
+        ai_evaluated_at: new Date().toISOString(),
+      });
+      if (insertErr) throw insertErr;
+      await reloadChores();
+    } catch (err) {
+      console.error('mark chore done failed:', err);
+    } finally {
+      setMarkingDoneId(null);
+    }
+  };
 
   if (state.status !== 'ready' || choresLoading) {
     return (
@@ -180,6 +209,7 @@ export default function KidHomeScreen() {
             const refUrl = chore.reference_photo_path
               ? (referenceUrls[chore.reference_photo_path] ?? null)
               : null;
+            const isChecklist = chore.verification_kind === 'checklist';
             return (
               <KidChoreTile
                 key={chore.id}
@@ -191,15 +221,23 @@ export default function KidHomeScreen() {
                         hour: 'numeric',
                         minute: '2-digit',
                       })}`
-                    : 'No hops yet — ready when you are.'
+                    : isChecklist
+                      ? 'Tap when you’re done — no photo needed.'
+                      : 'No hops yet — ready when you are.'
                 }
                 overrideLine={lastOverride}
                 status={status}
                 rewardWeight={chore.reward_weight}
-                onPress={() => router.push(`/kid/submit/${chore.id}`)}
+                onPress={
+                  isChecklist
+                    ? () => markChoreDone(chore.id)
+                    : () => router.push(`/kid/submit/${chore.id}`)
+                }
                 isOptional={false}
                 referenceUrl={refUrl}
                 tips={chore.coaching_tips}
+                verification={chore.verification_kind}
+                busy={markingDoneId === chore.id}
               />
             );
           })}
@@ -227,6 +265,7 @@ export default function KidHomeScreen() {
             const refUrl = chore.reference_photo_path
               ? (referenceUrls[chore.reference_photo_path] ?? null)
               : null;
+            const isChecklist = chore.verification_kind === 'checklist';
             return (
               <KidChoreTile
                 key={chore.id}
@@ -243,10 +282,16 @@ export default function KidHomeScreen() {
                 overrideLine={lastOverride}
                 status={status}
                 rewardWeight={chore.reward_weight}
-                onPress={() => router.push(`/kid/submit/${chore.id}`)}
+                onPress={
+                  isChecklist
+                    ? () => markChoreDone(chore.id)
+                    : () => router.push(`/kid/submit/${chore.id}`)
+                }
                 isOptional
                 referenceUrl={refUrl}
                 tips={chore.coaching_tips}
+                verification={chore.verification_kind}
+                busy={markingDoneId === chore.id}
               />
             );
           })}

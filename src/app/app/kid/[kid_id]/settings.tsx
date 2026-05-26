@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AgeGuidanceCard } from '@/components/age-guidance-card';
 import { BrandButton } from '@/components/brand-button';
 import { BrandHeading } from '@/components/brand-heading';
 import { BrandLogo } from '@/components/brand-logo';
@@ -237,6 +238,11 @@ export default function KidSettingsScreen() {
               />
             </View>
           </View>
+
+          {/* Developmental frame — re-read anytime, especially helpful when
+              the parent feels frustrated and needs to recalibrate against
+              what's actually typical at this age. */}
+          <AgeGuidanceCard age={kid.age} kidName={kid.display_name} />
 
           {/* Kid login */}
           <View

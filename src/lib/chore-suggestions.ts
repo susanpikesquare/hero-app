@@ -28,6 +28,12 @@ export type ChoreSuggestion = {
   kind: string;
   /** 1-3 short ADHD-friendly bullets shown to the kid on the chore tile. */
   tips: string[];
+  /**
+   * How the kid submits proof. Default 'photo' (current behavior).
+   * 'checklist' = no photo, kid just taps "Mark done" — used for self-care
+   * chores like brushing teeth where photographing the kid is not OK.
+   */
+  verification: 'photo' | 'checklist';
 };
 
 export type AgeBucket = {
@@ -49,6 +55,43 @@ export const AGE_BUCKETS: AgeBucket[] = [
     framing:
       'At this age, small wins build big confidence. Pick chores that feel doable in a few minutes.',
     chores: [
+      // Self-care first. These are 'checklist' chores — no photo, kid just
+      // taps "Mark done" because photographing kids in self-care moments
+      // would be wrong. Erica's note: "we would not take pics of the kids
+      // at all; reminders are good."
+      {
+        title: 'Brush teeth (morning)',
+        blurb: 'Two minutes, top and bottom. No photo needed.',
+        kind: 'self-care',
+        tips: [
+          'Two whole minutes',
+          'Top teeth AND bottom teeth',
+          'Don’t forget the back ones',
+        ],
+        verification: 'checklist',
+      },
+      {
+        title: 'Brush teeth (night)',
+        blurb: 'Right after your last snack of the day.',
+        kind: 'self-care',
+        tips: [
+          'After your last snack',
+          'Two whole minutes',
+          'Spit, don’t swallow',
+        ],
+        verification: 'checklist',
+      },
+      {
+        title: 'Wash hands before meals',
+        blurb: 'Soap, warm water, ABCs.',
+        kind: 'self-care',
+        tips: [
+          'Soap AND warm water',
+          'Sing the ABCs while scrubbing',
+          'Dry with a towel, not your shirt',
+        ],
+        verification: 'checklist',
+      },
       {
         title: 'Make bed',
         blurb: 'Pillow on the pillow, blanket pulled up — close enough counts.',
@@ -58,6 +101,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Blanket pulled all the way up',
           'Pat it smooth with your hand',
         ],
+        verification: 'photo',
       },
       {
         title: 'Toys in the bin',
@@ -68,6 +112,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Toys on the floor go in',
           'Close the lid when you’re done',
         ],
+        verification: 'photo',
       },
       {
         title: 'Dirty clothes in the hamper',
@@ -78,6 +123,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Socks count too',
           'Peek under the bed',
         ],
+        verification: 'photo',
       },
       {
         title: 'Shoes on the shelf',
@@ -88,6 +134,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Heels face out',
           'Hang up your coat too',
         ],
+        verification: 'photo',
       },
       {
         title: 'Clear my plate',
@@ -98,6 +145,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Cup and fork too',
           'Push your chair back in',
         ],
+        verification: 'photo',
       },
     ],
   },
@@ -108,6 +156,40 @@ export const AGE_BUCKETS: AgeBucket[] = [
     framing:
       'Early elementary kids can do real tasks start-to-finish. Aim for chores they can own without a parent watching.',
     chores: [
+      // Self-care (no photo, tap-to-confirm).
+      {
+        title: 'Brush teeth (morning)',
+        blurb: 'Two minutes, top and bottom. No photo needed.',
+        kind: 'self-care',
+        tips: [
+          'Two whole minutes',
+          'Top, bottom, and the back ones',
+          'Floss if it’s a flossing day',
+        ],
+        verification: 'checklist',
+      },
+      {
+        title: 'Brush teeth (night)',
+        blurb: 'After your last snack — no exceptions.',
+        kind: 'self-care',
+        tips: [
+          'After your last snack',
+          'Two whole minutes',
+          'Spit, don’t swallow',
+        ],
+        verification: 'checklist',
+      },
+      {
+        title: 'Shower or bath',
+        blurb: 'Hair, body, dry off — actually getting wet.',
+        kind: 'self-care',
+        tips: [
+          'Hair: shampoo, rinse',
+          'Body: soap top to bottom',
+          'Towel dry, don’t drip on the floor',
+        ],
+        verification: 'checklist',
+      },
       {
         title: 'Make bed',
         blurb: 'Sheets flat, blanket up, pillow on top.',
@@ -117,6 +199,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Blanket pulled up',
           'Pillow on top, smooth',
         ],
+        verification: 'photo',
       },
       {
         title: 'Tidy bedroom floor',
@@ -127,6 +210,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Everything has a home',
           'You should see all the carpet',
         ],
+        verification: 'photo',
       },
       {
         title: 'Put away clean laundry',
@@ -137,6 +221,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Drawers, not floor',
           'Hang up anything that wrinkles',
         ],
+        verification: 'photo',
       },
       {
         title: 'Pack school backpack',
@@ -147,6 +232,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Tomorrow’s books and folder in',
           'Water bottle topped up',
         ],
+        verification: 'photo',
       },
       {
         title: 'Wipe the table',
@@ -157,6 +243,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Damp cloth, no streaks',
           'Lift placemats and check under',
         ],
+        verification: 'photo',
       },
       {
         title: 'Feed the pet',
@@ -167,6 +254,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Fresh water on top',
           'Wipe up any spills',
         ],
+        verification: 'photo',
       },
     ],
   },
@@ -177,6 +265,51 @@ export const AGE_BUCKETS: AgeBucket[] = [
     framing:
       'Tweens can handle multi-step chores. Pair a daily one with a weekly one.',
     chores: [
+      // Self-care (no photo).
+      {
+        title: 'Brush teeth (morning)',
+        blurb: 'Two minutes, top and bottom. No photo needed.',
+        kind: 'self-care',
+        tips: [
+          'Two minutes — really',
+          'Top, bottom, and the back ones',
+          'Floss if it’s a flossing day',
+        ],
+        verification: 'checklist',
+      },
+      {
+        title: 'Brush teeth (night)',
+        blurb: 'Last thing before bed.',
+        kind: 'self-care',
+        tips: [
+          'After your last snack',
+          'Two whole minutes',
+          'Spit, don’t swallow',
+        ],
+        verification: 'checklist',
+      },
+      {
+        title: 'Shower',
+        blurb: 'Actually wet, actually clean.',
+        kind: 'self-care',
+        tips: [
+          'Hair: shampoo + condition',
+          'Body: soap top to bottom',
+          'Towel dry, hang the towel up',
+        ],
+        verification: 'checklist',
+      },
+      {
+        title: 'Deodorant',
+        blurb: 'A new habit at this age.',
+        kind: 'self-care',
+        tips: [
+          'After your shower works best',
+          'Both armpits — yes, both',
+          'Cap back on, lid closed',
+        ],
+        verification: 'checklist',
+      },
       {
         title: 'Make bed daily',
         blurb: 'Bed is made before they leave the room each morning.',
@@ -186,6 +319,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Blanket smooth, no wrinkles',
           'Pillows on top',
         ],
+        verification: 'photo',
       },
       {
         title: 'Weekly bedroom clean',
@@ -196,6 +330,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Wipe dust off the desk and shelves',
           'Vacuum or sweep last',
         ],
+        verification: 'photo',
       },
       {
         title: 'Fold and put away laundry',
@@ -206,6 +341,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Fold shirts in thirds',
           'Drawer, not chair',
         ],
+        verification: 'photo',
       },
       {
         title: 'Pack lunch',
@@ -216,6 +352,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Cold stuff in the fridge until morning',
           'Lunchbox by the door when packed',
         ],
+        verification: 'photo',
       },
       {
         title: 'Empty the dishwasher',
@@ -226,6 +363,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Plates and bowls back in cabinets',
           'Run again if there are dirty dishes waiting',
         ],
+        verification: 'photo',
       },
       {
         title: 'Take out the trash',
@@ -236,6 +374,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Fresh bag in the can',
           'Bin back outside in its spot',
         ],
+        verification: 'photo',
       },
       {
         title: 'Wipe the bathroom counter',
@@ -246,6 +385,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Use antibacterial wipes',
           'Check around the faucet handle',
         ],
+        verification: 'photo',
       },
     ],
   },
@@ -256,6 +396,40 @@ export const AGE_BUCKETS: AgeBucket[] = [
     framing:
       'Early teens are practicing independence. Lean toward chores that own a full room or recurring task.',
     chores: [
+      // Self-care (no photo).
+      {
+        title: 'Brush teeth (morning + night)',
+        blurb: 'Both. Every day. The whole two minutes.',
+        kind: 'self-care',
+        tips: [
+          'Morning AND night',
+          'Two whole minutes each time',
+          'Floss at night',
+        ],
+        verification: 'checklist',
+      },
+      {
+        title: 'Shower',
+        blurb: 'Hair clean, body clean, towel hung up.',
+        kind: 'self-care',
+        tips: [
+          'Hair: shampoo + condition',
+          'Body: soap top to bottom',
+          'Towel hung up, not on the floor',
+        ],
+        verification: 'checklist',
+      },
+      {
+        title: 'Deodorant',
+        blurb: 'Non-negotiable at this age.',
+        kind: 'self-care',
+        tips: [
+          'After your shower works best',
+          'Both armpits',
+          'Cap on, lid closed',
+        ],
+        verification: 'checklist',
+      },
       {
         title: 'Maintain bedroom (weekly)',
         blurb: 'A real clean — floor, surfaces, made bed, organized desk.',
@@ -265,6 +439,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Bed made, laundry put away',
           'Trash out, desk organized',
         ],
+        verification: 'photo',
       },
       {
         title: 'Wash own laundry',
@@ -275,6 +450,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Don’t overfill the machine',
           'Move to dryer same day; fold within an hour',
         ],
+        verification: 'photo',
       },
       {
         title: 'Clean the bathroom counter + sink',
@@ -285,6 +461,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Spray + wipe with antibacterial',
           'Mirror streak-free',
         ],
+        verification: 'photo',
       },
       {
         title: 'Vacuum a common area',
@@ -295,6 +472,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Edges + middle',
           'Empty the canister when done',
         ],
+        verification: 'photo',
       },
       {
         title: 'Cook a simple meal',
@@ -305,6 +483,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Plate it like you’d serve a guest',
           'Wash the pan after',
         ],
+        verification: 'photo',
       },
       {
         title: 'Take out trash + recycling',
@@ -315,6 +494,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Recycling sorted (no food)',
           'Both bins back outside',
         ],
+        verification: 'photo',
       },
     ],
   },
@@ -334,6 +514,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Laundry caught up',
           'Trash and recycling out',
         ],
+        verification: 'photo',
       },
       {
         title: 'Run own laundry routine',
@@ -344,6 +525,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Fold or hang within an hour',
           'Drawers, not the floor',
         ],
+        verification: 'photo',
       },
       {
         title: 'Clean the bathroom (full)',
@@ -354,6 +536,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Mirror streak-free',
           'Toilet and floor last',
         ],
+        verification: 'photo',
       },
       {
         title: 'Cook a full family meal',
@@ -364,6 +547,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Clean as you go',
           'Serve, eat, then wash',
         ],
+        verification: 'photo',
       },
       {
         title: 'Vacuum + mop a room',
@@ -374,6 +558,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Vacuum first, then mop',
           'Get the edges',
         ],
+        verification: 'photo',
       },
       {
         title: 'Wash the car',
@@ -384,6 +569,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Top down, edges + windows',
           'Rinse + dry to avoid spots',
         ],
+        verification: 'photo',
       },
       {
         title: 'Mow the lawn',
@@ -394,6 +580,7 @@ export const AGE_BUCKETS: AgeBucket[] = [
           'Overlap rows slightly',
           'Empty the bag as you go',
         ],
+        verification: 'photo',
       },
     ],
   },

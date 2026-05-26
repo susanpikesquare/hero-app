@@ -81,7 +81,11 @@ export function ParentQueueView() {
       return;
     }
     let cancelled = false;
-    const paths = pending.map((p) => p.photo_path);
+    // Self-care (checklist) submissions have a NULL photo_path — filter
+    // them out so we don't ask Supabase to sign a non-existent path.
+    const paths = pending
+      .map((p) => p.photo_path)
+      .filter((p): p is string => p !== null);
     supabase.storage
       .from('submissions')
       .createSignedUrls(paths, 60 * 10)
@@ -191,7 +195,7 @@ export function ParentQueueView() {
               {pending.map((sub) => {
                 const chore = chores.find((c) => c.id === sub.chore_id);
                 const kid = kids.find((k) => k.id === sub.submitted_by);
-                const signedUrl = signedUrls[sub.photo_path];
+                const signedUrl = sub.photo_path ? signedUrls[sub.photo_path] : null;
                 return (
                   <QueueCard
                     key={sub.id}

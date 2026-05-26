@@ -25,6 +25,7 @@ export type Database = {
           reference_photo_path: string | null;
           reward_weight: number;
           title: string;
+          verification_kind: Database['public']['Enums']['verification_kind'];
         };
         Insert: {
           active?: boolean;
@@ -38,6 +39,7 @@ export type Database = {
           reference_photo_path?: string | null;
           reward_weight?: number;
           title: string;
+          verification_kind?: Database['public']['Enums']['verification_kind'];
         };
         Update: {
           active?: boolean;
@@ -51,6 +53,7 @@ export type Database = {
           reference_photo_path?: string | null;
           reward_weight?: number;
           title?: string;
+          verification_kind?: Database['public']['Enums']['verification_kind'];
         };
         Relationships: [
           {
@@ -191,7 +194,7 @@ export type Database = {
           parent_override_reason:
             | Database['public']['Enums']['override_reason']
             | null;
-          photo_path: string;
+          photo_path: string | null;
           status: Database['public']['Enums']['submission_status'];
           submitted_at: string;
           submitted_by: string | null;
@@ -208,7 +211,7 @@ export type Database = {
           parent_override_reason?:
             | Database['public']['Enums']['override_reason']
             | null;
-          photo_path: string;
+          photo_path?: string | null;
           status?: Database['public']['Enums']['submission_status'];
           submitted_at?: string;
           submitted_by?: string | null;
@@ -225,7 +228,7 @@ export type Database = {
           parent_override_reason?:
             | Database['public']['Enums']['override_reason']
             | null;
-          photo_path?: string;
+          photo_path?: string | null;
           status?: Database['public']['Enums']['submission_status'];
           submitted_at?: string;
           submitted_by?: string | null;
@@ -299,6 +302,7 @@ export type Database = {
       override_kind: 'approved' | 'rejected';
       override_reason: 'good_enough_today' | 'worked_hard' | 'help_with_rest';
       submission_status: 'pending_ai' | 'pending_parent' | 'complete';
+      verification_kind: 'photo' | 'checklist';
     };
     CompositeTypes: { [_ in never]: never };
   };

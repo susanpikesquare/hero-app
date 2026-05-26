@@ -15,6 +15,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AgeGuidanceCard } from '@/components/age-guidance-card';
 import { BrandButton } from '@/components/brand-button';
 import { BrandHeading } from '@/components/brand-heading';
 import { BrandLogo } from '@/components/brand-logo';
@@ -119,15 +120,32 @@ export default function KidSetupScreen() {
     if (!family || !kid) return;
     // Pull the pre-drafted coaching tips through from the suggestion library
     // so the kid sees them on the chore tile without the parent typing
-    // anything. Custom chores start with no tips — parent edits later.
-    const toCreate: { title: string; kind: string; tips: string[] }[] = [];
+    // anything. Same for verification_kind — self-care chores like
+    // "brush teeth" come in as 'checklist' (no photo). Custom chores
+    // start with no tips and default to 'photo'.
+    const toCreate: {
+      title: string;
+      kind: string;
+      tips: string[];
+      verification: 'photo' | 'checklist';
+    }[] = [];
     for (const s of bucket.chores) {
       if (selected[s.title]) {
-        toCreate.push({ title: s.title, kind: s.kind, tips: s.tips });
+        toCreate.push({
+          title: s.title,
+          kind: s.kind,
+          tips: s.tips,
+          verification: s.verification,
+        });
       }
     }
     for (const c of customChores) {
-      toCreate.push({ title: c.title, kind: 'custom', tips: [] });
+      toCreate.push({
+        title: c.title,
+        kind: 'custom',
+        tips: [],
+        verification: 'photo',
+      });
     }
     if (toCreate.length === 0) {
       // Nothing to save — go straight to the dashboard.
@@ -142,6 +160,7 @@ export default function KidSetupScreen() {
         title: c.title,
         kind: c.kind,
         coaching_tips: c.tips,
+        verification_kind: c.verification,
       }));
       const { error: insertErr } = await supabase.from('chores').insert(rows);
       if (insertErr) throw insertErr;
@@ -234,6 +253,11 @@ export default function KidSetupScreen() {
               </Pressable>
             )}
           </View>
+
+          {/* Calibrate parent expectations BEFORE they pick chores. The card
+              shows social/emotional/cognitive expectations for kids with ADHD
+              at this age plus how that shapes the chore-picking decision. */}
+          <AgeGuidanceCard age={kid.age} kidName={kid.display_name} />
 
           <View
             style={[
