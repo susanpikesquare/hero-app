@@ -40,8 +40,8 @@ export type AgeGuidance = {
 export const AGE_GUIDANCE: AgeGuidance[] = [
   {
     minAge: 4,
-    maxAge: 6,
-    label: 'Ages 4–6',
+    maxAge: 5,
+    label: 'Ages 4–5',
     frame:
       'At this age, kids with ADHD are still building the executive scaffolding for almost everything. Expect lots of body, little time-awareness, and big feelings about small things.',
     dimensions: {
@@ -56,9 +56,9 @@ export const AGE_GUIDANCE: AgeGuidance[] = [
       'Pick 1–3 chores total. Each should be doable in under 5 minutes and feel like a single observable action ("Pillow on the pillow") not a multi-step routine. Self-care like brushing teeth is great here — make it routine, not negotiation.',
   },
   {
-    minAge: 7,
-    maxAge: 9,
-    label: 'Ages 7–9',
+    minAge: 6,
+    maxAge: 8,
+    label: 'Ages 6–8',
     frame:
       'Early elementary kids with ADHD are starting to internalize routines but still need scaffolding to remember them. Initiating is harder than executing.',
     dimensions: {
@@ -73,9 +73,9 @@ export const AGE_GUIDANCE: AgeGuidance[] = [
       'A short list (3–5 chores) with the most important one anchored to a consistent time of day. The reference photo and coaching tips matter most at this age — kids can read short bullets but lose multi-paragraph instructions.',
   },
   {
-    minAge: 10,
+    minAge: 9,
     maxAge: 12,
-    label: 'Ages 10–12',
+    label: 'Ages 9–12',
     frame:
       'Tweens with ADHD are managing more independent work but the gap between "what they can do" and "what they consistently do" widens. Hold the expectation, hold the relationship.',
     dimensions: {
@@ -108,8 +108,8 @@ export const AGE_GUIDANCE: AgeGuidance[] = [
   },
   {
     minAge: 16,
-    maxAge: 25,
-    label: 'Ages 16+',
+    maxAge: 18,
+    label: 'Ages 16–18',
     frame:
       'Older teens with ADHD are practicing adult life with you as a safety net. The goal isn\'t getting chores done — it\'s building the systems they\'ll use when you\'re not there.',
     dimensions: {

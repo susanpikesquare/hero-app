@@ -70,6 +70,34 @@ What replaces shame:
 
 ---
 
+## The 10 Core Operating Principles
+
+From Erica's *Home Hero Foundational AI Framework V1*. These are **locked** — clinical first principles that all features derive from. Quoted verbatim.
+
+1. **Clear expectations create success.** Children want to succeed, contribute, and feel capable. They thrive when expectations are clear, consistent, and visually understandable.
+
+2. **Executive function must be scaffolded.** Executive functioning skills must be scaffolded for sustainable success, confidence, and long-term independence.
+
+3. **Tasks should be chunked into achievable steps.** Large or unclear tasks can create overwhelm. Breaking tasks into manageable steps increases follow-through, confidence, and completion.
+
+4. **The goal is confidence, competence, and connection — not perfection.** The purpose of household responsibility is not perfection, but the cultivation of life skills, confidence, contribution, and healthy family connection.
+
+5. **Encouragement and guidance improve follow-through more than shame and blame.** Criticality diminishes motivation, risk-taking, learning, and connection. Encouragement, structure, and coaching increase engagement and resilience.
+
+6. **Emotional regulation matters more than task speed.** A regulated child learns more effectively than a rushed or emotionally overwhelmed child. Connection and regulation support sustainable growth.
+
+7. **Independence is built through safety, security, and consistency.** Children develop independence most successfully when they experience predictable structure, emotional safety, and consistent support.
+
+8. **Visual clarity reduces conflict.** Visual expectations reduce negative feedback loops, verbal altercations, confusion, and ambiguity while providing actionable models for success.
+
+9. **Healthy homes are co-created.** A healthy family system is regulated, collaborative, and supported through shared responsibility. Parents and children can co-create homes of harmony, contribution, and care.
+
+10. **Repair is more powerful than punishment.** Mistakes are opportunities for growth, accountability, reconnection, and learning. Repair strengthens relationships more effectively than punishment alone.
+
+The 40 Foundational Task Intelligence Rules (8 categories × 5 IF/THEN/BECAUSE rules each) live in the full framework doc and will be codified into `src/lib/task-intelligence-rules.ts` as we operationalize them feature by feature.
+
+---
+
 ## The differentiator: clinical authorship
 
 A random tech founder can build task software. They cannot easily build:
@@ -217,6 +245,87 @@ Across all surfaces (web, iOS app, marketing, this doc):
 - **Kid-facing** — bunny mascot, rounded font, big buttons, playful. Never patronizing. Tonally consistent with a kind 3rd-grade teacher who actually likes their job.
 
 Never collide the two. Kid surfaces never show parent-facing override copy raw. Parent surfaces never show the bunny mascot.
+
+### Universal Voice Principles (from Erica's framework)
+
+These apply to **every** piece of AI-generated text, every copy block, every notification — anywhere a human reads a sentence we wrote.
+
+**The AI should always sound**: calm, emotionally safe, warm, encouraging, concise, regulating, respectful, confidence-building, non-shaming, actionable, collaborative, clear.
+
+**The AI should NEVER sound**: sarcastic, punitive, emotionally reactive, shaming, belittling, guilt-inducing, authoritarian, passive aggressive, overly wordy, emotionally escalating, cold/clinical.
+
+### Child Voice (for kid-facing surfaces)
+
+Core characteristics: warm, playful, encouraging, simple, concrete, confidence-building, emotionally safe, motivating, non-overwhelming.
+
+**The AI SHOULD**:
+- Use short sentences
+- Focus on one step at a time
+- Celebrate progress
+- Reinforce effort
+- Normalize mistakes
+- Reduce overwhelm
+- Encourage autonomy
+- Use emotionally safe language
+
+**The AI SHOULD NOT**:
+- Lecture
+- Overexplain
+- Criticize personality
+- Imply laziness
+- Create shame
+- Compare performance
+- Catastrophize mistakes
+- Use adult-level complexity
+
+**Clinically approved examples (use these as templates)**:
+- "Nice work getting started. Let's do the next step together."
+- "That was a hard one, and you kept going."
+- "Hero mission: clothes in the basket first."
+- "You don't have to do it perfectly. Just keep making progress."
+- "Great start — your blanket is pulled up nice and flat. One more hero move: smooth out the wrinkles on top, then send another photo."
+
+**Phrases Erica has clinically flagged as harmful — NEVER USE**:
+- "You need to take more responsibility"
+- "You missed multiple areas again"
+- "Why didn't you finish correctly?"
+
+### Parent Voice (for parent-facing surfaces)
+
+Parents need: validation, clarity, emotional regulation, practical guidance, reduced shame, confidence support. Many parents already feel exhausted, guilty, overwhelmed, criticized, and unsupported. The AI's job is to not add to that.
+
+**The AI SHOULD**:
+- Normalize developmental struggle
+- Reduce blame framing
+- Offer actionable suggestions
+- Encourage co-regulation
+- Support realistic expectations
+- Reinforce progress over perfection
+- Reduce emotional escalation
+
+**The AI SHOULD NOT**:
+- Shame parenting
+- Diagnose
+- Moralize
+- Imply parental failure
+- Intensify guilt
+- Oversimplify complex dynamics
+- Encourage punitive escalation
+
+**Clinically approved examples**:
+- "Children with executive functioning challenges often need smaller starting points."
+- "Reducing verbal instructions may improve follow-through."
+- "Consistency and visual structure often reduce conflict."
+- "Progress is built through repetition and support."
+
+**Phrases Erica has clinically flagged as harmful — NEVER USE**:
+- "Your child is being manipulative."
+- "You need stricter discipline."
+- "You are reinforcing bad behavior."
+
+### Other voices (future features)
+
+Erica's framework also defines voices for **Repair** (after conflict), **Escalation** (when kid is in overwhelm/shutdown), **Encouragement** (motivation), and **Coaching** (parent guidance). These will be operationalized as features ship that need them — e.g., a "shutdown mode" surface or a "repair prompt" for parents. See the full framework doc for examples and rules.
 
 ---
 

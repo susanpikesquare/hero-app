@@ -50,8 +50,8 @@ export type AgeBucket = {
 export const AGE_BUCKETS: AgeBucket[] = [
   {
     minAge: 4,
-    maxAge: 6,
-    label: 'Ages 4–6',
+    maxAge: 5,
+    label: 'Ages 4–5',
     framing:
       'At this age, small wins build big confidence. Pick chores that feel doable in a few minutes.',
     chores: [
@@ -150,9 +150,9 @@ export const AGE_BUCKETS: AgeBucket[] = [
     ],
   },
   {
-    minAge: 7,
-    maxAge: 9,
-    label: 'Ages 7–9',
+    minAge: 6,
+    maxAge: 8,
+    label: 'Ages 6–8',
     framing:
       'Early elementary kids can do real tasks start-to-finish. Aim for chores they can own without a parent watching.',
     chores: [
@@ -259,9 +259,9 @@ export const AGE_BUCKETS: AgeBucket[] = [
     ],
   },
   {
-    minAge: 10,
+    minAge: 9,
     maxAge: 12,
-    label: 'Ages 10–12',
+    label: 'Ages 9–12',
     framing:
       'Tweens can handle multi-step chores. Pair a daily one with a weekly one.',
     chores: [
@@ -500,8 +500,8 @@ export const AGE_BUCKETS: AgeBucket[] = [
   },
   {
     minAge: 16,
-    maxAge: 25,
-    label: 'Ages 16+',
+    maxAge: 18,
+    label: 'Ages 16–18',
     framing:
       'Older teens are nearly running their own life. Chores here should look like adulting reps.',
     chores: [

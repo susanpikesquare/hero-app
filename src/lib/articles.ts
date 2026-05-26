@@ -41,8 +41,8 @@ export const ARTICLES: Article[] = [
     title: 'Tiny chores, huge wins.',
     blurb:
       'At 4–6, the win is the experience of contributing — not the perfect outcome.',
-    ageBucket: { min: 4, max: 6 },
-    eyebrow: 'Ages 4–6 · Preschool & Kindergarten',
+    ageBucket: { min: 4, max: 5 },
+    eyebrow: 'Ages 4–5 · Preschool & Kindergarten',
     intro: [
       "Kids this age are wired to help. You've probably noticed: a four-year-old will offer to sweep with enthusiasm that fades by middle school. Catch that window. The goal at this stage isn't a sparkling room — it's the experience of being someone who contributes to the home.",
       "Done is doing it. A pillow on the bed counts as made. Three toys back in the bin counts as tidied. Your kid is wiring their own self-image right now, and what we want them to learn is, ‘I am a person who helps.’",
@@ -78,8 +78,8 @@ export const ARTICLES: Article[] = [
     title: 'Real chores, real ownership.',
     blurb:
       'Early elementary kids can complete a task start-to-finish. Your job shifts from doing-with-them to trusting them.',
-    ageBucket: { min: 7, max: 9 },
-    eyebrow: 'Ages 7–9 · Early Elementary',
+    ageBucket: { min: 6, max: 8 },
+    eyebrow: 'Ages 6–8 · Early Elementary',
     intro: [
       "Around 7, something clicks: kids can plan a multi-step task and actually finish it. They can pack their backpack, feed the pet, make their bed in a way that holds up to a photo.",
       "Your job is shifting from ‘doing it together’ to ‘holding the standard while they do it.’ That shift is where most parent-kid chore friction starts — and where this app is most useful.",
@@ -115,8 +115,8 @@ export const ARTICLES: Article[] = [
     title: 'Systems, not tasks.',
     blurb:
       'Tweens can handle multi-step chores AND manage a system. This is where ‘run the household together’ starts.',
-    ageBucket: { min: 10, max: 12 },
-    eyebrow: 'Ages 10–12 · Late Elementary & Tween',
+    ageBucket: { min: 9, max: 12 },
+    eyebrow: 'Ages 9–12 · Late Elementary & Tween',
     intro: [
       "By 10, kids can hold ‘run the system’ in their head, not just ‘do the chore.’ They can pack their own lunches the night before, manage a weekly laundry load, and remember that the dishwasher needs unloading without you bringing it up.",
       "This is the age where executive function makes a leap. Your job is to load them up with chores that exercise that muscle — not just a list of tasks, but ownership over a small domain.",
@@ -190,8 +190,8 @@ export const ARTICLES: Article[] = [
     title: 'Rehearsal for adulthood.',
     blurb:
       'By 16, your kid is two years from running their own household. Treat home like the dress rehearsal.',
-    ageBucket: { min: 16, max: 25 },
-    eyebrow: 'Ages 16+ · Older Teen',
+    ageBucket: { min: 16, max: 18 },
+    eyebrow: 'Ages 16–18 · Older Teen',
     intro: [
       "The frame at 16+ shifts from ‘kid doing chores’ to ‘young adult practicing adulthood under a roof.’ That re-framing changes everything — for them and for you.",
       "If they can't cook a meal, run a load of laundry, or clean a bathroom by the time they leave home, the home didn't teach them. Now is when the teaching counts.",
