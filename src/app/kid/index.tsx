@@ -8,14 +8,15 @@
  */
 
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
+import { KidChoreTile } from '@/components/kid-chore-tile';
 import { KidShell, KidStyles } from '@/components/kid-shell';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useKidSession } from '@/lib/kid-session';
 import { overrideKidMessage } from '@/lib/override-copy';
-import { choreStatusToday, type ChoreTodayStatus } from '@/lib/progress-stats';
+import { choreStatusToday } from '@/lib/progress-stats';
 import {
   descriptorFor,
   earnedCountFor,
@@ -23,16 +24,7 @@ import {
   nextBadgeProgress,
 } from '@/lib/rewards';
 import { choresForKid, submissionsForChore, useChores } from '@/lib/use-chores';
-
-const STATUS_META: Record<
-  ChoreTodayStatus,
-  { label: string; emoji: string; tone: 'done' | 'waiting' | 'try' | 'open' }
-> = {
-  done: { label: 'Done today!', emoji: '✓', tone: 'done' },
-  waiting: { label: 'Waiting on your grown-up', emoji: '⏳', tone: 'waiting' },
-  try_again: { label: 'Your grown-up wants another go', emoji: '🔁', tone: 'try' },
-  not_yet: { label: 'Ready when you are', emoji: '📸', tone: 'open' },
-};
+import { useReferenceUrls } from '@/lib/use-reference-urls';
 
 export default function KidHomeScreen() {
   const theme = useTheme();
@@ -40,6 +32,12 @@ export default function KidHomeScreen() {
   const { state } = useKidSession();
   const { chores, submissions, loading: choresLoading } = useChores(
     state.status === 'ready'
+  );
+  // Batch-fetch signed URLs for every chore's reference photo so the tiles
+  // can show "what 'done' looks like" inline. Returns empty map until the
+  // chores load, which is fine — KidChoreTile falls back to a 📸 placeholder.
+  const referenceUrls = useReferenceUrls(
+    chores.map((c) => c.reference_photo_path)
   );
 
   if (state.status !== 'ready' || choresLoading) {
@@ -179,10 +177,12 @@ export default function KidHomeScreen() {
               ? overrideKidMessage(last.parent_override, last.parent_override_reason)
               : null;
             const status = choreStatusToday(chore.id, kidId, submissions);
+            const refUrl = chore.reference_photo_path
+              ? (referenceUrls[chore.reference_photo_path] ?? null)
+              : null;
             return (
-              <ChoreTile
+              <KidChoreTile
                 key={chore.id}
-                theme={theme}
                 title={chore.title}
                 subtitle={
                   last
@@ -198,6 +198,8 @@ export default function KidHomeScreen() {
                 rewardWeight={chore.reward_weight}
                 onPress={() => router.push(`/kid/submit/${chore.id}`)}
                 isOptional={false}
+                referenceUrl={refUrl}
+                tips={chore.coaching_tips}
               />
             );
           })}
@@ -222,10 +224,12 @@ export default function KidHomeScreen() {
               ? overrideKidMessage(last.parent_override, last.parent_override_reason)
               : null;
             const status = choreStatusToday(chore.id, kidId, submissions);
+            const refUrl = chore.reference_photo_path
+              ? (referenceUrls[chore.reference_photo_path] ?? null)
+              : null;
             return (
-              <ChoreTile
+              <KidChoreTile
                 key={chore.id}
-                theme={theme}
                 title={chore.title}
                 subtitle={
                   last
@@ -241,6 +245,8 @@ export default function KidHomeScreen() {
                 rewardWeight={chore.reward_weight}
                 onPress={() => router.push(`/kid/submit/${chore.id}`)}
                 isOptional
+                referenceUrl={refUrl}
+                tips={chore.coaching_tips}
               />
             );
           })}
@@ -263,121 +269,6 @@ export default function KidHomeScreen() {
         </View>
       )}
     </KidShell>
-  );
-}
-
-function ChoreTile({
-  theme,
-  title,
-  subtitle,
-  overrideLine,
-  status,
-  rewardWeight,
-  onPress,
-  isOptional,
-}: {
-  theme: ReturnType<typeof useTheme>;
-  title: string;
-  subtitle: string;
-  overrideLine: { message: string; emoji: string } | null;
-  status: ChoreTodayStatus;
-  rewardWeight: number;
-  onPress: () => void;
-  isOptional: boolean;
-}) {
-  const meta = STATUS_META[status];
-  const isDone = status === 'done';
-
-  const statusBg =
-    meta.tone === 'done'
-      ? theme.accentSoft
-      : meta.tone === 'try'
-        ? '#F3E8D6'
-        : meta.tone === 'waiting'
-          ? theme.infoSoft
-          : theme.background;
-  const statusFg =
-    meta.tone === 'done'
-      ? theme.accent
-      : meta.tone === 'try'
-        ? '#8A5A1F'
-        : meta.tone === 'waiting'
-          ? theme.info
-          : theme.text;
-
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        KidStyles.card,
-        {
-          backgroundColor: pressed ? theme.accentSoft : theme.backgroundElement,
-          borderColor: isOptional ? theme.info : theme.border,
-          opacity: isDone ? 0.82 : 1,
-        },
-      ]}
-    >
-      <View style={styles.tileHeader}>
-        <Text style={[KidStyles.choreTitle, { color: theme.text, flex: 1 }]}>
-          {title}
-        </Text>
-        {rewardWeight > 1 && (
-          <View
-            style={[
-              styles.weightChip,
-              { backgroundColor: theme.infoSoft, borderColor: theme.info },
-            ]}
-          >
-            <Text style={[styles.weightChipText, { color: theme.info }]}>
-              +{rewardWeight}
-            </Text>
-          </View>
-        )}
-      </View>
-      <Text style={[KidStyles.choreBody, { color: theme.textSecondary }]}>
-        {subtitle}
-      </Text>
-      {overrideLine && (
-        <View
-          style={[
-            styles.overrideMessage,
-            { backgroundColor: theme.background, borderColor: theme.border },
-          ]}
-        >
-          <Text style={styles.overrideEmoji}>{overrideLine.emoji}</Text>
-          <Text style={[styles.overrideText, { color: theme.text }]}>
-            {overrideLine.message}
-          </Text>
-        </View>
-      )}
-      <View
-        style={[
-          styles.statusBadge,
-          { backgroundColor: statusBg, borderColor: theme.border },
-        ]}
-      >
-        <Text style={[styles.statusEmoji, { color: statusFg }]}>{meta.emoji}</Text>
-        <Text style={[styles.statusLabel, { color: statusFg }]}>
-          {isDone && isOptional ? `Bonus ${meta.label.toLowerCase()}` : meta.label}
-        </Text>
-      </View>
-      {!isDone && (
-        <View
-          style={[
-            KidStyles.bigButton,
-            {
-              backgroundColor: isOptional ? theme.info : theme.accent,
-              alignSelf: 'flex-start',
-              paddingHorizontal: Spacing.four,
-            },
-          ]}
-        >
-          <Text style={[KidStyles.bigButtonLabel, { color: theme.background }]}>
-            {status === 'try_again' ? '📸 Try again' : '📸 Take a photo'}
-          </Text>
-        </View>
-      )}
-    </Pressable>
   );
 }
 
@@ -432,43 +323,4 @@ const styles = StyleSheet.create({
   },
   progressFill: { height: '100%' },
   sectionHeader: { gap: Spacing.one, marginTop: Spacing.three },
-  tileHeader: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  weightChip: {
-    paddingHorizontal: Spacing.two,
-    paddingVertical: 2,
-    borderRadius: Radius.pill,
-    borderWidth: 1,
-  },
-  weightChipText: { fontSize: 14, fontWeight: '700' },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.one,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderRadius: Radius.pill,
-    borderWidth: 1,
-    alignSelf: 'flex-start',
-    marginTop: Spacing.one,
-  },
-  statusEmoji: { fontSize: 16 },
-  statusLabel: { fontSize: 13, fontWeight: '700' },
-  overrideMessage: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    marginTop: Spacing.one,
-  },
-  overrideEmoji: { fontSize: 22 },
-  overrideText: {
-    fontFamily: 'system-ui',
-    fontSize: 15,
-    lineHeight: 22,
-    fontWeight: '600',
-    flex: 1,
-  },
 });

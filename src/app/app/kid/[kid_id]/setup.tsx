@@ -117,12 +117,17 @@ export default function KidSetupScreen() {
   const save = async () => {
     setError(null);
     if (!family || !kid) return;
-    const toCreate: { title: string; kind: string }[] = [];
+    // Pull the pre-drafted coaching tips through from the suggestion library
+    // so the kid sees them on the chore tile without the parent typing
+    // anything. Custom chores start with no tips — parent edits later.
+    const toCreate: { title: string; kind: string; tips: string[] }[] = [];
     for (const s of bucket.chores) {
-      if (selected[s.title]) toCreate.push({ title: s.title, kind: s.kind });
+      if (selected[s.title]) {
+        toCreate.push({ title: s.title, kind: s.kind, tips: s.tips });
+      }
     }
     for (const c of customChores) {
-      toCreate.push({ title: c.title, kind: 'custom' });
+      toCreate.push({ title: c.title, kind: 'custom', tips: [] });
     }
     if (toCreate.length === 0) {
       // Nothing to save — go straight to the dashboard.
@@ -136,6 +141,7 @@ export default function KidSetupScreen() {
         kid_id: kid.id,
         title: c.title,
         kind: c.kind,
+        coaching_tips: c.tips,
       }));
       const { error: insertErr } = await supabase.from('chores').insert(rows);
       if (insertErr) throw insertErr;

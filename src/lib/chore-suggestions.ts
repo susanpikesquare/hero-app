@@ -11,6 +11,11 @@
  *     bed including brushing teeth and putting on PJs")
  *   - encouragement-shaped — the title shouldn't read as nagging
  *
+ * Per-chore `tips` are short ADHD-friendly bullets shown on the kid's
+ * chore tile so they don't have to remember what "done" means. Capped
+ * at 3 per chore in the UI. Tips are seeded into chores.coaching_tips
+ * when the parent adds a chore from this library.
+ *
  * `kind` is mostly informational. The AI eval compares the submitted photo
  * to the parent's reference photo regardless of kind; the field is there
  * so future improvements (per-kind prompts, badges, streaks) have a hook.
@@ -21,6 +26,8 @@ export type ChoreSuggestion = {
   /** One short sentence the parent sees while choosing. Not shown to the kid. */
   blurb: string;
   kind: string;
+  /** 1-3 short ADHD-friendly bullets shown to the kid on the chore tile. */
+  tips: string[];
 };
 
 export type AgeBucket = {
@@ -46,26 +53,51 @@ export const AGE_BUCKETS: AgeBucket[] = [
         title: 'Make bed',
         blurb: 'Pillow on the pillow, blanket pulled up — close enough counts.',
         kind: 'bedroom',
+        tips: [
+          'Pillow on the pillow',
+          'Blanket pulled all the way up',
+          'Pat it smooth with your hand',
+        ],
       },
       {
         title: 'Toys in the bin',
         blurb: 'All visible toys back into their box or shelf.',
         kind: 'bedroom',
+        tips: [
+          'Pick a bin first',
+          'Toys on the floor go in',
+          'Close the lid when you’re done',
+        ],
       },
       {
         title: 'Dirty clothes in the hamper',
         blurb: 'Floor is clear; everything dirty made it into the hamper.',
         kind: 'bedroom',
+        tips: [
+          'Sniff test, then in',
+          'Socks count too',
+          'Peek under the bed',
+        ],
       },
       {
         title: 'Shoes on the shelf',
         blurb: 'Shoes paired up and put where they live.',
         kind: 'entry',
+        tips: [
+          'Pairs go together',
+          'Heels face out',
+          'Hang up your coat too',
+        ],
       },
       {
         title: 'Clear my plate',
         blurb: 'Plate, cup, and utensils make it from the table to the sink.',
         kind: 'kitchen',
+        tips: [
+          'Plate to the sink',
+          'Cup and fork too',
+          'Push your chair back in',
+        ],
       },
     ],
   },
@@ -80,31 +112,61 @@ export const AGE_BUCKETS: AgeBucket[] = [
         title: 'Make bed',
         blurb: 'Sheets flat, blanket up, pillow on top.',
         kind: 'bedroom',
+        tips: [
+          'Sheet flat first',
+          'Blanket pulled up',
+          'Pillow on top, smooth',
+        ],
       },
       {
         title: 'Tidy bedroom floor',
         blurb: "Floor is walkable — nothing on the carpet that doesn't belong.",
         kind: 'bedroom',
+        tips: [
+          'Pick a corner to start',
+          'Everything has a home',
+          'You should see all the carpet',
+        ],
       },
       {
         title: 'Put away clean laundry',
         blurb: 'Folded clothes are in drawers or hung up, not in the basket.',
         kind: 'bedroom',
+        tips: [
+          'One item at a time',
+          'Drawers, not floor',
+          'Hang up anything that wrinkles',
+        ],
       },
       {
         title: 'Pack school backpack',
         blurb: 'Tomorrow’s books, folder, and water bottle are in the bag.',
         kind: 'entry',
+        tips: [
+          'Lunchbox in',
+          'Tomorrow’s books and folder in',
+          'Water bottle topped up',
+        ],
       },
       {
         title: 'Wipe the table',
         blurb: 'Table is crumb-free and not sticky after meals.',
         kind: 'kitchen',
+        tips: [
+          'Crumbs into your hand first',
+          'Damp cloth, no streaks',
+          'Lift placemats and check under',
+        ],
       },
       {
         title: 'Feed the pet',
         blurb: 'Bowls have the right amount of food and fresh water.',
         kind: 'pet',
+        tips: [
+          'Use the measuring scoop',
+          'Fresh water on top',
+          'Wipe up any spills',
+        ],
       },
     ],
   },
@@ -119,36 +181,71 @@ export const AGE_BUCKETS: AgeBucket[] = [
         title: 'Make bed daily',
         blurb: 'Bed is made before they leave the room each morning.',
         kind: 'bedroom',
+        tips: [
+          'Pull the sheet up first',
+          'Blanket smooth, no wrinkles',
+          'Pillows on top',
+        ],
       },
       {
         title: 'Weekly bedroom clean',
         blurb: 'Floor clear, surfaces wiped, laundry handled.',
         kind: 'bedroom',
+        tips: [
+          'Floor clear first',
+          'Wipe dust off the desk and shelves',
+          'Vacuum or sweep last',
+        ],
       },
       {
         title: 'Fold and put away laundry',
         blurb: 'Their own clothes are folded and in drawers.',
         kind: 'laundry',
+        tips: [
+          'Match socks first',
+          'Fold shirts in thirds',
+          'Drawer, not chair',
+        ],
       },
       {
         title: 'Pack lunch',
         blurb: 'Lunchbox is ready the night before with a balanced meal.',
         kind: 'kitchen',
+        tips: [
+          'Protein, fruit, snack, drink',
+          'Cold stuff in the fridge until morning',
+          'Lunchbox by the door when packed',
+        ],
       },
       {
         title: 'Empty the dishwasher',
         blurb: 'Clean dishes back in cabinets; dishwasher ready to load.',
         kind: 'kitchen',
+        tips: [
+          'Hand sharp things to a grown-up',
+          'Plates and bowls back in cabinets',
+          'Run again if there are dirty dishes waiting',
+        ],
       },
       {
         title: 'Take out the trash',
         blurb: 'Bin emptied, new bag in, bin returned to its spot.',
         kind: 'kitchen',
+        tips: [
+          'Tie the bag before lifting',
+          'Fresh bag in the can',
+          'Bin back outside in its spot',
+        ],
       },
       {
         title: 'Wipe the bathroom counter',
         blurb: 'Counter clear, toothpaste splatters gone, sink clean.',
         kind: 'bathroom',
+        tips: [
+          'Move everything off the counter',
+          'Use antibacterial wipes',
+          'Check around the faucet handle',
+        ],
       },
     ],
   },
@@ -163,31 +260,61 @@ export const AGE_BUCKETS: AgeBucket[] = [
         title: 'Maintain bedroom (weekly)',
         blurb: 'A real clean — floor, surfaces, made bed, organized desk.',
         kind: 'bedroom',
+        tips: [
+          'Clear floor and surfaces first',
+          'Bed made, laundry put away',
+          'Trash out, desk organized',
+        ],
       },
       {
         title: 'Wash own laundry',
         blurb: 'A load run start to finish: wash, dry, fold, put away.',
         kind: 'laundry',
+        tips: [
+          'Sort by color',
+          'Don’t overfill the machine',
+          'Move to dryer same day; fold within an hour',
+        ],
       },
       {
         title: 'Clean the bathroom counter + sink',
         blurb: 'Surfaces sparkle; mirror is streak-free.',
         kind: 'bathroom',
+        tips: [
+          'Clear the counter',
+          'Spray + wipe with antibacterial',
+          'Mirror streak-free',
+        ],
       },
       {
         title: 'Vacuum a common area',
         blurb: 'Living-room or hallway floor is visibly vacuumed.',
         kind: 'living',
+        tips: [
+          'Move chairs and small stuff first',
+          'Edges + middle',
+          'Empty the canister when done',
+        ],
       },
       {
         title: 'Cook a simple meal',
         blurb: 'A meal they made shows on a plate — sandwich, eggs, pasta.',
         kind: 'kitchen',
+        tips: [
+          'Clean as you go',
+          'Plate it like you’d serve a guest',
+          'Wash the pan after',
+        ],
       },
       {
         title: 'Take out trash + recycling',
         blurb: 'Both bins emptied and back in place; recycling sorted.',
         kind: 'kitchen',
+        tips: [
+          'Bag tied, fresh bag in',
+          'Recycling sorted (no food)',
+          'Both bins back outside',
+        ],
       },
     ],
   },
@@ -202,36 +329,71 @@ export const AGE_BUCKETS: AgeBucket[] = [
         title: 'Maintain bedroom (weekly)',
         blurb: 'Clean, organized, no laundry pile.',
         kind: 'bedroom',
+        tips: [
+          'Floor clear, surfaces wiped',
+          'Laundry caught up',
+          'Trash and recycling out',
+        ],
       },
       {
         title: 'Run own laundry routine',
         blurb: 'Their clothes are clean and put away on a weekly cadence.',
         kind: 'laundry',
+        tips: [
+          'Wash + dry same day',
+          'Fold or hang within an hour',
+          'Drawers, not the floor',
+        ],
       },
       {
         title: 'Clean the bathroom (full)',
         blurb: 'Counter, sink, mirror, toilet all visibly clean.',
         kind: 'bathroom',
+        tips: [
+          'Counter and sink first',
+          'Mirror streak-free',
+          'Toilet and floor last',
+        ],
       },
       {
         title: 'Cook a full family meal',
         blurb: 'A plated meal they made for the household.',
         kind: 'kitchen',
+        tips: [
+          'Plan and shop ahead',
+          'Clean as you go',
+          'Serve, eat, then wash',
+        ],
       },
       {
         title: 'Vacuum + mop a room',
         blurb: 'Floor is visibly vacuumed and mopped, edges included.',
         kind: 'living',
+        tips: [
+          'Move furniture you can',
+          'Vacuum first, then mop',
+          'Get the edges',
+        ],
       },
       {
         title: 'Wash the car',
         blurb: 'Exterior clean, no obvious dirt or streaks.',
         kind: 'outdoor',
+        tips: [
+          'Hose first, then soap',
+          'Top down, edges + windows',
+          'Rinse + dry to avoid spots',
+        ],
       },
       {
         title: 'Mow the lawn',
         blurb: 'Lawn is evenly cut; edges trimmed.',
         kind: 'outdoor',
+        tips: [
+          'Edges first',
+          'Overlap rows slightly',
+          'Empty the bag as you go',
+        ],
       },
     ],
   },
