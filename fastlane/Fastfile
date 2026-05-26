@@ -1,0 +1,100 @@
+# fastlane release pipeline for Home Hero iOS.
+#
+# Pulls the build from the local ios/ workspace, signs with whatever
+# distribution certificate is in your local Keychain (set up via
+# `npx eas-cli credentials --platform ios` last May), and uploads to
+# App Store Connect for TestFlight distribution.
+#
+# Usage:
+#
+#   git pull                              # get latest from Claude's commits
+#   bundle exec fastlane build            # local archive only, no upload (sanity check)
+#   bundle exec fastlane beta             # archive + upload to TestFlight
+#   bundle exec fastlane bump_build       # just increment the build number
+#
+# All lanes work without any cloud quota — they run entirely on your
+# Mac. Replaces `eas build --platform ios` for the production path.
+
+default_platform(:ios)
+
+# The Xcode workspace lives inside ios/. Setting this saves writing it
+# in every lane below.
+WORKSPACE = "ios/HomeHero.xcworkspace"
+SCHEME    = "HomeHero"
+
+platform :ios do
+  before_all do
+    # Make sure the working tree is clean — releasing with uncommitted
+    # changes makes "what was in this build?" impossible to answer later.
+    ensure_git_status_clean(show_uncommitted_changes: true)
+  end
+
+  desc "Increment the iOS build number (Info.plist CFBundleVersion)"
+  lane :bump_build do
+    increment_build_number(
+      xcodeproj: "ios/HomeHero.xcodeproj"
+    )
+  end
+
+  desc "Build locally — archive + export, no upload. For sanity checks."
+  lane :build do
+    increment_build_number(
+      xcodeproj: "ios/HomeHero.xcodeproj"
+    )
+    build_app(
+      workspace: WORKSPACE,
+      scheme: SCHEME,
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "build",
+      clean: true,
+      include_symbols: true,
+      include_bitcode: false
+    )
+  end
+
+  desc "Archive + upload to TestFlight. The full ship."
+  lane :beta do
+    # Bump CFBundleVersion. App Store Connect rejects duplicate build
+    # numbers for the same marketing version, so this has to increment
+    # every time.
+    increment_build_number(
+      xcodeproj: "ios/HomeHero.xcodeproj"
+    )
+
+    build_app(
+      workspace: WORKSPACE,
+      scheme: SCHEME,
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "build",
+      clean: true,
+      include_symbols: true,
+      include_bitcode: false
+    )
+
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+      # We're a single developer; we don't have an internal-testing team
+      # group set up other than the default. Default group works for now.
+      distribute_external: false,
+      changelog: "Latest from main. See git log for details."
+    )
+
+    # Commit the build-number bump so the next `git pull` on this Mac
+    # (or any other) sees the same state.
+    commit_version_bump(
+      xcodeproj: "ios/HomeHero.xcodeproj",
+      message: "chore(ios): bump build number after fastlane beta release"
+    )
+    push_to_git_remote
+  end
+
+  after_all do |lane|
+    UI.success "✓ #{lane} finished cleanly."
+  end
+
+  error do |lane, exception|
+    UI.error "✗ #{lane} failed: #{exception.message}"
+  end
+end
