@@ -46,6 +46,12 @@ platform :ios do
       scheme: SCHEME,
       configuration: "Release",
       export_method: "app-store",
+      # See the `beta` lane comments — same automatic-signing handling
+      # required for the export step.
+      export_options: {
+        signingStyle: "automatic",
+      },
+      xcargs: "-allowProvisioningUpdates",
       output_directory: "build",
       clean: true,
       include_symbols: true,
@@ -67,6 +73,16 @@ platform :ios do
       scheme: SCHEME,
       configuration: "Release",
       export_method: "app-store",
+      # When the project uses automatic signing, the archive step works
+      # but the export-to-ipa step needs to be told to also use automatic
+      # signing (otherwise gym defaults to manual + asks for a profile
+      # mapping that doesn't exist).
+      export_options: {
+        signingStyle: "automatic",
+      },
+      # Lets xcodebuild fetch/refresh provisioning profiles from Apple
+      # Developer automatically during the export step.
+      xcargs: "-allowProvisioningUpdates",
       output_directory: "build",
       clean: true,
       include_symbols: true,
