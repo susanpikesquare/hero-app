@@ -1,44 +1,48 @@
-# fastlane
+fastlane documentation
+----
 
-Local-only release pipeline for the iOS app. Replaces `eas build --platform ios` so we never burn EAS Build cloud quota.
+# Installation
 
-## One-time setup
+Make sure you have the latest version of the Xcode command line tools installed:
 
-```bash
-# Install Ruby dependencies (fastlane and friends)
-bundle install
+```sh
+xcode-select --install
 ```
 
-If `bundle` isn't found, you have it from the system Ruby — that's fine, just don't use `sudo`. If permission errors, run `gem install bundler --user-install` first.
+For _fastlane_ installation instructions, see [Installing _fastlane_](https://docs.fastlane.tools/#installing-fastlane)
 
-The first run of `bundle exec fastlane beta` will prompt for your Apple ID 2FA. After that, fastlane caches the session token for 30 days.
+# Available Actions
 
-## Daily workflow
+## iOS
 
-```bash
-git pull                                  # get the latest from Claude's commits
-bundle exec fastlane build                # optional: local-only sanity check (~10 min)
-bundle exec fastlane beta                 # full ship to TestFlight (~15 min)
+### ios bump_build
+
+```sh
+[bundle exec] fastlane ios bump_build
 ```
 
-That's it. No cloud quota burned, no EAS submit interactive prompts, no `--non-interactive` env-var dance.
+Increment the iOS build number (Info.plist CFBundleVersion)
 
-## What each lane does
+### ios build
 
-| Lane | What it does |
-|---|---|
-| `bump_build` | Just increments the iOS build number. Use when you need to bump without shipping. |
-| `build` | Bumps build number + archives the app + exports an `.ipa` into `build/`. No upload. Run this to verify a build works before committing to the upload step. |
-| `beta` | Everything in `build` + uploads to TestFlight + commits the build-number bump + pushes to git. The full ship. |
+```sh
+[bundle exec] fastlane ios build
+```
 
-## What's where
+Build locally — archive + export, no upload. For sanity checks.
 
-- `fastlane/Fastfile` — the lane definitions (this is the script)
-- `fastlane/Appfile` — bundle ID, Apple ID, team ID (no secrets here)
-- `Gemfile` (at project root) — fastlane version pinning
+### ios beta
 
-## Notes
+```sh
+[bundle exec] fastlane ios beta
+```
 
-- **Signing**: fastlane uses your local Keychain's distribution certificate, which was set up via `npx eas-cli credentials --platform ios` (May 2026). If Xcode can build the app, fastlane can sign it.
-- **Build number**: `beta` auto-increments and pushes the bump back to GitHub. So the next person to `git pull` sees the new build number. No conflicts as long as only one person ships at a time.
-- **First ship after this setup**: the build number in Xcode is `1` (or whatever the project file says). App Store Connect rejects this because build 9 was the last EAS-managed one. After the first `fastlane beta`, the number will increment, and after that everything chains correctly.
+Archive + upload to TestFlight. The full ship.
+
+----
+
+This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
+
+More information about _fastlane_ can be found on [fastlane.tools](https://fastlane.tools).
+
+The documentation of _fastlane_ can be found on [docs.fastlane.tools](https://docs.fastlane.tools).
