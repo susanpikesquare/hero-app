@@ -1,11 +1,11 @@
 # Identifiers fastlane needs to talk to App Store Connect.
-# These are not secrets — bundle ID + Team ID + App Store Connect App ID
-# + Apple email are all visible in App Store Connect anyway.
+# These are not secrets — bundle ID + Team ID + Apple email are all
+# visible in App Store Connect anyway.
 
 app_identifier("co.pikesquare.homehero")  # iOS bundle ID
 apple_id("susan@pikesquare.co")           # Apple ID for App Store Connect
 team_id("52YZ35R36U")                     # Apple Developer team (PikeSquare, LLc.)
 
-# App Store Connect App ID — needed for the upload step.
-# This corresponds to the "ASC App ID" returned by `eas submit` earlier.
-itc_team_id("6772587208")
+# Note: fastlane auto-detects the App Store Connect team. If we ever
+# end up on multiple ASC teams, set itc_team_id here (NUMERIC team ID,
+# found at appstoreconnect.apple.com/account → People).
