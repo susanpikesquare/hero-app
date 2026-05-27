@@ -3,7 +3,7 @@
 # visible in App Store Connect anyway.
 
 app_identifier("co.pikesquare.homehero")  # iOS bundle ID
-apple_id("susan@pikesquare.co")           # Apple ID for App Store Connect
+apple_id("susanmmcgovern@yahoo.com")      # Apple ID for App Store Connect (Account Holder)
 team_id("52YZ35R36U")                     # Apple Developer team (PikeSquare, LLc.)
 
 # Note: fastlane auto-detects the App Store Connect team. If we ever
