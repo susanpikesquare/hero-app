@@ -389,12 +389,13 @@ function CompletionStep({
                   themeColor="textSecondary"
                   style={completionStyles.outcomeBody}
                 >
-                  Founding-100 families also get a 30-minute working
-                  session with our founder, Erica. Send us a short note
-                  about your family and we'll send you a code.
+                  Home Hero is primarily an iPhone app. Send us a short
+                  note about your family and we'll set you up on
+                  TestFlight. Founding-100 families also get a 30-minute
+                  working session with our founder, Erica.
                 </ThemedText>
                 <BrandButton
-                  label="Email us for an invite →"
+                  label="Email us for iPhone access →"
                   onPress={onRequestInvite}
                 />
               </View>
