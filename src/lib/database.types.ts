@@ -80,6 +80,11 @@ export type Database = {
           name: string;
           parent_welcomed_at: string | null;
           reward_mode: string;
+          week_one_checkin_answer:
+            | Database['public']['Enums']['week_one_answer']
+            | null;
+          week_one_checkin_answered_at: string | null;
+          week_one_checkin_shown_at: string | null;
         };
         Insert: {
           created_at?: string;
@@ -88,6 +93,11 @@ export type Database = {
           name: string;
           parent_welcomed_at?: string | null;
           reward_mode?: string;
+          week_one_checkin_answer?:
+            | Database['public']['Enums']['week_one_answer']
+            | null;
+          week_one_checkin_answered_at?: string | null;
+          week_one_checkin_shown_at?: string | null;
         };
         Update: {
           created_at?: string;
@@ -96,6 +106,11 @@ export type Database = {
           name?: string;
           parent_welcomed_at?: string | null;
           reward_mode?: string;
+          week_one_checkin_answer?:
+            | Database['public']['Enums']['week_one_answer']
+            | null;
+          week_one_checkin_answered_at?: string | null;
+          week_one_checkin_shown_at?: string | null;
         };
         Relationships: [
           {
@@ -187,6 +202,30 @@ export type Database = {
           max_uses?: number;
           revoked?: boolean;
           times_used?: number;
+        };
+        Relationships: [];
+      };
+      parent_nudges: {
+        Row: {
+          id: string;
+          family_id: string;
+          parent_id: string;
+          kid_id: string;
+          nudged_at: string;
+        };
+        Insert: {
+          id?: string;
+          family_id: string;
+          parent_id: string;
+          kid_id: string;
+          nudged_at?: string;
+        };
+        Update: {
+          id?: string;
+          family_id?: string;
+          parent_id?: string;
+          kid_id?: string;
+          nudged_at?: string;
         };
         Relationships: [];
       };
@@ -314,6 +353,7 @@ export type Database = {
       override_reason: 'good_enough_today' | 'worked_hard' | 'help_with_rest';
       submission_status: 'pending_ai' | 'pending_parent' | 'complete';
       verification_kind: 'photo' | 'checklist';
+      week_one_answer: 'less_conflict' | 'about_the_same' | 'more_conflict';
     };
     CompositeTypes: { [_ in never]: never };
   };

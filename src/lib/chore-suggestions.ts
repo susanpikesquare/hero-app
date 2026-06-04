@@ -39,6 +39,13 @@ export type ChoreSuggestion = {
    * chores like brushing teeth where photographing the kid is not OK.
    */
   verification: 'photo' | 'checklist';
+  /**
+   * Optional override of the bucket-level source list. Use when a specific
+   * chore draws its provenance from a different or narrower source than
+   * the rest of the bucket. Most chores leave this empty and inherit the
+   * bucket's `sources`.
+   */
+  source?: string;
 };
 
 export type AgeBucket = {
@@ -50,6 +57,19 @@ export type AgeBucket = {
   /** A line the parent sees above the list, in encouragement-first tone. */
   framing: string;
   chores: ChoreSuggestion[];
+  /**
+   * Trusted sources whose published guidance informs the chores in this
+   * bucket. Surfaced as a small "drawn from" line in the picker UI so the
+   * parent can see provenance at a glance. Same set as the corresponding
+   * article in `articles.ts`.
+   */
+  sources: string[];
+  /**
+   * Daily-task ceiling drawn from published developmental guidance.
+   * Used by the soft warning when the parent's chore selection exceeds
+   * this number (PRD §9.6 + Workbook Q3.3 — warn, don't block).
+   */
+  dailyTaskCeiling: { min: number; max: number };
 };
 
 export const AGE_BUCKETS: AgeBucket[] = [
@@ -153,6 +173,14 @@ export const AGE_BUCKETS: AgeBucket[] = [
         verification: 'photo',
       },
     ],
+    sources: [
+      'American Academy of Pediatrics · HealthyChildren.org — Age-appropriate chores & responsibilities',
+      'CDC — Child Development Milestones, ages 4–5',
+      'Child Mind Institute — Early childhood development',
+      'ZERO TO THREE — Early childhood guidance',
+      'Center on the Developing Child at Harvard — Foundations of executive function',
+    ],
+    dailyTaskCeiling: { min: 1, max: 2 },
   },
   {
     minAge: 6,
@@ -262,6 +290,14 @@ export const AGE_BUCKETS: AgeBucket[] = [
         verification: 'photo',
       },
     ],
+    sources: [
+      'American Academy of Pediatrics · HealthyChildren.org — Age-appropriate chores & responsibilities',
+      'CDC — Child Development Milestones, middle childhood',
+      'Child Mind Institute — Self-regulation & school-age development',
+      'Understood.org — Learning and thinking differences in early elementary',
+      'Center on the Developing Child at Harvard — Executive function development',
+    ],
+    dailyTaskCeiling: { min: 3, max: 5 },
   },
   {
     minAge: 9,
@@ -393,6 +429,14 @@ export const AGE_BUCKETS: AgeBucket[] = [
         verification: 'photo',
       },
     ],
+    sources: [
+      'American Academy of Pediatrics · HealthyChildren.org — Tween responsibilities & expectations',
+      'Child Mind Institute — Late childhood & early adolescence',
+      'Understood.org — Executive function challenges in tweens',
+      'CHADD (Children and Adults with ADHD) — ADHD in elementary & middle school',
+      'Center on the Developing Child at Harvard — Executive function development',
+    ],
+    dailyTaskCeiling: { min: 3, max: 7 },
   },
   {
     minAge: 13,
@@ -502,6 +546,14 @@ export const AGE_BUCKETS: AgeBucket[] = [
         verification: 'photo',
       },
     ],
+    sources: [
+      'American Academy of Pediatrics · HealthyChildren.org — Teen development & responsibilities',
+      'Child Mind Institute — Adolescent mental health & identity formation',
+      'American Psychological Association — Adolescent development',
+      'CHADD (Children and Adults with ADHD) — ADHD in adolescence',
+      'American Association for Marriage and Family Therapy — Family systems & adolescence',
+    ],
+    dailyTaskCeiling: { min: 2, max: 5 },
   },
   {
     minAge: 16,
@@ -588,6 +640,14 @@ export const AGE_BUCKETS: AgeBucket[] = [
         verification: 'photo',
       },
     ],
+    sources: [
+      'American Academy of Pediatrics · HealthyChildren.org — Older teens & launching young adults',
+      'Child Mind Institute — Older teens & emerging adulthood',
+      'American Psychological Association — Emerging adulthood',
+      'American Association for Marriage and Family Therapy — Family systems & launching',
+      'Understood.org — Older teens with learning & thinking differences',
+    ],
+    dailyTaskCeiling: { min: 1, max: 4 },
   },
 ];
 

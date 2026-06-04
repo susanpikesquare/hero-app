@@ -285,6 +285,31 @@ export default function KidSetupScreen() {
                 />
               ))}
             </View>
+
+            {/* Provenance — show the parent the trusted sources the
+                suggestions in this bucket draw from. Same set as the
+                corresponding article. */}
+            {bucket.sources && bucket.sources.length > 0 && (
+              <View style={styles.sourcesBlock}>
+                <ThemedText
+                  type="smallBold"
+                  themeColor="textMuted"
+                  style={{ textTransform: 'uppercase', letterSpacing: 1 }}
+                >
+                  Drawn from
+                </ThemedText>
+                {bucket.sources.map((src, i) => (
+                  <ThemedText
+                    key={i}
+                    type="small"
+                    themeColor="textSecondary"
+                    style={{ lineHeight: 22 }}
+                  >
+                    · {src}
+                  </ThemedText>
+                ))}
+              </View>
+            )}
           </View>
 
           <View
@@ -355,6 +380,41 @@ export default function KidSetupScreen() {
               {error}
             </ThemedText>
           )}
+
+          {/* Soft task-load warning (Workbook Q3.3). When the selected
+              count plus pre-existing chores would exceed the
+              age-appropriate ceiling published guidance suggests, surface
+              a gentle inline note. Never blocking — parent can proceed. */}
+          {(() => {
+            const selectedCount =
+              countSelections(selected, customChores) + existingTitlesLower.size;
+            const ceiling = bucket.dailyTaskCeiling.max;
+            if (selectedCount <= ceiling) return null;
+            return (
+              <View
+                style={[
+                  styles.warningCard,
+                  { backgroundColor: '#FBF2EE', borderColor: '#D6A89E' },
+                ]}
+              >
+                <ThemedText
+                  type="smallBold"
+                  style={{
+                    color: '#8A4439',
+                    textTransform: 'uppercase',
+                    letterSpacing: 1,
+                  }}
+                >
+                  Heads up
+                </ThemedText>
+                <ThemedText type="default" themeColor="text">
+                  That’s {selectedCount} chores for {bucket.label.toLowerCase()}.
+                  Published guidance generally suggests {bucket.dailyTaskCeiling.min}–{ceiling} at this age.
+                  Going higher tends to break the contribution experience rather than build it — but you know your home best. You can proceed.
+                </ThemedText>
+              </View>
+            );
+          })()}
 
           <View style={styles.saveRow}>
             <BrandButton
@@ -465,6 +525,13 @@ const styles = StyleSheet.create({
   },
   cardTitle: { marginBottom: Spacing.one },
   suggList: { gap: Spacing.two, marginTop: Spacing.two },
+  sourcesBlock: { marginTop: Spacing.four, gap: Spacing.one },
+  warningCard: {
+    padding: Spacing.four,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    gap: Spacing.two,
+  },
   suggRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',

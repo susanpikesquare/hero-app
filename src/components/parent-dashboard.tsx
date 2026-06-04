@@ -29,6 +29,11 @@ import {
 } from '@/lib/rewards';
 import { choresForKid, submissionsForChore, useChores } from '@/lib/use-chores';
 import { useFamily } from '@/lib/use-family';
+import {
+  NUDGE_METACOGNITION_THRESHOLD,
+  recordNudge,
+  useNudgeCount,
+} from '@/lib/use-nudge';
 
 export function ParentDashboard() {
   const theme = useTheme();
@@ -498,6 +503,20 @@ export function ParentDashboard() {
                       })}
                     </View>
                   )}
+
+                  {/* Gentle nudge + AI metacognition (per Erica June 3).
+                      In MVP we log the nudge but don't yet ship cross-
+                      device push (Beta, PRD §9.13). The metacognition
+                      callout fires when count >= NUDGE_METACOGNITION_THRESHOLD. */}
+                  {parent && family && (
+                    <NudgeRow
+                      kidId={kid.id}
+                      kidName={kid.display_name}
+                      familyId={family.id}
+                      parentId={parent.id}
+                      theme={theme}
+                    />
+                  )}
                 </Card>
               );
             })
@@ -792,6 +811,94 @@ function AddKidRow({
   );
 }
 
+/**
+ * Per-kid nudge button + coaching callout. Lives at the bottom of each
+ * kid card on the parent dashboard.
+ *
+ * MVP behavior:
+ *   - Tap the button → log a nudge row, bump the local count.
+ *   - When count >= NUDGE_METACOGNITION_THRESHOLD, render a soft callout
+ *     above the button: "You've nudged {kid} N times today. Want to try
+ *     a different approach?"
+ *   - Cross-device push to the kid's device is deferred to Beta (see
+ *     docs/engineering-defaults.md + PRD §9.13). In v0 the log itself
+ *     is the value — it powers the metacognition + the kid-initiated
+ *     metric.
+ */
+function NudgeRow({
+  kidId,
+  kidName,
+  familyId,
+  parentId,
+  theme,
+}: {
+  kidId: string;
+  kidName: string;
+  familyId: string;
+  parentId: string;
+  theme: ReturnType<typeof useTheme>;
+}) {
+  const { count, bump } = useNudgeCount(kidId);
+  const [busy, setBusy] = useState(false);
+  const overThreshold = count >= NUDGE_METACOGNITION_THRESHOLD;
+
+  const onNudge = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await recordNudge({ familyId, parentId, kidId });
+      bump();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <View style={styles.nudgeRow}>
+      {overThreshold && (
+        <View
+          style={[
+            styles.nudgeCallout,
+            { backgroundColor: '#FBF2EE', borderColor: '#D6A89E' },
+          ]}
+        >
+          <ThemedText
+            type="smallBold"
+            style={{
+              color: '#8A4439',
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+            }}
+          >
+            A gentle note
+          </ThemedText>
+          <ThemedText type="default" themeColor="text">
+            You've nudged {kidName} {count} times today. When nudges pile
+            up, they tend to stop landing. Want to try a different
+            approach? The coaching library has paired examples — same
+            moment, two ways.
+          </ThemedText>
+        </View>
+      )}
+
+      <View style={styles.nudgeButtonRow}>
+        <BrandButton
+          variant="ghost"
+          label={
+            busy
+              ? 'Nudging…'
+              : count === 0
+                ? 'Gentle nudge'
+                : `Gentle nudge (${count} today)`
+          }
+          onPress={onNudge}
+          disabled={busy}
+        />
+      </View>
+    </View>
+  );
+}
+
 function PulseStat({
   theme,
   value,
@@ -914,6 +1021,14 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     marginTop: Spacing.one,
   },
+  nudgeRow: { marginTop: Spacing.three, gap: Spacing.three },
+  nudgeCallout: {
+    padding: Spacing.four,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    gap: Spacing.two,
+  },
+  nudgeButtonRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.three },
   rewardChip: {
     flexDirection: 'row',
     alignItems: 'center',
