@@ -82,8 +82,11 @@ export const ARTICLES: Article[] = [
     takeaway:
       "At this age, the win is the repetition of being someone who participates. The skill catches up later — published research says executive function continues maturing well into the twenties.",
     sources: [
+      "American Academy of Pediatrics · HealthyChildren.org — Age-appropriate chores & responsibilities",
       "CDC — Child Development Milestones, ages 4–5",
-      "AAP HealthyChildren.org — Age-appropriate chores",
+      "Child Mind Institute — Early childhood development",
+      "ZERO TO THREE — Early childhood guidance",
+      "Center on the Developing Child at Harvard — Foundations of executive function",
     ],
   },
   {
@@ -123,8 +126,11 @@ export const ARTICLES: Article[] = [
     takeaway:
       "6–8 is the first age the app expects independent completion. The reference photo, the short tips, and the conservative ceiling all exist to make that independence learnable.",
     sources: [
-      "CDC — Child Development Milestones, ages 6–8",
-      "AAP HealthyChildren.org — Age-appropriate chores",
+      "American Academy of Pediatrics · HealthyChildren.org — Age-appropriate chores & responsibilities",
+      "CDC — Child Development Milestones, middle childhood",
+      "Child Mind Institute — Self-regulation & school-age development",
+      "Understood.org — Learning and thinking differences in early elementary",
+      "Center on the Developing Child at Harvard — Executive function development",
     ],
   },
   {
@@ -164,9 +170,11 @@ export const ARTICLES: Article[] = [
     takeaway:
       "9–12 is the rehearsal for the teenage years. The patterns of ownership, weekly cadence, and self-assessment that land now are the ones that hold into 13+.",
     sources: [
-      "CDC — Child Development Milestones, ages 9–11",
-      "AAP HealthyChildren.org — Age-appropriate chores",
-      "Cleveland Clinic — Executive function development",
+      "American Academy of Pediatrics · HealthyChildren.org — Tween responsibilities & expectations",
+      "Child Mind Institute — Late childhood & early adolescence",
+      "Understood.org — Executive function challenges in tweens",
+      "CHADD (Children and Adults with ADHD) — ADHD in elementary & middle school",
+      "Center on the Developing Child at Harvard — Executive function development",
     ],
   },
   {
@@ -206,9 +214,11 @@ export const ARTICLES: Article[] = [
     takeaway:
       "Early teens are practicing being adults in your house. The app's voice, ceiling, and override language are all tuned around that — not around chore completion as an end in itself.",
     sources: [
-      "AAP HealthyChildren.org — Teen development & responsibilities",
-      "Cleveland Clinic — Executive function development",
-      "Common Sense Media — Age-appropriate expectations",
+      "American Academy of Pediatrics · HealthyChildren.org — Teen development & responsibilities",
+      "Child Mind Institute — Adolescent mental health & identity formation",
+      "American Psychological Association — Adolescent development",
+      "CHADD (Children and Adults with ADHD) — ADHD in adolescence",
+      "American Association for Marriage and Family Therapy — Family systems & adolescence",
     ],
   },
   {
@@ -248,9 +258,11 @@ export const ARTICLES: Article[] = [
     takeaway:
       "Two years from launch, your teen is rehearsing the systems they'll run on their own. The app's role at this age is the shared accountability surface — they're meant to be running most of it themselves.",
     sources: [
-      "AAP HealthyChildren.org — Teen development & responsibilities",
-      "Common Sense Media — Older teens & autonomy",
-      "Cleveland Clinic — Executive function development",
+      "American Academy of Pediatrics · HealthyChildren.org — Older teens & launching young adults",
+      "Child Mind Institute — Older teens & emerging adulthood",
+      "American Psychological Association — Emerging adulthood",
+      "American Association for Marriage and Family Therapy — Family systems & launching",
+      "Understood.org — Older teens with learning & thinking differences",
     ],
   },
 ];

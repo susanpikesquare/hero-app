@@ -360,7 +360,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       },
       {
         type: 'p',
-        text: 'Inside the app you’ll find short context pieces, organized by age bucket — ages 5–7, 8–10, 11–13, 14+. They’re not parenting advice. They explain the thinking behind what the app is recommending: why this chore at this age, why this many tasks per day, why a kid with executive-function load might need a smaller step. The content is curated from published developmental guidance — CDC childhood development milestones, AAP age-appropriate chore guidelines, and similar industry sources — and synthesized into two-minute reads you can skim while the coffee’s brewing. Linked contextually from the dashboard when they match what you’re experiencing this week.',
+        text: 'Inside the app you’ll find short context pieces, organized by age bucket. They’re not parenting advice. They explain the thinking behind what the app is recommending: why this chore at this age, why this many tasks per day, why a kid with executive-function load might need a smaller step. The content is curated from trusted sources that specialize in child psychology, neurodivergent and neurotypical development across all ages, and family therapy — including the American Academy of Pediatrics, the CDC, the Child Mind Institute, Understood.org, CHADD, the Center on the Developing Child at Harvard, the American Psychological Association, and the American Association for Marriage and Family Therapy. Each article shows its source list so you can see exactly where the developmental claims come from. Linked contextually from the dashboard when they match what you’re experiencing this week.',
       },
     ],
   },
