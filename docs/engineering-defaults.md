@@ -222,6 +222,91 @@ Tracked separately in `docs/workbook-decisions.md`:
 
 ---
 
+## Engineering work still pending (post-Batch D)
+
+Tracked here so the next session starts with full context.
+
+### D6 — Instance-based status reading (medium scope)
+
+**What it is:** Pivot the dashboard + kid tile to read today's status
+from `chore_instances.status` instead of computing from submissions.
+
+**Why deferred:** The existing submission-derived logic
+(`choreStatusToday()`) is consistent for daily chores, which is every
+chore in production today. The benefit of D6 is mostly invisible until
+families have actual weekly chores. Half-implementing it would risk
+breaking the working flow.
+
+**To land it cleanly:**
+1. Server-side trigger on `submissions` insert that finds today's
+   `chore_instance` for (chore_id, kid_id) and updates its `status` to
+   match the submission state. New file:
+   `supabase/migrations/*_v0_submission_to_instance_trigger.sql`.
+2. New helper in `chore-instances.ts`: `statusForInstance(instance)`
+   returning the same `ChoreTodayStatus` enum that `choreStatusToday()`
+   does today.
+3. Refactor consumers (`parent-dashboard.tsx`, `parent-queue-view.tsx`,
+   `/kid/index.tsx`, `/app/kid/[kid_id]/index.tsx`, `KidChoreTile`) to
+   prefer instance-based status when an instance row exists, falling
+   back to submission-derived for chores without an instance.
+4. Verify the dashboard pulse counts (`familyHops`, `familyDone`,
+   `familyRequired`, `familyAwaiting`) compute identically with the new
+   path.
+
+### D7 — Multi-household refactor (large, dedicated session)
+
+**What it is:** Make a kid a top-level entity that can belong to
+multiple parent households simultaneously. Standards travel with the
+kid. Per Erica's June 3 ask (product-vision.md §3, §4¾).
+
+**Why deferred:** Genuinely 3-5 days of focused engineering. Touches:
+- Schema (new `kid_household_memberships` join table; `chores.family_id`
+  semantics; potentially every FK referencing family_id)
+- RLS on every table that references family_id (~10 policies)
+- Auth context — parent needs a "currently viewing as household X" state
+- Parent dashboard reconciliation: a co-parent in a second household
+  sees the same kid, the same chore titles, but their own household's
+  recognition + nudge log
+- Standards reconciliation: when households disagree on a chore's
+  reference photo or tips, whose wins? (Probably: per-household
+  overrides, with a soft note when they diverge.)
+- Migration story: a single-household kid today should silently become
+  a multi-household-capable kid tomorrow without disruption.
+
+**Recommended order for the dedicated session:**
+1. Migration: `kid_household_memberships(kid_id, household_id,
+   primary, joined_at)`. Existing kids get one row with
+   `primary=true`.
+2. Update every RLS policy to read membership instead of
+   `family_members.family_id` directly. Test exhaustively in a branch
+   database.
+3. Auth context state: `activeHouseholdId` separate from
+   `parentHouseholdIds[]`.
+4. Parent dashboard: show all kids the parent has access to across all
+   their households, grouped by household. Co-parent invitation flow.
+5. Per-household overrides on chore standards.
+
+### Smaller deferred items
+
+- **Per-chore source field population.** B1 added `source?: string` on
+  `ChoreSuggestion` but didn't populate any. Bucket-level sources
+  already cover the surface in the UI. Defer until specific chores
+  need overrides.
+- **Parent PIN rate limiting.** Engineering-defaults §3 specifies the
+  policy. No PIN flow exists in v0; Kid Mode unlock is currently
+  uncovered. Land both together when shared-device Kid Mode lands.
+- **Kid-deletion photo cascade.** Engineering-defaults §8. Parent can
+  delete a kid (cascades to chores, submissions in DB), but Storage
+  photos for that kid are orphaned. Sweeper job TBD.
+
+### What requires a new native iOS build
+
+- D5 (expo-notifications) requires a fresh native bundle. The next
+  `fastlane beta` run picks it up. The current build (in flight when
+  Batch B started) only delivers Batch A.
+
+---
+
 *This doc is the answer key for engineering decisions. If a future
 engineer asks "did we ever decide X?" — check here. If a decision
 needs to change, edit here first, then the code.*
