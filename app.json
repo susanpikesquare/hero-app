@@ -54,6 +54,12 @@
           "photosPermission": "Home Hero needs your photo library so kids can choose a finished-chore photo to submit.",
           "cameraPermission": "Home Hero needs the camera so kids can submit a photo of their finished chore."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#5E7A5C"
+        }
       ]
     ],
     "experiments": {

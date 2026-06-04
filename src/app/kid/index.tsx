@@ -16,6 +16,7 @@ import { KidShell, KidStyles } from '@/components/kid-shell';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { ensureToday } from '@/lib/chore-instances';
+import { scheduleForKid } from '@/lib/kid-reminders';
 import { useKidSession } from '@/lib/kid-session';
 import { resolveKidMode, VOICE } from '@/lib/kid-mode';
 import { overrideKidMessage } from '@/lib/override-copy';
@@ -40,11 +41,22 @@ export default function KidHomeScreen() {
   // Materialize today's chore_instances on the server so the kid surface
   // is consistent with the rest of the system. Best effort.
   const familyIdForEffect = state.status === 'ready' ? state.family.id : null;
+  const kidIdForEffect = state.status === 'ready' ? state.kid.id : null;
+  const kidNameForEffect = state.status === 'ready' ? state.kid.display_name : null;
   useEffect(() => {
     if (familyIdForEffect) {
       void ensureToday(familyIdForEffect);
     }
   }, [familyIdForEffect]);
+
+  // Schedule kid-side local reminders (morning + afternoon) on session
+  // ready. Idempotent — calling repeatedly with the same kid is safe.
+  // Asks for notification permission on first run; no-op on web.
+  useEffect(() => {
+    if (kidIdForEffect && kidNameForEffect) {
+      void scheduleForKid({ kidId: kidIdForEffect, kidName: kidNameForEffect });
+    }
+  }, [kidIdForEffect, kidNameForEffect]);
   // Batch-fetch signed URLs for every chore's reference photo so the tiles
   // can show "what 'done' looks like" inline. Returns empty map until the
   // chores load, which is fine — KidChoreTile falls back to a 📸 placeholder.

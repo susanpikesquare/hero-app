@@ -66,7 +66,17 @@ export function useChores(enabled: boolean) {
       recurrenceType?: 'none' | 'daily' | 'weekly';
       /** Required if recurrenceType is 'weekly'. ISO weekdays: 1=Mon..7=Sun. */
       recurrenceDays?: number[];
+      /** PRD §18 task type. Defaults to 'photo_verification'. */
+      taskType?:
+        | 'photo_verification'
+        | 'parent_verification'
+        | 'self_attest';
     }) => {
+      // Keep verification_kind in sync with task_type for the duration the
+      // legacy column is still read by the AI pipeline + kid tile.
+      const taskType = opts.taskType ?? 'photo_verification';
+      const verification_kind: 'photo' | 'checklist' =
+        taskType === 'photo_verification' ? 'photo' : 'checklist';
       const { error: insertErr } = await supabase.from('chores').insert({
         family_id: opts.familyId,
         kid_id: opts.kidId,
@@ -76,6 +86,8 @@ export function useChores(enabled: boolean) {
         reward_weight: opts.rewardWeight ?? 1,
         recurrence_type: opts.recurrenceType ?? 'daily',
         recurrence_days: opts.recurrenceDays ?? [],
+        task_type: taskType,
+        verification_kind,
       });
       if (insertErr) throw insertErr;
       await reload();

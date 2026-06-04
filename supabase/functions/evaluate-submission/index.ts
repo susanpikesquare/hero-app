@@ -38,6 +38,10 @@ Deno.serve(async (req: Request) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  // Hoisted so the unhandled-error catch at the bottom can use them.
+  let submission_id: string | undefined;
+  let sb: ReturnType<typeof createClient> | null = null;
+
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -45,7 +49,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const body = (await req.json().catch(() => null)) as { submission_id?: string } | null;
-    const submission_id = body?.submission_id;
+    submission_id = body?.submission_id;
     if (!submission_id) {
       return jsonResp({ error: 'submission_id required' }, 400);
     }
@@ -78,7 +82,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // 2. Service-role client for reading chore + signing URLs + writing back.
-    const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const { data: chore, error: choreErr } = await sb
       .from('chores')
@@ -263,12 +267,35 @@ Reply with JSON only:
       }
     );
 
+    // AI failure fallback (engineering-defaults §7): if anything below
+    // breaks, route the submission to the parent queue with a neutral
+    // "sent for review" state. Never strand the kid in pending_ai.
+    const routeToParentOnError = async (logTag: string, detail: unknown) => {
+      console.error(`evaluate-submission: ${logTag}`, detail);
+      const { error: routeErr } = await sb
+        .from('submissions')
+        .update({ status: 'pending_parent' })
+        .eq('id', submission_id);
+      if (routeErr) {
+        console.error(
+          'evaluate-submission: secondary failure routing to parent',
+          routeErr.message
+        );
+      }
+    };
+
     if (!openaiResp.ok) {
       const errText = await openaiResp.text();
-      console.error('OpenAI error:', errText);
+      await routeToParentOnError('OpenAI HTTP error', {
+        status: openaiResp.status,
+        body: errText,
+      });
       return jsonResp(
-        { error: 'openai call failed', status: openaiResp.status, detail: errText },
-        500
+        {
+          error: 'openai call failed; routed to parent queue',
+          status: openaiResp.status,
+        },
+        202
       );
     }
 
@@ -277,16 +304,21 @@ Reply with JSON only:
     };
     const message = openaiJson.choices?.[0]?.message?.content;
     if (!message) {
-      return jsonResp({ error: 'openai returned no content' }, 500);
+      await routeToParentOnError('OpenAI returned no content', openaiJson);
+      return jsonResp(
+        { error: 'openai returned no content; routed to parent queue' },
+        202
+      );
     }
 
     let parsed: { verdict?: string; feedback?: string };
     try {
       parsed = JSON.parse(message);
     } catch {
+      await routeToParentOnError('OpenAI returned non-JSON', message);
       return jsonResp(
-        { error: 'openai returned non-JSON', raw: message },
-        500
+        { error: 'openai returned non-JSON; routed to parent queue', raw: message },
+        202
       );
     }
 
@@ -299,12 +331,34 @@ Reply with JSON only:
       p_feedback: feedback,
     });
     if (rpcErr) {
-      return jsonResp({ error: 'writeback failed', detail: rpcErr.message }, 500);
+      await routeToParentOnError('writeback failed', rpcErr.message);
+      return jsonResp(
+        { error: 'writeback failed; routed to parent queue', detail: rpcErr.message },
+        202
+      );
     }
 
     return jsonResp({ ok: true, verdict, feedback });
   } catch (err) {
     console.error('evaluate-submission unhandled error', err);
-    return jsonResp({ error: String(err) }, 500);
+    // Even on unhandled error, attempt the route — but only if we got
+    // far enough to have a service-role client and a submission id.
+    if (sb && submission_id) {
+      try {
+        await sb
+          .from('submissions')
+          .update({ status: 'pending_parent' })
+          .eq('id', submission_id);
+      } catch (routeErr) {
+        console.error(
+          'evaluate-submission: failed to route to parent in catch',
+          routeErr
+        );
+      }
+    }
+    return jsonResp(
+      { error: 'unhandled; routed to parent queue', detail: String(err) },
+      202
+    );
   }
 });

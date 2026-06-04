@@ -28,6 +28,9 @@ export default function NewChoreScreen() {
   >('daily');
   // ISO weekdays: 1=Mon, 2=Tue ... 7=Sun. Used when recurrence_type=weekly.
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
+  const [taskType, setTaskType] = useState<
+    'photo_verification' | 'parent_verification' | 'self_attest'
+  >('photo_verification');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,6 +64,7 @@ export default function NewChoreScreen() {
         rewardWeight: isOptional ? rewardWeight : 1,
         recurrenceType,
         recurrenceDays: recurrenceType === 'weekly' ? recurrenceDays : [],
+        taskType,
       });
       router.replace('/app');
     } catch (err) {
@@ -183,6 +187,65 @@ export default function NewChoreScreen() {
           {isOptional
             ? 'Extra jobs show up in a separate section for your kid. They’re opt-in and worth bonus rewards.'
             : 'Required chores show on the daily to-do list, worth 1 reward each.'}
+        </ThemedText>
+      </View>
+
+      {/* Task type — PRD §18. Determines how the kid completes the chore
+          AND what shows up in the parent's review queue. */}
+      <View style={styles.pickWrap}>
+        <ThemedText type="smallBold" themeColor="textSecondary">
+          How it gets done
+        </ThemedText>
+        <View style={styles.kidGrid}>
+          {[
+            {
+              value: 'photo_verification' as const,
+              label: 'Photo + AI check',
+              hint:
+                "Kid takes a picture; the AI gives kind, specific feedback. Best for tidy room, made bed, fed pet.",
+            },
+            {
+              value: 'parent_verification' as const,
+              label: 'Parent confirms',
+              hint:
+                "Kid taps Mark done; you confirm in the queue. Best for homework, practice, reading.",
+            },
+            {
+              value: 'self_attest' as const,
+              label: 'Mark done (no review)',
+              hint:
+                'Kid taps Mark done; it counts immediately. Best for self-care: brush teeth, shower.',
+            },
+          ].map((opt) => {
+            const selected = opt.value === taskType;
+            return (
+              <Pressable
+                key={opt.value}
+                onPress={() => setTaskType(opt.value)}
+                style={[
+                  styles.kidChip,
+                  {
+                    backgroundColor: selected ? theme.accent : 'transparent',
+                    borderColor: selected ? theme.accent : theme.border,
+                  },
+                ]}
+              >
+                <ThemedText
+                  type="default"
+                  style={{ color: selected ? theme.background : theme.text }}
+                >
+                  {opt.label}
+                </ThemedText>
+              </Pressable>
+            );
+          })}
+        </View>
+        <ThemedText type="small" themeColor="textMuted">
+          {taskType === 'photo_verification'
+            ? "Kid takes a picture; the AI gives kind, specific feedback. Best for tidy room, made bed, fed pet."
+            : taskType === 'parent_verification'
+              ? "Kid taps Mark done; you confirm in the queue. Best for homework, practice, reading."
+              : 'Kid taps Mark done; it counts immediately. Best for self-care: brush teeth, shower.'}
         </ThemedText>
       </View>
 

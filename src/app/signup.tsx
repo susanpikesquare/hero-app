@@ -97,6 +97,30 @@ export default function SignupScreen() {
       return;
     }
 
+    // 4. Capture the device timezone so the household has a real IANA tz
+    //    (engineering-defaults §1). Best-effort — the column has a UTC
+    //    fallback if this fails. We don't have the family id back from
+    //    the RPC, so we update by membership (the parent is now a member
+    //    of exactly one family).
+    try {
+      const tz =
+        Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+      const { data: members } = await supabase
+        .from('family_members')
+        .select('family_id')
+        .limit(1);
+      const fid = members?.[0]?.family_id;
+      if (fid) {
+        await supabase
+          .from('families')
+          .update({ timezone: tz })
+          .eq('id', fid);
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn('Could not capture family timezone:', err);
+    }
+
     router.replace('/app');
   };
 

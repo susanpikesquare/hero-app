@@ -27,6 +27,7 @@ export type Database = {
           reference_photo_path: string | null;
           reward_weight: number;
           starts_on: string;
+          task_type: Database['public']['Enums']['task_type'];
           title: string;
           verification_kind: Database['public']['Enums']['verification_kind'];
         };
@@ -44,6 +45,7 @@ export type Database = {
           reference_photo_path?: string | null;
           reward_weight?: number;
           starts_on?: string;
+          task_type?: Database['public']['Enums']['task_type'];
           title: string;
           verification_kind?: Database['public']['Enums']['verification_kind'];
         };
@@ -61,6 +63,7 @@ export type Database = {
           reference_photo_path?: string | null;
           reward_weight?: number;
           starts_on?: string;
+          task_type?: Database['public']['Enums']['task_type'];
           title?: string;
           verification_kind?: Database['public']['Enums']['verification_kind'];
         };
@@ -122,6 +125,7 @@ export type Database = {
           name: string;
           parent_welcomed_at: string | null;
           reward_mode: string;
+          timezone: string;
           week_one_checkin_answer:
             | Database['public']['Enums']['week_one_answer']
             | null;
@@ -135,6 +139,7 @@ export type Database = {
           name: string;
           parent_welcomed_at?: string | null;
           reward_mode?: string;
+          timezone?: string;
           week_one_checkin_answer?:
             | Database['public']['Enums']['week_one_answer']
             | null;
@@ -148,6 +153,7 @@ export type Database = {
           name?: string;
           parent_welcomed_at?: string | null;
           reward_mode?: string;
+          timezone?: string;
           week_one_checkin_answer?:
             | Database['public']['Enums']['week_one_answer']
             | null;
@@ -273,6 +279,7 @@ export type Database = {
       };
       submissions: {
         Row: {
+          actor_role: Database['public']['Enums']['actor_role'] | null;
           ai_evaluated_at: string | null;
           ai_feedback: string | null;
           ai_verdict: Database['public']['Enums']['ai_verdict'] | null;
@@ -291,6 +298,7 @@ export type Database = {
           submitted_by: string | null;
         };
         Insert: {
+          actor_role?: Database['public']['Enums']['actor_role'] | null;
           ai_evaluated_at?: string | null;
           ai_feedback?: string | null;
           ai_verdict?: Database['public']['Enums']['ai_verdict'] | null;
@@ -309,6 +317,7 @@ export type Database = {
           submitted_by?: string | null;
         };
         Update: {
+          actor_role?: Database['public']['Enums']['actor_role'] | null;
           ai_evaluated_at?: string | null;
           ai_feedback?: string | null;
           ai_verdict?: Database['public']['Enums']['ai_verdict'] | null;
@@ -394,6 +403,7 @@ export type Database = {
       };
     };
     Enums: {
+      actor_role: 'parent' | 'kid';
       ai_verdict: 'pass' | 'needs_work';
       instance_status:
         | 'open'
@@ -409,6 +419,7 @@ export type Database = {
       override_reason: 'good_enough_today' | 'worked_hard' | 'help_with_rest';
       recurrence_type: 'none' | 'daily' | 'weekly';
       submission_status: 'pending_ai' | 'pending_parent' | 'complete';
+      task_type: 'photo_verification' | 'parent_verification' | 'self_attest';
       verification_kind: 'photo' | 'checklist';
       week_one_answer: 'less_conflict' | 'about_the_same' | 'more_conflict';
     };
