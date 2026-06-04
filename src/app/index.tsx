@@ -1,5 +1,6 @@
 import { Link, useRouter } from 'expo-router';
 import {
+  Image,
   Linking,
   Platform,
   Pressable,
@@ -454,16 +455,47 @@ function WebMarketingLanding() {
             <BrandHeading level="h2" style={styles.sectionTitle}>
               Erica Hospes, LMFT
             </BrandHeading>
-            <ThemedText type="default" themeColor="textSecondary" style={styles.lead}>
-              Erica founded Home Hero out of her own experience as a parent
-              and her years in private practice. The framework that runs
-              underneath every screen — the voice, the language, the
-              developmental fit by age — came out of her conviction that no
-              parent should have to be the family's standard alone.
-            </ThemedText>
-            <ThemedText type="small" themeColor="textMuted" style={styles.lead}>
-              Bio in progress — final version coming soon.
-            </ThemedText>
+            <View
+              style={[
+                styles.founderRow,
+                isWide && styles.founderRowWide,
+              ]}
+            >
+              <Image
+                // eslint-disable-next-line @typescript-eslint/no-require-imports
+                source={require('@/assets/images/erica_hospes.png')}
+                accessible
+                accessibilityLabel="Erica Hospes, LMFT — founder of Home Hero"
+                style={[
+                  styles.founderPhoto,
+                  { borderColor: theme.border },
+                ]}
+                resizeMode="cover"
+              />
+              <View style={styles.founderBio}>
+                <ThemedText type="default" themeColor="text" style={styles.lead}>
+                  Erica founded Home Hero out of her years in private practice
+                  and her own experience as a parent. She is a Licensed
+                  Marriage and Family Therapist with a doctorate in human
+                  sexuality and a master's in transpersonal psychology, and
+                  the founder of The Creation Agency in Los Gatos, where her
+                  practice has long focused on adolescent development and
+                  parental support.
+                </ThemedText>
+                <ThemedText
+                  type="default"
+                  themeColor="textSecondary"
+                  style={styles.lead}
+                >
+                  Before therapy, she spent a decade in the technology
+                  industry — which is part of why Home Hero exists at all.
+                  The framework that runs underneath every screen came out
+                  of what she has seen sitting with families: the moves
+                  that actually help, and the gaps that no app on the
+                  market was filling.
+                </ThemedText>
+              </View>
+            </View>
           </View>
 
           <View
@@ -555,6 +587,26 @@ const styles = StyleSheet.create({
     gap: Spacing.four,
     marginTop: Spacing.three,
     flexWrap: 'wrap',
+  },
+  founderRow: {
+    flexDirection: 'column',
+    gap: Spacing.four,
+    marginTop: Spacing.three,
+  },
+  founderRowWide: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  founderPhoto: {
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    borderWidth: 2,
+  },
+  founderBio: {
+    flex: 1,
+    gap: Spacing.three,
+    maxWidth: ReadableContentWidth,
   },
   wordmark: {
     letterSpacing: 0.5,
