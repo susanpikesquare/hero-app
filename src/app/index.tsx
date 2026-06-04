@@ -27,6 +27,12 @@ const INVITE_SUBJECT = 'Home Hero — invite request';
 const INVITE_BODY =
   "Hi,\n\nI'd like an invite code for Home Hero. A bit about my family:\n\n— ";
 
+// TestFlight public link. Set this when Susan enables it in App Store
+// Connect → Apps → Home Hero Family → TestFlight → (group) → Public Link.
+// When empty, the "Get the app" CTAs route to the invite-request mailto
+// instead.
+const TESTFLIGHT_URL = '';
+
 const PILLARS = [
   {
     title: 'A shared standard, not a parent\'s voice.',
@@ -190,6 +196,20 @@ function WebMarketingLanding() {
   // and the Founding-100 section so prospects move through the mirror
   // before being asked to commit.
   const goToAssessment = () => router.push('/assessment');
+  // The app is primarily phone-based. Web is the home base for parent
+  // setup + heatmap review. When a TestFlight public link is
+  // configured, "Get the app" deep-links there; otherwise it falls
+  // back to the invite-request mailto.
+  const getTheApp = () => {
+    if (TESTFLIGHT_URL) {
+      Linking.openURL(TESTFLIGHT_URL);
+    } else {
+      requestInvite();
+    }
+  };
+  const installCtaLabel = TESTFLIGHT_URL
+    ? 'Get Home Hero on iPhone'
+    : 'Request iPhone access';
 
   return (
     <ScrollView
@@ -215,8 +235,8 @@ function WebMarketingLanding() {
               </Link>
               <BrandButton
                 variant="ghost"
-                label="I have a code"
-                onPress={goToSignup}
+                label={installCtaLabel}
+                onPress={getTheApp}
               />
             </View>
           </View>
@@ -229,17 +249,17 @@ function WebMarketingLanding() {
               level={isWide ? 'display' : 'h1'}
               style={styles.heroTitle}
             >
-              A family operating system, so you can stop running the house and start being in it.
+              A family operating system in your pocket.
             </BrandHeading>
             <ThemedText
               type="default"
               themeColor="textSecondary"
               style={styles.heroSub}
             >
-              Home Hero takes the daily managing — the reminders, the
-              standard-keeping, the specific feedback — off the parent's
-              voice and onto a calm, neutral surface. So the parts of
-              parenting that actually need you get you.
+              Home Hero is primarily an iPhone app. The kid uses it on
+              their device; you set the standards and review on yours.
+              The web (this site, when you sign in) is the home base for
+              setup and the longer view. Both surfaces, one family.
             </ThemedText>
             <View style={styles.heroCTA}>
               <BrandButton
@@ -248,9 +268,19 @@ function WebMarketingLanding() {
               />
               <BrandButton
                 variant="ghost"
-                label="I have a code"
-                onPress={goToSignup}
+                label={installCtaLabel}
+                onPress={getTheApp}
               />
+            </View>
+            <View style={styles.heroSubCTA}>
+              <Pressable onPress={goToSignup} hitSlop={6}>
+                <ThemedText
+                  type="small"
+                  style={[styles.heroSubLink, { color: theme.info }]}
+                >
+                  Already have a code? Sign in on web →
+                </ThemedText>
+              </Pressable>
             </View>
             <ThemedText type="small" themeColor="textMuted" style={styles.heroFootnote}>
               Invite-only while we work with our first cohort of families. The self-check is for you, not us — there's no scoring on the other end.
@@ -297,6 +327,55 @@ function WebMarketingLanding() {
                 </View>
               ))}
             </View>
+          </View>
+
+          {/* App download / surface explainer. Comes right after "Why a
+              chore app" so the reader has the value frame, before
+              "How it works" gets into mechanics. */}
+          <View
+            style={[
+              styles.section,
+              styles.installSection,
+              {
+                backgroundColor: theme.background,
+                borderColor: theme.border,
+              },
+            ]}
+          >
+            <BrandHeading level="eyebrow" themeColor="accent">
+              The app
+            </BrandHeading>
+            <BrandHeading level="h2" style={styles.sectionTitle}>
+              Built for the phone you already have in your hand.
+            </BrandHeading>
+            <ThemedText
+              type="default"
+              themeColor="textSecondary"
+              style={styles.lead}
+            >
+              Home Hero is primarily an iPhone app. Your kid uses it on
+              their device or a shared family one; you use it on yours.
+              The web (this site, when you sign in) is the home base for
+              the longer view — adding kids, picking the standard, reading
+              the heatmap with a coffee in your hand. Two surfaces, one
+              family operating system.
+            </ThemedText>
+            <View style={styles.installRow}>
+              <BrandButton label={installCtaLabel} onPress={getTheApp} />
+              <BrandButton
+                variant="ghost"
+                label="Open on web →"
+                onPress={goToSignup}
+              />
+            </View>
+            <ThemedText
+              type="small"
+              themeColor="textMuted"
+              style={styles.heroFootnote}
+            >
+              iPhone for now. Android is on the roadmap once the iOS loop
+              is proven.
+            </ThemedText>
           </View>
 
           <View style={styles.section}>
@@ -459,6 +538,23 @@ const styles = StyleSheet.create({
   },
   heroFootnote: {
     marginTop: Spacing.one,
+  },
+  heroSubCTA: {
+    marginTop: Spacing.two,
+  },
+  heroSubLink: {
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  installSection: {
+    borderWidth: 1,
+  },
+  installRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.four,
+    marginTop: Spacing.three,
+    flexWrap: 'wrap',
   },
   wordmark: {
     letterSpacing: 0.5,
