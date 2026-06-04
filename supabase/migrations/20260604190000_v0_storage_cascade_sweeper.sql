@@ -1,0 +1,32 @@
+-- Storage photo cascade — intentionally CLIENT-SIDE (engineering-defaults §8).
+--
+-- When a kid is deleted, the DB cascades cleanly:
+--   family_members → chores (FK ON DELETE CASCADE)
+--   family_members → submissions (via chores)
+--
+-- But Supabase enforces a `protect_delete()` trigger on storage.objects
+-- that blocks ALL direct DELETE from a SQL trigger or RPC, even via
+-- SECURITY DEFINER. The intended path for deleting Storage objects is
+-- the `storage.remove()` API call, which goes through Storage's HTTP
+-- layer with proper auth + accounting.
+--
+-- We tried a server-side BEFORE DELETE trigger approach first and
+-- discovered it BROKE the kid delete flow (the cascade-on-kid-delete
+-- fires the chore-delete trigger which calls protect_delete which
+-- aborts the transaction). Rolled back.
+--
+-- Correct pattern: the kid settings screen, before calling
+-- `family_members.delete()`, calls `supabase.storage.remove([paths])`
+-- for every chore reference photo + submission photo belonging to that
+-- kid. See src/app/app/kid/[kid_id]/settings.tsx → doDelete().
+--
+-- This file exists to:
+--   1. Document the design choice (so a future engineer doesn't reach
+--      for the trigger pattern again and rediscover this).
+--   2. Be a placeholder if we ever move the photo deletion server-side
+--      via an edge function (which would NOT use a trigger; it would
+--      call storage.remove() via the JS SDK from the function body).
+
+-- No DDL in this migration. See doDelete() in the kid settings screen
+-- for the active implementation.
+select 1;

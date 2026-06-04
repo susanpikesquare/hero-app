@@ -152,6 +152,66 @@ export default function KidSettingsScreen() {
     setError(null);
     setDeleting(true);
     try {
+      // 1. Cascade-delete the kid's Storage photos BEFORE the DB delete.
+      //    The DB cascade (family_members → chores → submissions FK)
+      //    won't touch storage.objects — Supabase blocks direct DELETE
+      //    on that table via protect_delete(). The Storage API is the
+      //    correct path (engineering-defaults §8).
+      //
+      //    We do this defensively: read all the photo paths first, then
+      //    issue parallel storage.remove() calls. Failures are logged
+      //    but don't block the DB delete — orphaned photos are better
+      //    than a stranded kid record.
+      const [{ data: kidChores }, { data: kidSubmissions }] = await Promise.all(
+        [
+          supabase
+            .from('chores')
+            .select('id, reference_photo_path')
+            .eq('kid_id', kid.id),
+          supabase
+            .from('submissions')
+            .select('photo_path')
+            .in(
+              'chore_id',
+              (
+                await supabase
+                  .from('chores')
+                  .select('id')
+                  .eq('kid_id', kid.id)
+              ).data?.map((c) => c.id) ?? []
+            ),
+        ]
+      );
+
+      const referencePaths = (kidChores ?? [])
+        .map((c) => c.reference_photo_path)
+        .filter((p): p is string => !!p);
+      const submissionPaths = (kidSubmissions ?? [])
+        .map((s) => s.photo_path)
+        .filter((p): p is string => !!p);
+
+      const storageOps: Promise<unknown>[] = [];
+      if (referencePaths.length > 0) {
+        storageOps.push(
+          supabase.storage.from('reference-photos').remove(referencePaths)
+        );
+      }
+      if (submissionPaths.length > 0) {
+        storageOps.push(
+          supabase.storage.from('submissions').remove(submissionPaths)
+        );
+      }
+      const storageResults = await Promise.allSettled(storageOps);
+      for (const r of storageResults) {
+        if (r.status === 'rejected') {
+          console.warn(
+            'Storage cleanup partial failure (DB delete will proceed):',
+            r.reason
+          );
+        }
+      }
+
+      // 2. DB delete. Cascades chores + submissions via existing FK.
       const { error: deleteErr } = await supabase
         .from('family_members')
         .delete()
