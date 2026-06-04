@@ -111,7 +111,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       },
       {
         type: 'p',
-        text: 'The Home Hero framework was developed with Erica Hospes, LMFT, our founding consultant. The product itself is not clinical software, not therapy, and not parenting curriculum. It is a daily co-pilot. If your family is genuinely struggling beyond what the app addresses, we gently point you toward a pediatrician or mental-health provider — referring, not treating.',
+        text: 'Home Hero was founded by Erica Hospes, LMFT, who built it from her own experience as a parent and her years in private practice. The framework that runs underneath every screen — the voice, the language, the developmental fit by age — came out of her conviction that no parent should have to be the family\'s standard alone. The product is a daily co-pilot for the household. If your family is carrying something larger than the daily, we will quietly point you toward someone who can help.',
       },
     ],
   },
@@ -262,7 +262,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       },
       {
         type: 'p',
-        text: 'When you override a submission, you pick a reason. The reason becomes a short, kind message your kid sees in their app. The four reasons were authored with Erica Hospes, LMFT (our founding consultant), and they are the only options for a reason:',
+        text: 'When you override a submission, you pick a reason. The reason becomes a short, kind message your kid sees in their app. The four reasons were written by Erica, our founder — and there are only ever these four:',
       },
       {
         type: 'callout',
@@ -360,7 +360,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       },
       {
         type: 'p',
-        text: 'Inside the app you’ll find five short articles authored with our founding consultant, organized by age bucket — ages 5–7, 8–10, 11–13, 14+. They’re built to be read on a phone in two minutes, while you’re waiting for coffee. Topics include "Why one bedroom is the right starting point," "How to actually say ‘good enough for today,’" and "What to do when your kid stops submitting." Articles are linked contextually from the dashboard when they match what you’re experiencing this week.',
+        text: 'Inside the app you’ll find five short articles authored with Erica, organized by age bucket — ages 5–7, 8–10, 11–13, 14+. They’re built to be read on a phone in two minutes, while you’re waiting for coffee. Topics include "Why one bedroom is the right starting point," "How to actually say ‘good enough for today,’" and "What to do when your kid stops submitting." Articles are linked contextually from the dashboard when they match what you’re experiencing this week.',
       },
     ],
   },
@@ -444,7 +444,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       },
       {
         type: 'p',
-        text: 'Founding families also get a 30-minute one-to-one working session with our founding consultant (Erica Hospes, LMFT) included in their pilot. It is not a clinical session — it is a conversation about how your family is using the app and what we should build next. We can credibly only offer this once and only for the first 100 families — so if you’re reading this and haven’t booked yours, email us to schedule.',
+        text: 'Founding families also get a 30-minute one-to-one working session with Erica, the founder, included in their pilot. A conversation about how your family is using the app and what we should build next. We can credibly only offer this once and only for the first 100 families — so if you’re reading this and haven’t booked yours, email us to schedule.',
       },
       {
         type: 'callout',

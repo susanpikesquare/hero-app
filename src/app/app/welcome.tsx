@@ -145,11 +145,10 @@ export default function WelcomeScreen() {
               themeColor="text"
               style={styles.bodyP}
             >
-              We are not here to teach you how to parent. We are not a
-              therapy app. We are a co-pilot for the daily moments. If
-              your family needs more than that, we will gently point you
-              to a pediatrician or mental-health provider — never the
-              other way around.
+              We are a co-pilot for the daily moments. Nothing more,
+              nothing less. If your family is carrying something larger
+              than the daily, we'll quietly point you toward someone who
+              can help — never the other way around.
             </ThemedText>
           </View>
 

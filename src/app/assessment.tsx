@@ -390,8 +390,8 @@ function CompletionStep({
                   style={completionStyles.outcomeBody}
                 >
                   Founding-100 families also get a 30-minute working
-                  session with our founding consultant. Send us a short
-                  note about your family and we'll send you a code.
+                  session with our founder, Erica. Send us a short note
+                  about your family and we'll send you a code.
                 </ThemedText>
                 <BrandButton
                   label="Email us for an invite →"

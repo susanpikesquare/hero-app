@@ -108,8 +108,8 @@ export default function ParentSaysScreen() {
               themeColor="textMuted"
               style={{ marginTop: Spacing.two }}
             >
-              Authored with Erica Hospes, LMFT. Read once before bed and
-              you'll catch yourself in the kitchen.
+              From Erica Hospes, LMFT, our founder. Read once before bed
+              and you'll catch yourself in the kitchen the next morning.
             </ThemedText>
           </View>
 

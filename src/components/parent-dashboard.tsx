@@ -336,10 +336,10 @@ export function ParentDashboard() {
                 Set up your family operating system
               </BrandHeading>
               <ThemedText type="default" themeColor="textSecondary">
-                Per our consultant Erica Hospes, LMFT, this works best as a
-                whole-family stand-up — every kid in. Add them now while you
-                have the time and attention. You can come back and add more,
-                but the first run should cover everyone.
+                This works best as a whole-family stand-up — every kid in.
+                Add them all now while you have the time and the attention.
+                You can always come back and add more, but the first run
+                should cover everyone.
               </ThemedText>
               <AddKidRow
                 name={newKidName}

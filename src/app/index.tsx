@@ -346,14 +346,14 @@ function WebMarketingLanding() {
               Founding 100
             </BrandHeading>
             <BrandHeading level="h2" style={styles.sectionTitle}>
-              The first 100 families get a 30-minute working session with our founding consultant.
+              The first 100 families get a 30-minute working session with Erica, our founder.
             </BrandHeading>
             <ThemedText type="default" themeColor="text" style={styles.lead}>
-              A one-to-one conversation with our founding consultant, included
-              with founding-family status. Not a clinical session — a chance
-              to talk through how your family is using the app and what we
-              should build next. We can credibly only do this once, and only
-              for the families who help us shape v1.
+              A one-to-one conversation with Erica, included with
+              founding-family status. A chance to talk through how your
+              family is using the app and what we should build next. We can
+              credibly only do this once, and only for the families who help
+              us shape v1.
             </ThemedText>
             <View style={styles.heroCTA}>
               <BrandButton
@@ -370,18 +370,17 @@ function WebMarketingLanding() {
 
           <View style={styles.section}>
             <BrandHeading level="eyebrow" themeColor="info">
-              About the consultant
+              About the founder
             </BrandHeading>
             <BrandHeading level="h2" style={styles.sectionTitle}>
               Erica Hospes, LMFT
             </BrandHeading>
             <ThemedText type="default" themeColor="textSecondary" style={styles.lead}>
-              Erica is the founding consultant whose worldview shapes the
-              Home Hero framework. She works with families every week and
-              wished a tool like this existed for the daily moments her
-              clients were carrying alone. Home Hero is not a clinical
-              service — it's the operating system she wanted in the home
-              between sessions.
+              Erica founded Home Hero out of her own experience as a parent
+              and her years in private practice. The framework that runs
+              underneath every screen — the voice, the language, the
+              developmental fit by age — came out of her conviction that no
+              parent should have to be the family's standard alone.
             </ThemedText>
             <ThemedText type="small" themeColor="textMuted" style={styles.lead}>
               Bio in progress — final version coming soon.
