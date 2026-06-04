@@ -39,6 +39,7 @@ import {
 } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
+import { ensureToday } from '@/lib/chore-instances';
 import { APPROVAL_REASONS, REJECTION } from '@/lib/override-copy';
 import { supabase } from '@/lib/supabase';
 import { useChores } from '@/lib/use-chores';
@@ -59,6 +60,15 @@ export function ParentQueueView() {
     reload,
   } = useChores(!!session);
   const { apply, busy, error: overrideError } = useOverride();
+
+  // Materialize today's chore_instances on the server. Best effort —
+  // legacy submission-based status logic remains the source of truth for
+  // this view; the rows just need to exist.
+  useEffect(() => {
+    if (family?.id) {
+      void ensureToday(family.id);
+    }
+  }, [family?.id]);
 
   // Pending submissions, newest first.
   const pending = useMemo(

@@ -23,6 +23,11 @@ export default function NewChoreScreen() {
   const [kidId, setKidId] = useState<string | null>(null);
   const [isOptional, setIsOptional] = useState(false);
   const [rewardWeight, setRewardWeight] = useState(1);
+  const [recurrenceType, setRecurrenceType] = useState<
+    'daily' | 'weekly' | 'none'
+  >('daily');
+  // ISO weekdays: 1=Mon, 2=Tue ... 7=Sun. Used when recurrence_type=weekly.
+  const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,6 +46,10 @@ export default function NewChoreScreen() {
       setError('Give the chore a title.');
       return;
     }
+    if (recurrenceType === 'weekly' && recurrenceDays.length === 0) {
+      setError('Pick at least one day of the week.');
+      return;
+    }
     setSubmitting(true);
     try {
       await addChore({
@@ -50,6 +59,8 @@ export default function NewChoreScreen() {
         kind: title.toLowerCase().includes('bedroom') ? 'bedroom' : 'custom',
         isOptional,
         rewardWeight: isOptional ? rewardWeight : 1,
+        recurrenceType,
+        recurrenceDays: recurrenceType === 'weekly' ? recurrenceDays : [],
       });
       router.replace('/app');
     } catch (err) {
@@ -173,6 +184,90 @@ export default function NewChoreScreen() {
             ? 'Extra jobs show up in a separate section for your kid. They’re opt-in and worth bonus rewards.'
             : 'Required chores show on the daily to-do list, worth 1 reward each.'}
         </ThemedText>
+      </View>
+
+      {/* Recurrence — when this chore actually appears. Default 'daily'
+          matches every existing chore in the system before this column
+          existed. */}
+      <View style={styles.pickWrap}>
+        <ThemedText type="smallBold" themeColor="textSecondary">
+          Repeats
+        </ThemedText>
+        <View style={styles.kidGrid}>
+          {[
+            { value: 'daily' as const, label: 'Every day' },
+            { value: 'weekly' as const, label: 'Specific days' },
+            { value: 'none' as const, label: 'One time' },
+          ].map((opt) => {
+            const selected = opt.value === recurrenceType;
+            return (
+              <Pressable
+                key={opt.value}
+                onPress={() => setRecurrenceType(opt.value)}
+                style={[
+                  styles.kidChip,
+                  {
+                    backgroundColor: selected ? theme.accent : 'transparent',
+                    borderColor: selected ? theme.accent : theme.border,
+                  },
+                ]}
+              >
+                <ThemedText
+                  type="default"
+                  style={{ color: selected ? theme.background : theme.text }}
+                >
+                  {opt.label}
+                </ThemedText>
+              </Pressable>
+            );
+          })}
+        </View>
+        {recurrenceType === 'weekly' && (
+          <View style={{ gap: Spacing.two }}>
+            <ThemedText type="small" themeColor="textMuted">
+              Tap the days this chore is due.
+            </ThemedText>
+            <View style={styles.kidGrid}>
+              {[
+                { value: 1, label: 'Mon' },
+                { value: 2, label: 'Tue' },
+                { value: 3, label: 'Wed' },
+                { value: 4, label: 'Thu' },
+                { value: 5, label: 'Fri' },
+                { value: 6, label: 'Sat' },
+                { value: 7, label: 'Sun' },
+              ].map((d) => {
+                const selected = recurrenceDays.includes(d.value);
+                return (
+                  <Pressable
+                    key={d.value}
+                    onPress={() =>
+                      setRecurrenceDays((prev) =>
+                        prev.includes(d.value)
+                          ? prev.filter((x) => x !== d.value)
+                          : [...prev, d.value].sort((a, b) => a - b)
+                      )
+                    }
+                    style={[
+                      styles.kidChip,
+                      {
+                        backgroundColor: selected ? theme.info : 'transparent',
+                        borderColor: selected ? theme.info : theme.border,
+                      },
+                    ]}
+                  >
+                    <ThemedText
+                      type="default"
+                      style={{ color: selected ? theme.background : theme.text }}
+                    >
+                      {d.label}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        )}
       </View>
 
       {isOptional && (

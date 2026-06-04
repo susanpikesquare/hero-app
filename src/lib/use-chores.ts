@@ -62,6 +62,10 @@ export function useChores(enabled: boolean) {
       kind: string;
       isOptional?: boolean;
       rewardWeight?: number;
+      /** Defaults to 'daily' (existing behavior). */
+      recurrenceType?: 'none' | 'daily' | 'weekly';
+      /** Required if recurrenceType is 'weekly'. ISO weekdays: 1=Mon..7=Sun. */
+      recurrenceDays?: number[];
     }) => {
       const { error: insertErr } = await supabase.from('chores').insert({
         family_id: opts.familyId,
@@ -70,6 +74,8 @@ export function useChores(enabled: boolean) {
         kind: opts.kind,
         is_optional: opts.isOptional ?? false,
         reward_weight: opts.rewardWeight ?? 1,
+        recurrence_type: opts.recurrenceType ?? 'daily',
+        recurrence_days: opts.recurrenceDays ?? [],
       });
       if (insertErr) throw insertErr;
       await reload();

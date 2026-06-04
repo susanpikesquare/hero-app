@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -27,6 +27,7 @@ import {
   earnedCountFor,
   latestBadge,
 } from '@/lib/rewards';
+import { ensureToday } from '@/lib/chore-instances';
 import { choresForKid, submissionsForChore, useChores } from '@/lib/use-chores';
 import { useFamily } from '@/lib/use-family';
 import {
@@ -42,6 +43,16 @@ export function ParentDashboard() {
   const { family, parent, kids, loading: famLoading, error: famError, addKid } =
     useFamily(!!session);
   const { chores, submissions, loading: choresLoading } = useChores(!!session);
+
+  // Materialize today's chore_instances on the server so the schema is
+  // consistent (every active recurring chore has a row for today). Best
+  // effort — existing submission-derived status logic keeps working for
+  // daily chores regardless of whether this succeeds.
+  useEffect(() => {
+    if (family?.id) {
+      void ensureToday(family.id);
+    }
+  }, [family?.id]);
 
   const [newKidName, setNewKidName] = useState('');
   const [newKidAge, setNewKidAge] = useState('');

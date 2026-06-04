@@ -8,13 +8,14 @@
  */
 
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { KidChoreTile } from '@/components/kid-chore-tile';
 import { KidShell, KidStyles } from '@/components/kid-shell';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { ensureToday } from '@/lib/chore-instances';
 import { useKidSession } from '@/lib/kid-session';
 import { resolveKidMode, VOICE } from '@/lib/kid-mode';
 import { overrideKidMessage } from '@/lib/override-copy';
@@ -35,6 +36,15 @@ export default function KidHomeScreen() {
   const { state } = useKidSession();
   const { chores, submissions, loading: choresLoading, reload: reloadChores } =
     useChores(state.status === 'ready');
+
+  // Materialize today's chore_instances on the server so the kid surface
+  // is consistent with the rest of the system. Best effort.
+  const familyIdForEffect = state.status === 'ready' ? state.family.id : null;
+  useEffect(() => {
+    if (familyIdForEffect) {
+      void ensureToday(familyIdForEffect);
+    }
+  }, [familyIdForEffect]);
   // Batch-fetch signed URLs for every chore's reference photo so the tiles
   // can show "what 'done' looks like" inline. Returns empty map until the
   // chores load, which is fine — KidChoreTile falls back to a 📸 placeholder.

@@ -22,8 +22,11 @@ export type Database = {
           is_optional: boolean;
           kid_id: string;
           kind: string;
+          recurrence_days: number[];
+          recurrence_type: Database['public']['Enums']['recurrence_type'];
           reference_photo_path: string | null;
           reward_weight: number;
+          starts_on: string;
           title: string;
           verification_kind: Database['public']['Enums']['verification_kind'];
         };
@@ -36,8 +39,11 @@ export type Database = {
           is_optional?: boolean;
           kid_id: string;
           kind?: string;
+          recurrence_days?: number[];
+          recurrence_type?: Database['public']['Enums']['recurrence_type'];
           reference_photo_path?: string | null;
           reward_weight?: number;
+          starts_on?: string;
           title: string;
           verification_kind?: Database['public']['Enums']['verification_kind'];
         };
@@ -50,8 +56,11 @@ export type Database = {
           is_optional?: boolean;
           kid_id?: string;
           kind?: string;
+          recurrence_days?: number[];
+          recurrence_type?: Database['public']['Enums']['recurrence_type'];
           reference_photo_path?: string | null;
           reward_weight?: number;
+          starts_on?: string;
           title?: string;
           verification_kind?: Database['public']['Enums']['verification_kind'];
         };
@@ -71,6 +80,39 @@ export type Database = {
             referencedColumns: ['id'];
           },
         ];
+      };
+      chore_instances: {
+        Row: {
+          chore_id: string;
+          completed_at: string | null;
+          created_at: string;
+          due_date: string;
+          family_id: string;
+          id: string;
+          kid_id: string;
+          status: Database['public']['Enums']['instance_status'];
+        };
+        Insert: {
+          chore_id: string;
+          completed_at?: string | null;
+          created_at?: string;
+          due_date: string;
+          family_id: string;
+          id?: string;
+          kid_id: string;
+          status?: Database['public']['Enums']['instance_status'];
+        };
+        Update: {
+          chore_id?: string;
+          completed_at?: string | null;
+          created_at?: string;
+          due_date?: string;
+          family_id?: string;
+          id?: string;
+          kid_id?: string;
+          status?: Database['public']['Enums']['instance_status'];
+        };
+        Relationships: [];
       };
       families: {
         Row: {
@@ -235,6 +277,7 @@ export type Database = {
           ai_feedback: string | null;
           ai_verdict: Database['public']['Enums']['ai_verdict'] | null;
           chore_id: string;
+          chore_instance_id: string | null;
           id: string;
           parent_override: Database['public']['Enums']['override_kind'] | null;
           parent_override_at: string | null;
@@ -252,6 +295,7 @@ export type Database = {
           ai_feedback?: string | null;
           ai_verdict?: Database['public']['Enums']['ai_verdict'] | null;
           chore_id: string;
+          chore_instance_id?: string | null;
           id?: string;
           parent_override?: Database['public']['Enums']['override_kind'] | null;
           parent_override_at?: string | null;
@@ -269,6 +313,7 @@ export type Database = {
           ai_feedback?: string | null;
           ai_verdict?: Database['public']['Enums']['ai_verdict'] | null;
           chore_id?: string;
+          chore_instance_id?: string | null;
           id?: string;
           parent_override?: Database['public']['Enums']['override_kind'] | null;
           parent_override_at?: string | null;
@@ -322,6 +367,10 @@ export type Database = {
       };
       current_user_family_id: { Args: never; Returns: string };
       current_user_is_parent: { Args: never; Returns: boolean };
+      ensure_chore_instances_for_date: {
+        Args: { p_family_id: string; p_due_date: string };
+        Returns: void;
+      };
       generate_kid_join_code: {
         Args: { p_kid_id: string };
         Returns: string;
@@ -346,11 +395,19 @@ export type Database = {
     };
     Enums: {
       ai_verdict: 'pass' | 'needs_work';
+      instance_status:
+        | 'open'
+        | 'submitted'
+        | 'awaiting_parent'
+        | 'passed'
+        | 'complete'
+        | 'missed';
       kid_mode: 'auto' | 'kid' | 'teen' | 'peer';
       member_role: 'parent' | 'kid';
       neurodivergence_context: 'not_specified' | 'neurotypical' | 'neurodivergent';
       override_kind: 'approved' | 'rejected';
       override_reason: 'good_enough_today' | 'worked_hard' | 'help_with_rest';
+      recurrence_type: 'none' | 'daily' | 'weekly';
       submission_status: 'pending_ai' | 'pending_parent' | 'complete';
       verification_kind: 'photo' | 'checklist';
       week_one_answer: 'less_conflict' | 'about_the_same' | 'more_conflict';
