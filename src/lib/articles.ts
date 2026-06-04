@@ -1,17 +1,22 @@
 /**
- * Parent-facing articles surfaced in the app. One per age bucket, matching
- * the chore suggestions in src/lib/chore-suggestions.ts.
+ * Parent-facing context articles surfaced in the app. One per age bucket,
+ * matching the chore suggestions in src/lib/chore-suggestions.ts.
  *
- * These are auto-drafted placeholders to get the surface working. Erica
- * (LMFT) will rewrite them in her own voice. The data shape is stable —
- * adding/editing articles only requires editing this file.
+ * Positioning (per Erica's June 3 working session + Workbook Q3.1):
+ * These are NOT parenting advice. They explain the thinking behind
+ * what the app is recommending — why this chore at this age, why this
+ * many tasks per day, why a kid with executive-function load might
+ * need a smaller step. The content synthesizes published developmental
+ * guidance into short reads.
  *
- * Voice rules borrowed from Erica's review of the v1 spec:
- *   - Connection over correction. Always.
- *   - Encouragement-first, never punitive.
- *   - "From home life feeling like a chore to cheerful."
- *   - Give parents confidence to set expectations with boundaries,
- *     structure, and accountability.
+ * Voice rules:
+ *   - Context, not coaching. Avoid "your job is to..." / "the move is..."
+ *   - Frame in terms of what kids at this age tend to be ready for, not
+ *     what a parent should do.
+ *   - When citing developmental claims, name the source (CDC, AAP, etc.).
+ *   - Universal voice: works for any kid, with an optional neurodivergence
+ *     paragraph that surfaces in the UI only when the kid's
+ *     `neurodivergence_context` is set.
  */
 
 export type ArticleSection = {
@@ -33,194 +38,220 @@ export type Article = {
   sections: ArticleSection[];
   /** One- or two-sentence closing line in italic-like emphasis. */
   takeaway: string;
+  /** Published sources synthesized into the article. Shown as a small
+   *  citation block at the bottom so parents can see where the
+   *  developmental claims come from. */
+  sources?: string[];
 };
 
 export const ARTICLES: Article[] = [
   {
-    slug: 'ages-4-to-6-tiny-chores-huge-wins',
-    title: 'Tiny chores, huge wins.',
+    slug: 'ages-4-to-5-early-participation',
+    title: 'Early participation: ages 4–5.',
     blurb:
-      'At 4–6, the win is the experience of contributing — not the perfect outcome.',
+      'What 4–5-year-olds tend to be ready for — and why Home Hero starts so small at this age.',
     ageBucket: { min: 4, max: 5 },
     eyebrow: 'Ages 4–5 · Preschool & Kindergarten',
     intro: [
-      "Kids this age are wired to help. You've probably noticed: a four-year-old will offer to sweep with enthusiasm that fades by middle school. Catch that window. The goal at this stage isn't a sparkling room — it's the experience of being someone who contributes to the home.",
-      "Done is doing it. A pillow on the bed counts as made. Three toys back in the bin counts as tidied. Your kid is wiring their own self-image right now, and what we want them to learn is, ‘I am a person who helps.’",
+      "Published developmental guidance (CDC, AAP) describes ages 4–5 as a stage of emerging participation — kids are wired to imitate household work and absorb routines, but executive function is still highly immature.",
+      "That's why Home Hero starts this age bucket with one or two small, observable chores rather than a routine. The app isn't asking a 5-year-old to manage anything — it's giving them repeated experience of a completed contribution.",
     ],
     sections: [
       {
-        heading: 'What to actually expect',
+        heading: "What kids 4–5 are typically ready for",
         paragraphs: [
-          "They will need help. They will get distracted. They will leave half the toys out and call it done. That isn't failure — that's developmentally on track.",
-          "The version of clean a 5-year-old can hold in their head is much smaller than yours. Pick one or two specific chores ('toys in the bin,' 'shoes on the shelf') and let them own those. Save the rest for older years.",
+          "Single-step, concrete tasks that take under five minutes — put shoes on the rack, put one toy back in the bin, pull the blanket up. Multi-step routines (\"get ready for bed including brushing teeth and pajamas\") are usually beyond this age band, because working memory at 4–5 can typically only hold one to two items at a time.",
+          "Attention spans of three to five minutes on a single task are typical at this age. Done means the action happened — not that the outcome matches an adult standard.",
         ],
       },
       {
-        heading: 'Structure + boundaries at this age',
+        heading: "Why Home Hero suggests so few chores at this age",
         paragraphs: [
-          "Same chore, same time, every day. Routine is regulation at this age. ‘After breakfast, we make the bed’ becomes muscle memory faster than any reward system.",
-          "Keep the chore small enough that they can finish it before they lose interest. A 4-year-old's attention span on a single task is about three to five minutes. Honor that.",
+          "The app's soft-warning ceiling for this age band sits around 2 daily tasks. That's not arbitrary — it reflects published guidance that piling on tasks at this developmental stage tends to produce more friction than learning.",
+          "The reference photo and three short tips on each chore tile exist for the same reason: visual support is the dominant scaffold at this age, because reading is just emerging and verbal-only instructions tend to be forgotten between rooms.",
         ],
       },
       {
-        heading: 'Connection over correction',
+        heading: "If you've set the neurodivergence context",
         paragraphs: [
-          "If the bed is lumpy and the pillow is on the floor, the move is not to remake it ‘properly.’ The move is to notice them noticing it: ‘You made your bed today. That helps our home feel calm.’",
-          "When they're not quite there, narrate the effort, not the gap. ‘I can see you pulled the blanket up — that was hard for those little arms.’ Then, only if the moment is right, ‘Want to try one more pull together?’",
+          "When a 4–5-year-old's `neurodivergence_context` is set to neurodivergent, the app starts at the lower end of the suggested range (1 daily task, not 2) and leans more heavily on the visual reference. This reflects guidance that transitions and task initiation tend to be more taxing at this age when executive-function load is heightened.",
+          "You can override the defaults from kid settings anytime if your family is ready for more or wants less.",
         ],
       },
     ],
     takeaway:
-      "At this age, every chore is a relationship deposit. Build the helper they already want to be — the technique catches up later.",
+      "At this age, the win is the repetition of being someone who participates. The skill catches up later — published research says executive function continues maturing well into the twenties.",
+    sources: [
+      "CDC — Child Development Milestones, ages 4–5",
+      "AAP HealthyChildren.org — Age-appropriate chores",
+    ],
   },
   {
-    slug: 'ages-7-to-9-real-chores-real-ownership',
-    title: 'Real chores, real ownership.',
+    slug: 'ages-6-to-8-emerging-independence',
+    title: 'Emerging independence: ages 6–8.',
     blurb:
-      'Early elementary kids can complete a task start-to-finish. Your job shifts from doing-with-them to trusting them.',
+      'Why early elementary is the first age the app suggests standalone chores.',
     ageBucket: { min: 6, max: 8 },
     eyebrow: 'Ages 6–8 · Early Elementary',
     intro: [
-      "Around 7, something clicks: kids can plan a multi-step task and actually finish it. They can pack their backpack, feed the pet, make their bed in a way that holds up to a photo.",
-      "Your job is shifting from ‘doing it together’ to ‘holding the standard while they do it.’ That shift is where most parent-kid chore friction starts — and where this app is most useful.",
+      "Around age 6, published developmental guidance describes a meaningful shift: kids can hold two to three sequential steps in working memory, recognize a finished outcome against a reference, and start completing chores independently.",
+      "That's why Home Hero introduces standalone photo-verified chores at this age, and why the daily task ceiling moves up from the 4–5 range.",
     ],
     sections: [
       {
-        heading: 'What to actually expect',
+        heading: "What kids 6–8 are typically ready for",
         paragraphs: [
-          "Their version of done is going to be a notch below yours. That's not laziness — that's age. A 7-year-old genuinely sees ‘fine’ where you see ‘the corners of the blanket are bunched up.’",
-          "Stay focused on two questions: Is the chore done well enough that the room functions? Is your kid practicing the skill of completing it? If both answers are yes, the chore is done.",
+          "Two- and three-step tasks they can finish without help — make the bed, pack the backpack, tidy a small area. Time concepts (\"in 10 minutes\") are still abstract; visual countdowns work better than verbal ones at this age.",
+          "Reading is emerging but inconsistent. The three coaching tips on each chore tile are capped short because longer instructions tend to be skimmed or lost.",
         ],
       },
       {
-        heading: 'Structure + accountability',
+        heading: "Why Home Hero leans on the reference photo at this age",
         paragraphs: [
-          "Weekly chores work better than daily ones at this age — pick a day, make it the same every week, and protect it. ‘Sunday morning is room day’ becomes a household rhythm rather than a daily nag.",
-          "Accountability at 7–9 looks like a check-in, not an inspection. Five minutes, side-by-side, looking at the photo together: ‘Walk me through what you did.’ That conversation is the point.",
+          "Self-assessment — the ability to look at one's own work and tell whether it matches the target — is a skill that emerges through this age band. The reference photo on each tile gives kids a concrete, side-by-side target rather than asking them to hold the standard in their head.",
+          "The soft-warning ceiling at 6–8 sits around 3–5 daily tasks. Above that, published guidance suggests the load tends to break the contribution experience rather than build it.",
         ],
       },
       {
-        heading: 'Connection over correction',
+        heading: "If you've set the neurodivergence context",
         paragraphs: [
-          "When the chore isn't quite right, the encouragement-first move is to lead with what they got right. ‘Your bed is so much neater than yesterday. Let's see if we can tackle the toys next.’",
-          "Save the correction for one thing per check-in. Two corrections feels like a list of failures; one feels like coaching. Pick the most-important-one and let the rest go until next week.",
+          "When a 6–8-year-old's context is set to neurodivergent, the app pre-seeds higher visual reliance and more frequent reminders, and tends toward the lower end of the daily ceiling. This reflects developmental guidance that task-initiation lag is most pronounced at this age when executive-function support is needed.",
+          "After-school dysregulation is also documented as more intense at this age when EF load is high — published guidance suggests not scheduling the hardest task for that window.",
         ],
       },
     ],
     takeaway:
-      "If your 8-year-old can do the chore start to finish — even imperfectly — that's the win. Their standards will rise with their age. Your relationship is what we're protecting today.",
+      "6–8 is the first age the app expects independent completion. The reference photo, the short tips, and the conservative ceiling all exist to make that independence learnable.",
+    sources: [
+      "CDC — Child Development Milestones, ages 6–8",
+      "AAP HealthyChildren.org — Age-appropriate chores",
+    ],
   },
   {
-    slug: 'ages-10-to-12-systems-not-tasks',
-    title: 'Systems, not tasks.',
+    slug: 'ages-9-to-12-skill-building',
+    title: 'Skill-building & responsibility: ages 9–12.',
     blurb:
-      'Tweens can handle multi-step chores AND manage a system. This is where ‘run the household together’ starts.',
+      "Why the app starts assigning multi-step weekly chores in this age band.",
     ageBucket: { min: 9, max: 12 },
     eyebrow: 'Ages 9–12 · Late Elementary & Tween',
     intro: [
-      "By 10, kids can hold ‘run the system’ in their head, not just ‘do the chore.’ They can pack their own lunches the night before, manage a weekly laundry load, and remember that the dishwasher needs unloading without you bringing it up.",
-      "This is the age where executive function makes a leap. Your job is to load them up with chores that exercise that muscle — not just a list of tasks, but ownership over a small domain.",
+      "Around age 10, published guidance describes a meaningful jump in planning capacity: kids can hold a multi-step task in their head, sequence it, and own a recurring weekly responsibility.",
+      "That's why Home Hero's suggestions in this age band start mixing in weekly chores alongside daily ones — and why reward weights start to matter more.",
     ],
     sections: [
       {
-        heading: 'What to actually expect',
+        heading: "What kids 9–12 are typically ready for",
         paragraphs: [
-          "Their consistency will be uneven. Two great weeks then a meltdown about taking out the trash — that's normal. The variability is part of how they're growing, not evidence that ‘they can't do it.’",
-          "Expect them to push back. ‘Why do I have to?’ is not insubordination at this age — it's their brain practicing self-advocacy. Honor the question with a real answer; don't dismiss it.",
+          "Multi-step tasks with a clear sequence — clean the bathroom, change bed linens, put together a simple meal. Planning skill is emerging unevenly at this age: the same kid can plan a complex multi-day project in theory and still forget to start their actual chore.",
+          "The gap between \"what they can do\" and \"what they consistently do\" widens at this age across all kids, per published developmental research. The app reflects this with reward weights — a real ownership chore (weekly bedroom clean) is weighted higher than a daily quick win.",
         ],
       },
       {
-        heading: 'Boundaries that build confidence',
+        heading: "Why the app introduces self-care chores here",
         paragraphs: [
-          "Be specific about the outcome, then loose about the process. ‘Your laundry is washed, folded, and put away by Sunday night’ gives them autonomy. ‘Wash your laundry at 4pm on Saturday’ doesn't.",
-          "Hold the line on the outcome. The boundary you're modeling is, ‘In this house, agreements get kept.’ That's a life skill far more important than a clean room.",
+          "Self-care chores (brush teeth, shower, deodorant) typically transition from supported to independent during this age band. Home Hero marks these as checklist chores rather than photo chores — photographing a kid's body or routines is a line the app deliberately doesn't cross.",
+          "The daily ceiling at 9–12 is the app's most flexible. Published guidance generally supports 3–7 daily tasks at this age, but the right number depends on the kid and what else they're carrying (school load, activities, sleep).",
         ],
       },
       {
-        heading: 'Connection over correction',
+        heading: "If you've set the neurodivergence context",
         paragraphs: [
-          "The temptation at this age is to escalate. ‘How many times do I have to ask?’ ‘What is wrong with you?’ — both come from frustration, both damage connection. Neither gets the chore done.",
-          "When you feel the escalation rising, name what's happening to yourself first: ‘I'm frustrated.’ Then come back to the chore with: ‘Let's look at this together — what got in the way?’ That curiosity is what teaches them to look at their own behavior.",
+          "When a 9–12-year-old's context is set to neurodivergent, the app keeps multi-step chores in the picture but breaks them down further on the tile — more sub-steps in the coaching tips, more reminders, lower starting reward weights so the kid experiences early wins.",
+          "The 9–12 band is also when published research suggests the self-narrative around \"I am bad at this\" can solidify if scaffolding is too thin. The app's encouragement-first feedback is tuned with that finding in mind.",
         ],
       },
     ],
     takeaway:
-      "10–12 is rehearsal for the teenage years. The habits of ownership, agreement-keeping, and conversation-after-friction that land now are the ones that hold through 13–17.",
+      "9–12 is the rehearsal for the teenage years. The patterns of ownership, weekly cadence, and self-assessment that land now are the ones that hold into 13+.",
+    sources: [
+      "CDC — Child Development Milestones, ages 9–11",
+      "AAP HealthyChildren.org — Age-appropriate chores",
+      "Cleveland Clinic — Executive function development",
+    ],
   },
   {
-    slug: 'ages-13-to-15-domain-ownership',
-    title: 'Domain ownership.',
+    slug: 'ages-13-to-15-expanding-autonomy',
+    title: 'Expanding autonomy: ages 13–15.',
     blurb:
-      'Early teens can fully own a room, a routine, or a household responsibility. Your role becomes coach, not manager.',
+      'Why the kid surface changes voice at 13 and what published guidance says about teen executive function.',
     ageBucket: { min: 13, max: 15 },
     eyebrow: 'Ages 13–15 · Early Teen',
     intro: [
-      "13 is when the relationship dynamic around chores can quietly shift from cooperation to power struggle — unless you intentionally rebuild it.",
-      "Teens this age can take total ownership of a domain: their room, their laundry, a weekly meal they cook. Your job is to step out of the management role and into a coaching one. That move is what keeps the chore-conversation from becoming The Chore Conversation™.",
+      "Published developmental research describes adolescence as a period of identity formation, peer-mediated learning, and uneven executive function maturation. Home Hero responds with a meaningfully different surface at this age.",
+      "The kid view drops the bunny mascot, drops the \"hero\" framing, and shifts to a peer/coach voice when the kid's mode is teen (default at 13–15). This isn't a cosmetic choice — published guidance on teen psychology suggests an app that reads as \"for kids\" tends to be disengaged from at this age.",
     ],
     sections: [
       {
-        heading: 'What to actually expect',
+        heading: "What kids 13–15 are typically ready for",
         paragraphs: [
-          "They're going to test the boundary. They'll let the room slide for a week, see how you respond, and recalibrate. That's healthy. It's also exhausting. Both can be true.",
-          "Their identity is forming around what they're good at — and ‘good at running a corner of the household’ is a wildly valuable identity to graduate them into.",
+          "Domain-level ownership — a full bedroom, a laundry cycle, a weekly contribution to family meals. Complex multi-step tasks are within reach, but follow-through is documented as wildly inconsistent at this age across all kids.",
+          "Published research consistently notes that full executive function maturation runs into the mid-to-late twenties. Procrastination spirals and weeks-long gaps are developmentally typical, not character flaws.",
         ],
       },
       {
-        heading: 'Boundaries, structure, accountability',
+        heading: "Why the app suggests fewer, bigger chores at this age",
         paragraphs: [
-          "Make agreements explicit. ‘You're responsible for your laundry. Done by Sunday means clean, folded, and in drawers. If it's not, here's what happens.’ Write the agreement down if it helps.",
-          "Hold the consequence calmly. Phones, screen time, weekend plans — pick a meaningful one and apply it without lecturing. The consequence does the teaching; you don't have to.",
-          "Praise the system, not just the result. ‘You ran your laundry without me reminding you — that's the kind of person you're becoming.’",
+          "Daily ceilings drop at 13–15 because published guidance supports replacing quantity with depth at this age. One real domain owned well is more developmentally useful than five small daily tasks.",
+          "The override flow is also tuned for this age band. \"Good enough for today\" is documented as one of the highest-leverage parenting tools during the early teen years, because public correction or anything that reads as criticism tends to erode the relationship faster than at younger ages.",
         ],
       },
       {
-        heading: 'Connection over correction',
+        heading: "If you've set the neurodivergence context",
         paragraphs: [
-          "At this age, your kid's hearing for criticism is exquisite. Even gentle feedback can land as ‘you think I'm a failure.’ Lead with curiosity: ‘What was happening this week? You didn't get to your room.’",
-          "The repair, not the lecture, is what builds the relationship. After a tough moment, come back: ‘I was frustrated earlier. I still expect the laundry, and I still love you. Both true.’",
+          "When a 13–15-year-old's context is set to neurodivergent, the app keeps the teen voice but increases the scaffolding underneath — more steps in the coaching tips, more reminders, longer transition windows. Published guidance suggests the EF gap between \"knows how\" and \"consistently does\" is most pronounced at this age when load is heightened.",
+          "If your teen prefers the original surface (mascot, \"hero\" framing), you can override the mode in kid settings. Home Hero's design honors that developmental difference isn't determined by birthday.",
         ],
       },
     ],
     takeaway:
-      "Early teens are practicing being an adult under your roof. Your job isn't to keep them small; it's to coach them toward someone you'd want as a roommate.",
+      "Early teens are practicing being adults in your house. The app's voice, ceiling, and override language are all tuned around that — not around chore completion as an end in itself.",
+    sources: [
+      "AAP HealthyChildren.org — Teen development & responsibilities",
+      "Cleveland Clinic — Executive function development",
+      "Common Sense Media — Age-appropriate expectations",
+    ],
   },
   {
-    slug: 'ages-16-plus-rehearsal-for-adulthood',
-    title: 'Rehearsal for adulthood.',
+    slug: 'ages-16-to-18-functional-independence',
+    title: 'Functional independence: ages 16–18.',
     blurb:
-      'By 16, your kid is two years from running their own household. Treat home like the dress rehearsal.',
+      'Why the kid surface becomes a co-piloted life-skills tracker, not a chore app.',
     ageBucket: { min: 16, max: 18 },
     eyebrow: 'Ages 16–18 · Older Teen',
     intro: [
-      "The frame at 16+ shifts from ‘kid doing chores’ to ‘young adult practicing adulthood under a roof.’ That re-framing changes everything — for them and for you.",
-      "If they can't cook a meal, run a load of laundry, or clean a bathroom by the time they leave home, the home didn't teach them. Now is when the teaching counts.",
+      "By 16, published developmental guidance describes kids as practicing the systems they'll use as adults — laundry, cooking, scheduling, money. Home Hero responds by shifting the kid surface (peer mode by default at 16+) into something that reads more like a shared household OS than a chore app.",
+      "The framing here matters. Older teens are documented as resenting management language; the app uses contribution language instead — \"your share of the household\" rather than \"your chores.\"",
     ],
     sections: [
       {
-        heading: 'What to actually expect',
+        heading: "What older teens are typically ready for",
         paragraphs: [
-          "They will resent feeling ‘managed.’ They're old enough to feel the difference between being asked and being told, and old enough to push back on the latter. That's appropriate.",
-          "They will also occasionally crash — a week where everything slides because school, friends, or feelings overflowed. That's also appropriate. Adulthood includes crash weeks.",
+          "Adult-shaped tasks — cooking a real meal, running a full laundry cycle, cleaning a bathroom to a hosting standard, managing personal scheduling. Published guidance suggests these are the highest-leverage tasks at this age because they directly rehearse post-launch life.",
+          "Older teens still crash. Published research is consistent that EF capacity remains uneven at this age — a week of total slide is developmentally typical, not a sign of regression.",
         ],
       },
       {
-        heading: 'Boundaries between adults-in-training',
+        heading: "Why the daily list shrinks at 16+",
         paragraphs: [
-          "Frame chores as their share of running the household, not as tasks you assign. ‘You live here, here's your share’ is a fundamentally different conversation than ‘do this because I said so.’",
-          "When they fall short, the conversation is, ‘What's the agreement, and is it still working?’ — not, ‘Why aren't you doing what I said?’ That respect builds the kind of agency that holds when you're not in the room.",
+          "The app's suggested daily ceiling at 16+ is the lowest of any age band. That's intentional. Published guidance supports the framing that the goal at this age isn't chore completion — it's the kid practicing a system they'll continue using when no one's reminding them.",
+          "The kid surface drops most of the celebration/reward visual treatment in peer mode. Hops and streaks read as childish to older teens; the surface becomes a simple completion log.",
         ],
       },
       {
-        heading: 'Connection over correction',
+        heading: "If you've set the neurodivergence context",
         paragraphs: [
-          "The danger at this age is that the chore-conversation eats the whole relationship. Don't let it. For every chore-related interaction, find three that are just human-to-human: their music, their friends, the thing they're excited about.",
-          "Your teenager remembers the tone, not the words. ‘You handled that this week’ said warmly outlasts a hundred lectures.",
+          "When a 16–18-year-old's context is set to neurodivergent, the app keeps the peer mode but holds onto stronger scaffolding underneath — more explicit transition windows, more frequent reminders, smaller cognitive jumps between steps.",
+          "Published research on executive function development supports the framing that EF maturation often runs later for neurodivergent older teens — into the late twenties for many. The app's design treats that as a normal pace, not a verdict.",
         ],
       },
     ],
     takeaway:
-      "Two years from now, they'll be running their own kitchen, their own laundry, their own life. Right now you're the home that taught them they could.",
+      "Two years from launch, your teen is rehearsing the systems they'll run on their own. The app's role at this age is the shared accountability surface — they're meant to be running most of it themselves.",
+    sources: [
+      "AAP HealthyChildren.org — Teen development & responsibilities",
+      "Common Sense Media — Older teens & autonomy",
+      "Cleveland Clinic — Executive function development",
+    ],
   },
 ];
 

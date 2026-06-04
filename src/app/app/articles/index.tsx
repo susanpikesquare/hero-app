@@ -40,16 +40,16 @@ export default function ArticlesIndexScreen() {
               For parents
             </BrandHeading>
             <BrandHeading level="h1" style={styles.title}>
-              Coaching, by age.
+              Why the app suggests what it suggests.
             </BrandHeading>
             <ThemedText
               type="default"
               themeColor="textSecondary"
               style={styles.lead}
             >
-              Short articles to help you set expectations with confidence —
-              what to expect at each age, the boundaries that build security,
-              and why connection beats correction every single time.
+              Short context pieces, one per age bucket. Not advice — the
+              thinking behind what Home Hero is recommending, drawn from
+              published developmental guidance.
             </ThemedText>
           </View>
 

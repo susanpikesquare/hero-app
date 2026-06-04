@@ -121,6 +121,32 @@ export default function ArticleScreen() {
                 {article.takeaway}
               </ThemedText>
             </View>
+
+            {/* Sources block — surfaces the published guidance the article
+                synthesizes. Per Workbook Q3.1, all developmental claims
+                should be traceable to a source, not asserted on Home
+                Hero's authority. */}
+            {article.sources && article.sources.length > 0 && (
+              <View style={styles.sources}>
+                <ThemedText
+                  type="smallBold"
+                  themeColor="textMuted"
+                  style={{ textTransform: 'uppercase', letterSpacing: 1 }}
+                >
+                  Drawn from
+                </ThemedText>
+                {article.sources.map((src, i) => (
+                  <ThemedText
+                    key={i}
+                    type="small"
+                    themeColor="textSecondary"
+                    style={styles.sourceLine}
+                  >
+                    · {src}
+                  </ThemedText>
+                ))}
+              </View>
+            )}
           </View>
 
           <View style={styles.footer}>
@@ -177,6 +203,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: Spacing.one,
   },
+  sources: {
+    marginTop: Spacing.four,
+    gap: Spacing.one,
+  },
+  sourceLine: { lineHeight: 22 },
   footer: {
     marginTop: Spacing.three,
     alignItems: 'flex-start',

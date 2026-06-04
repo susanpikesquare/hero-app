@@ -356,11 +356,11 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       },
       {
         type: 'h3',
-        text: 'Coaching articles',
+        text: 'Why the app suggests what it suggests',
       },
       {
         type: 'p',
-        text: 'Inside the app you’ll find five short articles authored with Erica, organized by age bucket — ages 5–7, 8–10, 11–13, 14+. They’re built to be read on a phone in two minutes, while you’re waiting for coffee. Topics include "Why one bedroom is the right starting point," "How to actually say ‘good enough for today,’" and "What to do when your kid stops submitting." Articles are linked contextually from the dashboard when they match what you’re experiencing this week.',
+        text: 'Inside the app you’ll find short context pieces, organized by age bucket — ages 5–7, 8–10, 11–13, 14+. They’re not parenting advice. They explain the thinking behind what the app is recommending: why this chore at this age, why this many tasks per day, why a kid with executive-function load might need a smaller step. The content is curated from published developmental guidance — CDC childhood development milestones, AAP age-appropriate chore guidelines, and similar industry sources — and synthesized into two-minute reads you can skim while the coffee’s brewing. Linked contextually from the dashboard when they match what you’re experiencing this week.',
       },
     ],
   },
