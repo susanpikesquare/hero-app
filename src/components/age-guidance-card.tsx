@@ -1,12 +1,17 @@
 /**
- * Branded callout that surfaces ADHD developmental guidance for a kid's
- * age bucket. Used on:
+ * Branded callout that surfaces age-appropriate developmental guidance
+ * for a kid's age bucket. Used on:
  *   - /app/kid/[kid_id]/setup (above the chore picker — calibrate
  *     expectations BEFORE choosing chores)
  *   - /app/kid/[kid_id]/settings (under the profile — re-read anytime)
  *
- * The kid never sees this card. It's a parent-facing frame written by
- * (eventually) a licensed therapist.
+ * Content lives in `src/lib/age-guidance.ts`; when the kid's
+ * `neurodivergence_context` is set to `neurodivergent`, the optional
+ * `neurodivergentLens` paragraph surfaces as an additional callout.
+ *
+ * The kid never sees this card. It's parent-facing reframing content,
+ * synthesized from published developmental guidance — not clinical or
+ * therapeutic advice.
  */
 
 import { StyleSheet, View } from 'react-native';
@@ -40,7 +45,7 @@ export function AgeGuidanceCard({ age, kidName }: Props) {
       ]}
     >
       <BrandHeading level="eyebrow" themeColor="accent">
-        ADHD development · {guidance.label}
+        Developmental support · {guidance.label}
       </BrandHeading>
       <BrandHeading level="h2" style={styles.title}>
         What&apos;s typical for {subject} right now.

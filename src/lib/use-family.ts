@@ -82,7 +82,12 @@ export function useFamily(enabled: boolean) {
   }, [reload]);
 
   const addKid = useCallback(
-    async (opts: { displayName: string; age: number | null }) => {
+    async (opts: {
+      displayName: string;
+      age: number | null;
+      neurodivergenceContext?:
+        | Database['public']['Enums']['neurodivergence_context'];
+    }) => {
       if (!state.family) throw new Error('No family loaded.');
       const { data, error: insertErr } = await supabase
         .from('family_members')
@@ -91,6 +96,8 @@ export function useFamily(enabled: boolean) {
           role: 'kid',
           display_name: opts.displayName.trim(),
           age: opts.age,
+          neurodivergence_context:
+            opts.neurodivergenceContext ?? 'not_specified',
         })
         .select('id')
         .single();

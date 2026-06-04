@@ -78,6 +78,7 @@ export type Database = {
           id: string;
           invite_code_used: string | null;
           name: string;
+          parent_welcomed_at: string | null;
           reward_mode: string;
         };
         Insert: {
@@ -85,6 +86,7 @@ export type Database = {
           id?: string;
           invite_code_used?: string | null;
           name: string;
+          parent_welcomed_at?: string | null;
           reward_mode?: string;
         };
         Update: {
@@ -92,6 +94,7 @@ export type Database = {
           id?: string;
           invite_code_used?: string | null;
           name?: string;
+          parent_welcomed_at?: string | null;
           reward_mode?: string;
         };
         Relationships: [
@@ -115,6 +118,8 @@ export type Database = {
           kid_join_code: string | null;
           kid_join_code_expires_at: string | null;
           kid_joined_at: string | null;
+          kid_mode: Database['public']['Enums']['kid_mode'];
+          neurodivergence_context: Database['public']['Enums']['neurodivergence_context'];
           role: Database['public']['Enums']['member_role'];
         };
         Insert: {
@@ -127,6 +132,8 @@ export type Database = {
           kid_join_code?: string | null;
           kid_join_code_expires_at?: string | null;
           kid_joined_at?: string | null;
+          kid_mode?: Database['public']['Enums']['kid_mode'];
+          neurodivergence_context?: Database['public']['Enums']['neurodivergence_context'];
           role: Database['public']['Enums']['member_role'];
         };
         Update: {
@@ -139,6 +146,8 @@ export type Database = {
           kid_join_code?: string | null;
           kid_join_code_expires_at?: string | null;
           kid_joined_at?: string | null;
+          kid_mode?: Database['public']['Enums']['kid_mode'];
+          neurodivergence_context?: Database['public']['Enums']['neurodivergence_context'];
           role?: Database['public']['Enums']['member_role'];
         };
         Relationships: [
@@ -298,7 +307,9 @@ export type Database = {
     };
     Enums: {
       ai_verdict: 'pass' | 'needs_work';
+      kid_mode: 'auto' | 'kid' | 'teen' | 'peer';
       member_role: 'parent' | 'kid';
+      neurodivergence_context: 'not_specified' | 'neurotypical' | 'neurodivergent';
       override_kind: 'approved' | 'rejected';
       override_reason: 'good_enough_today' | 'worked_hard' | 'help_with_rest';
       submission_status: 'pending_ai' | 'pending_parent' | 'complete';

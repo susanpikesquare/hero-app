@@ -68,9 +68,8 @@ export default function GuideScreen() {
               style={styles.heroSub}
             >
               Everything you need to know about how the app works, who it’s
-              for, and how to use it day to day. Written for parents,
-              therapists, and anyone evaluating Home Hero for their family
-              or practice.
+              for, and how to use it day to day. Written for parents and
+              anyone evaluating Home Hero for their family.
             </ThemedText>
             <ThemedText type="small" themeColor="textMuted">
               Last updated {GUIDE_UPDATED}

@@ -4,7 +4,21 @@ This document is the north-star reference for what Home Hero is and isn't. It ex
 
 This is **not** marketing copy. It's the framework that informs all the marketing copy, all the UI decisions, all the AI training data, and the entire product roadmap.
 
-Authored with Erica Hospes, LMFT (founding therapist consultant), May 2026.
+Internal source of the framework: Erica Hospes, LMFT (founding consultant). May 2026 first draft, updated June 3, 2026 working session.
+
+> **Critical positioning note (June 3, 2026 working session).** The product itself is **not clinical**. Nothing in Home Hero's user-facing surface — landing page, signup, app copy, AI feedback, articles — references therapy, clinical advice, or professional expertise. Erica is a *consultant* whose worldview shapes the framework; she is not the product's expert authority over the parent. We do not claim clinical efficacy. We do not run a curriculum. We refer; we do not treat. Internal docs (like this one) reflect the clinical thinking that *informs* the build, but the build never wears it as a badge.
+
+---
+
+## The June 3 frame (top-of-mind)
+
+Three short ideas to test every decision against.
+
+**Keywords.** Harmony. Peace. Joy. If a feature does not move the family toward at least one of those, do not build it.
+
+**The Hilio Plow problem.** Erica's term for the modern parent — helicopter parent crossed with snowplow parent. *"We are so afraid of our kids failing we are setting them up to fail."* Kids need real chances to succeed and to fail in the safety of home. Homes have become emotionally unsafe because parents are stressed, tapped out, with no patience left. **Home Hero exists to put the safety back, so the failing and the succeeding can both happen at home.**
+
+**Performative parenting vs. presence.** Parents are *doing things* with their kids but not *being a family* with them. Home Hero takes the daily managing so the parent can drop reaction-management mode and be in let-me-just-be-with-you mode. Every screen passes this test: *does this give the parent space, or take it?*
 
 ---
 
@@ -98,17 +112,17 @@ The 40 Foundational Task Intelligence Rules (8 categories × 5 IF/THEN/BECAUSE r
 
 ---
 
-## The differentiator: clinical authorship
+## The differentiator: a framework that came from someone who's spent a career inside the problem
 
-A random tech founder can build task software. They cannot easily build:
+A random tech founder can build task software. They cannot easily build, on their own:
 
-- Trauma-informed feedback loops
+- Encouragement-first feedback loops
 - Developmental scaffolding
 - Parent-child relational repair architecture
 - Emotionally intelligent accountability systems
 - Attachment-aware UX
 
-That's the moat. Home Hero is therapist-built — clinical voice in every screen, not just a "wellness" wrapper around a productivity tool.
+The framework that makes Home Hero different came from Erica's career working directly with families like the ones we serve. The product *delivers* that thinking; it does not *claim it as clinical service*. Said plainly: the source of the worldview is clinical; the product the family experiences is not. That distinction is intentional, and matters legally as well as positionally.
 
 ---
 
@@ -155,21 +169,18 @@ When a parent overrides an AI verdict on a submission, these are the **only** fo
 
 ## Audience
 
-Home Hero is most obviously for **families with ADHD kids ages 5–16**, but the design principles serve a much wider population. Markets the product naturally fits:
+Home Hero is for **any family with kids ages 4–18 who want less daily friction around contribution and more competence-building.** (Earlier drafts of this doc positioned ADHD families as the primary audience; the June 3 working session locked in a universal positioning. See §0 of `product-vision.md`.)
 
-- ADHD / executive functioning families (primary)
-- Neurodivergent households (autism, anxiety, sensory-sensitive)
+The product naturally fits:
+
+- Families dealing with the felt experience of executive-function load (whether or not anyone has a label)
+- Neurodivergent households (ADHD, autism, anxiety, sensory-sensitive) — neurodivergence is captured as **optional, parent-provided context** that shapes defaults and coaching, never as a verdict
 - Blended families
-- Divorced co-parenting homes (one app, both households)
+- Divorced or co-parenting households — *multi-household consistency is an explicit MVP feature* so the standard travels with the kid
 - High-achievement overwhelmed homes
-- Therapy practices (clinicians using it with clients)
-- Occupational therapists
-- Parenting coaches
-- Schools
-- Residential programs
 - Foster / adoptive families
 
-Anything sensory-aware, nervous-system-aware, or executive-function-aware is a fit.
+The product is **not** clinical software. We do not serve therapy practices as their tool of practice; clinicians may recommend the app to clients in the same way they might recommend a planner or a journaling habit.
 
 ---
 
@@ -197,20 +208,17 @@ For the OpenAI / vision evaluation that grades kid photos (and any future on-dem
 
 The AI knows what a 5, 8, 10, 13, or 16-year-old can reasonably do, with step-by-step scaffolding and safety limits. Use the age bands in `src/lib/age-guidance.ts` and `src/lib/chore-suggestions.ts`.
 
-### Layer 2 — ADHD / executive-function adaptation
+### Layer 2 — Executive-function adaptation (universal)
 
-Every task is adjustable for:
+Every task adapts for the five support dimensions in PRD §8, all of which any kid can need at different intensities:
 
-- Task initiation
-- Working memory
-- Time blindness
-- Sensory overwhelm
-- Distractibility
-- Frustration tolerance
-- Sequencing
-- Follow-through
+- Step chunking
+- Reminder frequency
+- Visual reliance
+- Transition support
+- Tone intensity
 
-Expand to other neurotypes (autism-sensitive, anxiety-sensitive) as the schema supports it.
+The deeper executive-function concerns (task initiation, working memory, time blindness, sensory overwhelm, distractibility, frustration tolerance, sequencing, follow-through) live underneath these five dimensions. When a parent sets `neurodivergence_context = neurodivergent` (PRD §8A), the defaults seed higher and the coaching surfaces neurodivergence-aware content first — but the dimensions are universal, not ADHD-specific.
 
 ### Layer 3 — Parent coaching language
 
@@ -228,7 +236,7 @@ When future content is generated (parent scripts, child step-lists, AI feedback,
 
 - **Age band**: 3–5, 6–8, 9–12, 13–15, 16–18
 - **Skill level**: beginner, supported, independent, mastery
-- **Neurotype**: typical, ADHD, autism-sensitive, anxiety-sensitive
+- **Neurodivergence context (parent-provided, never shown to kid)**: not_specified, neurotypical, neurodivergent. Specific profiles (ADHD, autism-sensitive, anxiety-sensitive, sensory-sensitive) are Later, per PRD §8A + Workbook parking lot.
 - **Parent tone**: warm, firm, playful, low-demand, repair-focused
 - **Task type**: bedroom, kitchen, laundry, pet care, bathroom, backpack, morning routine, evening routine, self-care
 - **Output format**: child steps, parent script, visual checklist, AI feedback, repair prompt
@@ -334,9 +342,11 @@ Erica's framework also defines voices for **Repair** (after conflict), **Escalat
 1. If a feature requires the parent to nag, we built it wrong.
 2. If a feature could make the kid feel ashamed, we built it wrong.
 3. If the AI ever sounds like a disappointed teacher, the prompt is wrong.
-4. If the product would still work for a family with no ADHD diagnosis, we're on track.
-5. The kid is trying. Always.
+4. If the product would still work for a family with no neurodivergence context set — and *also* feel different in the right ways when it is set — we're on track.
+5. If a screen does not move the family toward harmony, peace, or joy, we built it wrong.
+6. If a screen costs the parent more attention than it returns to them, we built it wrong.
+7. The kid is trying. Always.
 
 ---
 
-*Last updated: May 2026. Maintained jointly by engineering and clinical (Erica Hospes, LMFT).*
+*Last updated: June 3, 2026 (working session). Internal framework source: Erica Hospes, LMFT (consultant). The product itself is not clinical.*

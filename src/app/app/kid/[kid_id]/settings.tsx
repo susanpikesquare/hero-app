@@ -28,6 +28,15 @@ import {
 } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
+import {
+  MODE_LABELS,
+  resolveKidMode,
+  type KidModeSetting,
+} from '@/lib/kid-mode';
+import {
+  CONTEXT_OPTIONS,
+  type NeurodivergenceContext,
+} from '@/lib/neurodivergence-context';
 import { supabase } from '@/lib/supabase';
 import { useFamily } from '@/lib/use-family';
 
@@ -42,6 +51,9 @@ export default function KidSettingsScreen() {
 
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
+  const [kidMode, setKidMode] = useState<KidModeSetting>('auto');
+  const [neurodivergenceContext, setNeurodivergenceContext] =
+    useState<NeurodivergenceContext>('not_specified');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -90,6 +102,10 @@ export default function KidSettingsScreen() {
     if (!kid) return;
     setName(kid.display_name);
     setAge(kid.age != null ? String(kid.age) : '');
+    setKidMode((kid.kid_mode ?? 'auto') as KidModeSetting);
+    setNeurodivergenceContext(
+      (kid.neurodivergence_context ?? 'not_specified') as NeurodivergenceContext
+    );
   }, [kid]);
 
   const save = async () => {
@@ -114,7 +130,12 @@ export default function KidSettingsScreen() {
     try {
       const { error: updateErr } = await supabase
         .from('family_members')
-        .update({ display_name: trimmedName, age: nextAge })
+        .update({
+          display_name: trimmedName,
+          age: nextAge,
+          kid_mode: kidMode,
+          neurodivergence_context: neurodivergenceContext,
+        })
         .eq('id', kid.id);
       if (updateErr) throw updateErr;
       await reload();
@@ -237,6 +258,152 @@ export default function KidSettingsScreen() {
                 disabled={saving || deleting}
               />
             </View>
+          </View>
+
+          {/* Optional neurodivergence context (PRD §8A). Parent-facing only —
+              never appears on the kid surface. Seeds support defaults and
+              surfaces relevant coaching to the parent. */}
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+            ]}
+          >
+            <BrandHeading level="h2" style={styles.cardTitle}>
+              Is {kid.display_name} neurodivergent?
+            </BrandHeading>
+            <ThemedText type="default" themeColor="textSecondary">
+              Optional. We use this to tune the suggestions and coaching for
+              you. Nothing about it ever shows up on the kid's side of the
+              app — there's no label, no badge, no mention.
+            </ThemedText>
+
+            <View style={styles.modeOptions}>
+              {CONTEXT_OPTIONS.map((opt) => {
+                const isActive = neurodivergenceContext === opt.value;
+                return (
+                  <Pressable
+                    key={opt.value}
+                    onPress={() => setNeurodivergenceContext(opt.value)}
+                    style={({ pressed }) => [
+                      styles.modeOption,
+                      {
+                        borderColor: isActive ? theme.accent : theme.border,
+                        backgroundColor: isActive
+                          ? theme.accentSoft
+                          : pressed
+                            ? theme.backgroundSelected
+                            : theme.background,
+                      },
+                    ]}
+                  >
+                    <View style={styles.modeOptionHeader}>
+                      <ThemedText
+                        type="smallBold"
+                        style={{
+                          color: isActive ? theme.accent : theme.text,
+                          textTransform: 'uppercase',
+                          letterSpacing: 1,
+                        }}
+                      >
+                        {opt.label}
+                      </ThemedText>
+                      {isActive && (
+                        <ThemedText
+                          type="smallBold"
+                          style={{ color: theme.accent }}
+                        >
+                          ✓ Selected
+                        </ThemedText>
+                      )}
+                    </View>
+                    <ThemedText type="default" themeColor="textSecondary">
+                      {opt.hint}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Per-kid display mode. One Home Hero account holds kids at very
+              different developmental stages — the parent surface stays
+              constant for all of them, but each kid's surface speaks to
+              their own age. `auto` is the right default; the manual modes
+              are here for kids who are developmentally ahead or behind their
+              birthday (Erica's "developmental difference, not
+              birthday-determinism" framing). */}
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+            ]}
+          >
+            <BrandHeading level="h2" style={styles.cardTitle}>
+              How {kid.display_name} sees the app
+            </BrandHeading>
+            <ThemedText type="default" themeColor="textSecondary">
+              The kid surface adapts to age: a 9-year-old sees the hero
+              voice, a 14-year-old sees the teen voice, a 17-year-old sees
+              the peer voice. Override here if {kid.display_name} is
+              developmentally ahead or behind their birthday.
+            </ThemedText>
+
+            <View style={styles.modeOptions}>
+              {(Object.keys(MODE_LABELS) as KidModeSetting[]).map((m) => {
+                const isActive = kidMode === m;
+                const labelInfo = MODE_LABELS[m];
+                return (
+                  <Pressable
+                    key={m}
+                    onPress={() => setKidMode(m)}
+                    style={({ pressed }) => [
+                      styles.modeOption,
+                      {
+                        borderColor: isActive ? theme.accent : theme.border,
+                        backgroundColor: isActive
+                          ? theme.accentSoft
+                          : pressed
+                            ? theme.backgroundSelected
+                            : theme.background,
+                      },
+                    ]}
+                  >
+                    <View style={styles.modeOptionHeader}>
+                      <ThemedText
+                        type="smallBold"
+                        style={{
+                          color: isActive ? theme.accent : theme.text,
+                          textTransform: 'uppercase',
+                          letterSpacing: 1,
+                        }}
+                      >
+                        {labelInfo.label}
+                      </ThemedText>
+                      {isActive && (
+                        <ThemedText
+                          type="smallBold"
+                          style={{ color: theme.accent }}
+                        >
+                          ✓ Selected
+                        </ThemedText>
+                      )}
+                    </View>
+                    <ThemedText type="default" themeColor="textSecondary">
+                      {labelInfo.hint}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <ThemedText type="small" themeColor="textMuted">
+              Right now {kid.display_name} sees the{' '}
+              <ThemedText type="smallBold" themeColor="accent">
+                {resolveKidMode({ setting: kidMode, age: kid.age })}
+              </ThemedText>{' '}
+              surface.
+            </ThemedText>
           </View>
 
           {/* Developmental frame — re-read anytime, especially helpful when
@@ -451,5 +618,22 @@ const styles = StyleSheet.create({
     fontFamily: 'ui-monospace, "SF Mono", Menlo, Consolas, monospace',
     fontWeight: '700',
     letterSpacing: 4,
+  },
+  modeOptions: {
+    gap: Spacing.three,
+    marginTop: Spacing.two,
+  },
+  modeOption: {
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    padding: Spacing.four,
+    gap: Spacing.two,
+  },
+  modeOptionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
   },
 });

@@ -16,6 +16,7 @@ import { KidShell, KidStyles } from '@/components/kid-shell';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useKidSession } from '@/lib/kid-session';
+import { resolveKidMode, VOICE } from '@/lib/kid-mode';
 import { overrideKidMessage } from '@/lib/override-copy';
 import { choreStatusToday } from '@/lib/progress-stats';
 import {
@@ -82,6 +83,14 @@ export default function KidHomeScreen() {
   const kid = state.kid;
   const family = state.family;
   const kidId = kid.id;
+  // Resolve the display mode so this surface speaks to the right age.
+  // Parent set kid_mode='auto' (default) → resolve from age.
+  // Parent set kid_mode='teen' on a 9-year-old → respect that.
+  const resolvedMode = resolveKidMode({
+    setting: kid.kid_mode,
+    age: kid.age,
+  });
+  const voice = VOICE[resolvedMode];
 
   const allKidChores = choresForKid(chores, kidId);
   const requiredChores = allKidChores.filter((c) => !c.is_optional);
@@ -103,19 +112,19 @@ export default function KidHomeScreen() {
     <KidShell back={{ href: '/kid/join', label: 'Switch user' }}>
       <View style={styles.greeting}>
         <Text style={[KidStyles.greetingEyebrow, { color: theme.accent }]}>
-          Hi {kid.display_name} 👋
+          {voice.greetingEyebrow(kid.display_name)}
         </Text>
         <Text style={[KidStyles.greetingTitle, { color: theme.text }]}>
           {remaining === 0 && requiredChores.length > 0
-            ? "You're all done for today!"
-            : 'Today’s to-dos'}
+            ? voice.allDoneTitle
+            : voice.todayTitle}
         </Text>
         <Text style={[KidStyles.greetingSub, { color: theme.textSecondary }]}>
           {requiredChores.length === 0
             ? 'No chores set up yet — ask a grown-up to add one.'
             : remaining === 0
               ? `You finished all ${requiredChores.length}. ${optionalChores.length > 0 ? 'Extras below if you want more.' : 'Nice work.'}`
-              : `${doneToday} of ${requiredChores.length} done. Tap any chore to send a photo when you're ready.`}
+              : voice.remainingHint(doneToday, requiredChores.length)}
         </Text>
       </View>
 
@@ -238,6 +247,7 @@ export default function KidHomeScreen() {
                 tips={chore.coaching_tips}
                 verification={chore.verification_kind}
                 busy={markingDoneId === chore.id}
+                voice={voice}
               />
             );
           })}
@@ -292,6 +302,7 @@ export default function KidHomeScreen() {
                 tips={chore.coaching_tips}
                 verification={chore.verification_kind}
                 busy={markingDoneId === chore.id}
+                voice={voice}
               />
             );
           })}

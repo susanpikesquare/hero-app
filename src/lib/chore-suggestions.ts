@@ -1,20 +1,25 @@
 /**
  * Curated, age-appropriate chore suggestions surfaced during kid setup.
  *
- * These are **placeholders** — auto-drafted to get the flow working. Erica
- * (LMFT) will replace them with therapist-vetted lists once we're past v0,
- * and the rest of the app shouldn't have to change: just edit the array
- * below. Keep entries:
+ * Per Workbook Q3.1 (Erica, June 3, 2026): task suggestions are sourced
+ * from PUBLISHED developmental research, NOT from Erica's clinical
+ * authority. The published-sources citation lives in the `source` field
+ * per suggestion (TBD; current entries are placeholders pending the
+ * source-citation pass). Acceptable sources: CDC childhood development
+ * milestones, AAP age-appropriate chore guidelines, Montessori-aligned
+ * age guidance, Cleveland Clinic, Mayo Clinic family resources.
+ *
+ * Keep entries:
  *   - photo-friendly (the kid takes a picture to "submit" — so a tidy
  *     bedroom is great; "remembering to brush teeth" is not)
  *   - single-task, not multi-step ("Tidy bedroom floor" not "Get ready for
  *     bed including brushing teeth and putting on PJs")
  *   - encouragement-shaped — the title shouldn't read as nagging
  *
- * Per-chore `tips` are short ADHD-friendly bullets shown on the kid's
- * chore tile so they don't have to remember what "done" means. Capped
- * at 3 per chore in the UI. Tips are seeded into chores.coaching_tips
- * when the parent adds a chore from this library.
+ * Per-chore `tips` are short executive-function-friendly bullets shown
+ * on the kid's chore tile so they don't have to remember what "done"
+ * means. Capped at 3 per chore in the UI. Tips are seeded into
+ * chores.coaching_tips when the parent adds a chore from this library.
  *
  * `kind` is mostly informational. The AI eval compares the submitted photo
  * to the parent's reference photo regardless of kind; the field is there
@@ -26,7 +31,7 @@ export type ChoreSuggestion = {
   /** One short sentence the parent sees while choosing. Not shown to the kid. */
   blurb: string;
   kind: string;
-  /** 1-3 short ADHD-friendly bullets shown to the kid on the chore tile. */
+  /** 1-3 short executive-function-friendly bullets shown to the kid on the chore tile. */
   tips: string[];
   /**
    * How the kid submits proof. Default 'photo' (current behavior).

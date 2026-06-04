@@ -107,6 +107,11 @@ export default function SignupScreen() {
       subtitle="Use the invite code you received. Pick a password you'll remember — that and your email are how you'll sign back in."
       footer={
         <ThemedText type="small" themeColor="textMuted">
+          Not sure yet?{' '}
+          <Link href="/assessment" style={{ textDecorationLine: 'underline' }}>
+            Take the 30-second self-check
+          </Link>{' '}
+          first.{'\n'}
           Already have an account?{' '}
           <Link href="/login" style={{ textDecorationLine: 'underline' }}>
             Sign in

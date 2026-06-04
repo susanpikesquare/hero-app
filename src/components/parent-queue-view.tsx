@@ -127,6 +127,11 @@ export function ParentQueueView() {
             <View style={styles.navActions}>
               <BrandButton
                 variant="ghost"
+                label="Coaching"
+                onPress={() => router.push('/app/coaching/parent-says')}
+              />
+              <BrandButton
+                variant="ghost"
                 label="Dashboard"
                 onPress={() => router.push('/app/dashboard')}
               />
@@ -431,6 +436,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingBottom: Spacing.three,
+    // Allow wrapping when the logo + buttons can't fit on one row (very
+    // narrow phones, accessibility text sizes). Buttons drop to a new row
+    // beneath the logo instead of being clipped.
+    flexWrap: 'wrap',
+    gap: Spacing.two,
   },
   navActions: {
     flexDirection: 'row',

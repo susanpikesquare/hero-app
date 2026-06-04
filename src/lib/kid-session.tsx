@@ -36,6 +36,7 @@ export type KidRow = {
   family_id: string;
   display_name: string;
   age: number | null;
+  kid_mode: Database['public']['Enums']['kid_mode'];
 };
 
 export type FamilyRow = Database['public']['Tables']['families']['Row'];
@@ -76,7 +77,7 @@ export function KidSessionProvider({ children }: { children: ReactNode }) {
     // Resolve the family_member row linked to this auth user.
     const { data: kidRow, error: kidErr } = await supabase
       .from('family_members')
-      .select('id, family_id, display_name, age, role')
+      .select('id, family_id, display_name, age, role, kid_mode')
       .eq('auth_user_id', user.id)
       .maybeSingle();
 
@@ -109,6 +110,7 @@ export function KidSessionProvider({ children }: { children: ReactNode }) {
         family_id: kidRow.family_id,
         display_name: kidRow.display_name,
         age: kidRow.age,
+        kid_mode: kidRow.kid_mode,
       },
       family,
     });

@@ -255,8 +255,10 @@ export default function KidSetupScreen() {
           </View>
 
           {/* Calibrate parent expectations BEFORE they pick chores. The card
-              shows social/emotional/cognitive expectations for kids with ADHD
-              at this age plus how that shapes the chore-picking decision. */}
+              shows social/emotional/cognitive expectations for kids at this
+              age plus how that shapes the chore-picking decision. When the
+              kid's neurodivergence_context is set, a neurodivergent-lens
+              callout surfaces below as well. */}
           <AgeGuidanceCard age={kid.age} kidName={kid.display_name} />
 
           <View

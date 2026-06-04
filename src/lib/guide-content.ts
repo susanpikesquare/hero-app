@@ -63,11 +63,11 @@ export const GUIDE_SECTIONS: GuideSection[] = [
   {
     id: 'what-it-is',
     eyebrow: 'The big idea',
-    title: 'Clinical standards, in your kitchen.',
+    title: 'A family operating system, not a chore chart.',
     blocks: [
       {
         type: 'p',
-        text: 'Home Hero is an AI-validated chore app built for households with ADHD kids. A licensed therapist sets the clinical standard for what "done" looks like, our AI checks each photo your child submits against that standard, and you stay in charge of every final call — with one-tap encouragement-first reasons that protect the relationship while you protect the standard.',
+        text: 'Home Hero is an AI-validated chore app for every family — neurotypical, neurodivergent, somewhere in between. You set the standard for what "done" looks like with a reference photo and a few tips. Our AI checks each photo your kid submits against that standard. You stay in charge of every final call with one-tap encouragement-first reasons that protect the relationship while you protect the standard.',
       },
       {
         type: 'p',
@@ -79,7 +79,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
         eyebrow: 'Three things we believe',
         body: 'These shape every screen of the app.',
         lines: [
-          'Clinical standards belong in the kitchen, not just the therapy office.',
+          'Harmony, peace, and joy beat productivity, every time.',
           'Less nagging is the real reward — for the whole family.',
           'Feedback is always connection over correction.',
         ],
@@ -94,7 +94,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     blocks: [
       {
         type: 'p',
-        text: 'Home Hero is specifically designed for families with ADHD kids ages 5–16, though it works for siblings of any wiring. If any of the following sound familiar, this app was built for you:',
+        text: 'Home Hero is built for any family with kids ages 4–18 who want less daily friction around contribution and more competence-building. If any of the following sound familiar, this app was built for you:',
       },
       {
         type: 'bullets',
@@ -107,7 +107,11 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       },
       {
         type: 'p',
-        text: 'It is also designed to be used alongside a licensed therapist or family coach who already knows your home. The clinical phrasing throughout the app — especially the override reasons — was written by a Licensed Marriage and Family Therapist who works with ADHD families every week.',
+        text: 'During setup, you can optionally tell us if your child is neurodivergent. That context stays parent-facing and changes what we suggest, how we pace it, and the coaching we surface — it never appears as a label your child ever sees. Specific profiles (ADHD, autism, anxiety, sensory) are a later capability; today we capture only a general context.',
+      },
+      {
+        type: 'p',
+        text: 'The Home Hero framework was developed with Erica Hospes, LMFT, our founding consultant. The product itself is not clinical software, not therapy, and not parenting curriculum. It is a daily co-pilot. If your family is genuinely struggling beyond what the app addresses, we gently point you toward a pediatrician or mental-health provider — referring, not treating.',
       },
     ],
   },
@@ -119,7 +123,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
     blocks: [
       {
         type: 'p',
-        text: 'Home Hero starts with the single hardest chore in most ADHD homes — a tidy bedroom with a made bed — and gets that loop bulletproof before expanding into the rest of the house.',
+        text: 'Home Hero starts with the single hardest chore in most homes — a tidy bedroom with a made bed — and gets that loop bulletproof before expanding into the rest of the house.',
       },
       {
         type: 'steps',
@@ -127,7 +131,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
           {
             n: '01',
             title: 'Set the standard.',
-            body: 'Each chore starts from a therapist-designed reference photo — what "done" actually looks like. After a few rounds, you upload your own reference photo so your kid’s real clean space becomes the bar to clear.',
+            body: 'Each chore starts from a reference photo drawn from published developmental guidance — what "done" actually looks like at that age. After a few rounds, you upload your own reference photo so your kid’s real clean space becomes the bar to clear.',
           },
           {
             n: '02',
@@ -189,7 +193,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
         type: 'callout',
         tone: 'info',
         eyebrow: 'A note on reference photos',
-        body: 'For your first chore, you can use the therapist-designed reference that ships with the app. Once your kid has actually cleaned their own room a few times — to your standard, in your home — replace the reference with a photo of YOUR house in its target state. Your kid’s real clean room becomes the bar. This is the single highest-impact thing you can do in the app.',
+        body: 'For your first chore, you can use the starter reference that ships with the app. Once your kid has actually cleaned their own room a few times — to your standard, in your home — replace the reference with a photo of YOUR house in its target state. Your kid’s real clean room becomes the bar. This is the single highest-impact thing you can do in the app.',
       },
     ],
   },
@@ -258,7 +262,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       },
       {
         type: 'p',
-        text: 'When you override a submission, you pick a reason. The reason becomes a short, kind message your kid sees in their app. The four reasons were written by a licensed therapist and they are the only options for a reason:',
+        text: 'When you override a submission, you pick a reason. The reason becomes a short, kind message your kid sees in their app. The four reasons were authored with Erica Hospes, LMFT (our founding consultant), and they are the only options for a reason:',
       },
       {
         type: 'callout',
@@ -348,7 +352,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       },
       {
         type: 'p',
-        text: 'Click any kid’s name in the dashboard to see their last 13 weeks of activity as a GitHub-style heatmap — dense, dark squares for days they finished everything; lighter or empty for days they didn’t. This is the view to bring to a therapy session or a kitchen-table conversation. It’s not a report card. It’s a pattern.',
+        text: 'Click any kid’s name in the dashboard to see their last 13 weeks of activity as a GitHub-style heatmap — dense, dark squares for days they finished everything; lighter or empty for days they didn’t. This is a view that holds up to a kitchen-table conversation, a co-parent check-in, or your kid’s pediatrician asking how the routines are going. It’s not a report card. It’s a pattern.',
       },
       {
         type: 'h3',
@@ -356,7 +360,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       },
       {
         type: 'p',
-        text: 'Inside the app you’ll find five short articles written by our founding therapist, organized by age bucket — ages 5–7, 8–10, 11–13, 14+. They’re built to be read on a phone in two minutes, while you’re waiting for coffee. Topics include "Why one bedroom is the right starting point," "How to actually say ‘good enough for today,’" and "What to do when your kid stops submitting." Articles are linked contextually from the dashboard when they match what you’re experiencing this week.',
+        text: 'Inside the app you’ll find five short articles authored with our founding consultant, organized by age bucket — ages 5–7, 8–10, 11–13, 14+. They’re built to be read on a phone in two minutes, while you’re waiting for coffee. Topics include "Why one bedroom is the right starting point," "How to actually say ‘good enough for today,’" and "What to do when your kid stops submitting." Articles are linked contextually from the dashboard when they match what you’re experiencing this week.',
       },
     ],
   },
@@ -440,7 +444,7 @@ export const GUIDE_SECTIONS: GuideSection[] = [
       },
       {
         type: 'p',
-        text: 'Founding families also get a 30-minute one-to-one session with our founding therapist (LMFT) included in their pilot. We can credibly only offer this once and only for the first 100 families — so if you’re reading this and haven’t booked yours, email us to schedule.',
+        text: 'Founding families also get a 30-minute one-to-one working session with our founding consultant (Erica Hospes, LMFT) included in their pilot. It is not a clinical session — it is a conversation about how your family is using the app and what we should build next. We can credibly only offer this once and only for the first 100 families — so if you’re reading this and haven’t booked yours, email us to schedule.',
       },
       {
         type: 'callout',

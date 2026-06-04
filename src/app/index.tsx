@@ -29,16 +29,16 @@ const INVITE_BODY =
 
 const PILLARS = [
   {
-    title: 'Clinical standards, in your kitchen.',
-    body: 'Therapist-built reference photos define what "done" looks like — the same way our therapist would in session.',
+    title: 'A shared standard, not a parent\'s voice.',
+    body: 'A reference photo and a few tips define what "done" looks like, so the standard lives on the app instead of in any one person\'s tone.',
   },
   {
     title: 'Less nagging, more nervous-system rest.',
-    body: 'Redistribute the invisible labor. One nervous system stops carrying the whole home.',
+    body: 'The app carries the daily managing. The parent gets back the attention to be present.',
   },
   {
     title: 'Connection over correction.',
-    body: 'Feedback is always encouragement-first: "I can see your effort — here\'s how to hit a home run."',
+    body: 'Feedback is always encouragement-first, specific, and never shaming. Built for harmony, peace, and joy, not productivity.',
   },
 ];
 
@@ -46,12 +46,12 @@ const STEPS = [
   {
     n: '01',
     title: 'Set the standard.',
-    body: 'Start from a therapist-designed reference room. After a few rounds, you upload a photo of your own — your kid\'s actual clean space becomes the bar.',
+    body: 'Start from a starter task drawn from published developmental guidance, or create your own. Add a reference photo and a few tips so "done" is visible, not negotiable.',
   },
   {
     n: '02',
     title: 'Your kid submits.',
-    body: 'A photo of their finished bedroom. AI checks it against your standard and gives kind, specific feedback.',
+    body: 'A photo of their finished work — or a simple mark-complete for tasks like brushing teeth. The AI gives kind, specific feedback and routes anything ambiguous to you.',
   },
   {
     n: '03',
@@ -103,7 +103,7 @@ function IOSChooserLanding() {
               themeColor="textSecondary"
               style={styles.iosSub}
             >
-              AI-validated chores for ADHD families.
+              AI-validated chores. Less nagging, more presence.
             </ThemedText>
           </View>
         </View>
@@ -185,6 +185,11 @@ function WebMarketingLanding() {
     Linking.openURL(`mailto:${INVITE_EMAIL}?subject=${subject}&body=${body}`);
   };
   const goToSignup = () => router.push('/signup');
+  // The "is this for you" mirror — Erica's June 3 ask. This is the
+  // front-door experience for a curious parent. Routed from the hero
+  // and the Founding-100 section so prospects move through the mirror
+  // before being asked to commit.
+  const goToAssessment = () => router.push('/assessment');
 
   return (
     <ScrollView
@@ -210,33 +215,37 @@ function WebMarketingLanding() {
               </Link>
               <BrandButton
                 variant="ghost"
-                label="Get an invite"
-                onPress={requestInvite}
+                label="I have a code"
+                onPress={goToSignup}
               />
             </View>
           </View>
 
           <View style={[styles.hero, isWide && styles.heroWide]}>
             <BrandHeading level="eyebrow" themeColor="accent">
-              Built with therapists · for ADHD families
+              For every family · harmony, peace, joy
             </BrandHeading>
             <BrandHeading
               level={isWide ? 'display' : 'h1'}
               style={styles.heroTitle}
             >
-              Expert clinical care for the home — not just the therapy office.
+              A family operating system, so you can stop running the house and start being in it.
             </BrandHeading>
             <ThemedText
               type="default"
               themeColor="textSecondary"
               style={styles.heroSub}
             >
-              Home Hero brings AI-validated chore standards into your home, so
-              the invisible labor of remembering, reminding, and re-checking
-              stops landing on one exhausted nervous system.
+              Home Hero takes the daily managing — the reminders, the
+              standard-keeping, the specific feedback — off the parent's
+              voice and onto a calm, neutral surface. So the parts of
+              parenting that actually need you get you.
             </ThemedText>
             <View style={styles.heroCTA}>
-              <BrandButton label="Get an invite" onPress={requestInvite} />
+              <BrandButton
+                label="Is this for you? 30-second self-check →"
+                onPress={goToAssessment}
+              />
               <BrandButton
                 variant="ghost"
                 label="I have a code"
@@ -244,7 +253,7 @@ function WebMarketingLanding() {
               />
             </View>
             <ThemedText type="small" themeColor="textMuted" style={styles.heroFootnote}>
-              Invite-only while we work with our first cohort of families.
+              Invite-only while we work with our first cohort of families. The self-check is for you, not us — there's no scoring on the other end.
             </ThemedText>
           </View>
 
@@ -298,7 +307,7 @@ function WebMarketingLanding() {
               Three steps. One bedroom to start.
             </BrandHeading>
             <ThemedText type="default" themeColor="textSecondary" style={styles.lead}>
-              v0 starts with the single hardest chore in most ADHD homes:
+              v0 starts with the single hardest chore in most homes:
               tidy room, bed made. We get this bulletproof — then we expand.
             </ThemedText>
             <View style={styles.steps}>
@@ -337,28 +346,42 @@ function WebMarketingLanding() {
               Founding 100
             </BrandHeading>
             <BrandHeading level="h2" style={styles.sectionTitle}>
-              The first 100 families get a 30-minute parent session with our founding therapist.
+              The first 100 families get a 30-minute working session with our founding consultant.
             </BrandHeading>
             <ThemedText type="default" themeColor="text" style={styles.lead}>
-              Real coaching from a licensed therapist, one-to-one, included
-              with founding-family status. We can credibly only do this once —
-              and only for the families who help us shape v1.
+              A one-to-one conversation with our founding consultant, included
+              with founding-family status. Not a clinical session — a chance
+              to talk through how your family is using the app and what we
+              should build next. We can credibly only do this once, and only
+              for the families who help us shape v1.
             </ThemedText>
-            <BrandButton label="Get an invite" onPress={requestInvite} />
+            <View style={styles.heroCTA}>
+              <BrandButton
+                label="See if it's a fit"
+                onPress={goToAssessment}
+              />
+              <BrandButton
+                variant="ghost"
+                label="Email us directly"
+                onPress={requestInvite}
+              />
+            </View>
           </View>
 
           <View style={styles.section}>
             <BrandHeading level="eyebrow" themeColor="info">
-              About the creator
+              About the consultant
             </BrandHeading>
             <BrandHeading level="h2" style={styles.sectionTitle}>
               Erica Hospes, LMFT
             </BrandHeading>
             <ThemedText type="default" themeColor="textSecondary" style={styles.lead}>
-              Erica is a licensed therapist who works with ADHD families every
-              week. Home Hero is the tool she wished existed for her own
-              clients: clinical standards, in the home, without the parent
-              doing all the work of being the standard.
+              Erica is the founding consultant whose worldview shapes the
+              Home Hero framework. She works with families every week and
+              wished a tool like this existed for the daily moments her
+              clients were carrying alone. Home Hero is not a clinical
+              service — it's the operating system she wanted in the home
+              between sessions.
             </ThemedText>
             <ThemedText type="small" themeColor="textMuted" style={styles.lead}>
               Bio in progress — final version coming soon.

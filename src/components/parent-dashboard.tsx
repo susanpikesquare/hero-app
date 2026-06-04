@@ -17,6 +17,10 @@ import {
 import { useTheme } from '@/hooks/use-theme';
 import { articleForAge, ARTICLES } from '@/lib/articles';
 import { useAuth } from '@/lib/auth-context';
+import {
+  CONTEXT_OPTIONS,
+  type NeurodivergenceContext,
+} from '@/lib/neurodivergence-context';
 import { computeKidPulse } from '@/lib/progress-stats';
 import {
   descriptorFor,
@@ -36,6 +40,9 @@ export function ParentDashboard() {
 
   const [newKidName, setNewKidName] = useState('');
   const [newKidAge, setNewKidAge] = useState('');
+  const [newKidContext, setNewKidContext] = useState<NeurodivergenceContext>(
+    'not_specified'
+  );
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
@@ -60,9 +67,14 @@ export function ParentDashboard() {
     }
     setAdding(true);
     try {
-      const newKidId = await addKid({ displayName: newKidName, age });
+      const newKidId = await addKid({
+        displayName: newKidName,
+        age,
+        neurodivergenceContext: newKidContext,
+      });
       setNewKidName('');
       setNewKidAge('');
+      setNewKidContext('not_specified');
       if (newKidId) {
         router.push(`/app/kid/${newKidId}/setup`);
       }
@@ -100,6 +112,11 @@ export function ParentDashboard() {
           <View style={styles.nav}>
             <BrandLogo height={96} />
             <View style={styles.navActions}>
+              <BrandButton
+                variant="ghost"
+                label="Coaching"
+                onPress={() => router.push('/app/coaching/parent-says')}
+              />
               <BrandButton
                 variant="ghost"
                 label="Articles"
@@ -316,16 +333,21 @@ export function ParentDashboard() {
           {kids.length === 0 ? (
             <Card theme={theme} tone="elevated">
               <BrandHeading level="h2" style={styles.cardTitle}>
-                Add your first kid
+                Set up your family operating system
               </BrandHeading>
               <ThemedText type="default" themeColor="textSecondary">
-                You haven’t added anyone yet. Type a name and tap Add.
+                Per our consultant Erica Hospes, LMFT, this works best as a
+                whole-family stand-up — every kid in. Add them now while you
+                have the time and attention. You can come back and add more,
+                but the first run should cover everyone.
               </ThemedText>
               <AddKidRow
                 name={newKidName}
                 age={newKidAge}
+                context={newKidContext}
                 onChangeName={setNewKidName}
                 onChangeAge={setNewKidAge}
+                onChangeContext={setNewKidContext}
                 onSubmit={onAddKid}
                 disabled={adding}
                 error={addError}
@@ -497,8 +519,10 @@ export function ParentDashboard() {
                 <AddKidRow
                   name={newKidName}
                   age={newKidAge}
+                  context={newKidContext}
                   onChangeName={setNewKidName}
                   onChangeAge={setNewKidAge}
+                  onChangeContext={setNewKidContext}
                   onSubmit={onAddKid}
                   disabled={adding}
                   error={addError}
@@ -658,8 +682,10 @@ export function ParentDashboard() {
 function AddKidRow({
   name,
   age,
+  context,
   onChangeName,
   onChangeAge,
+  onChangeContext,
   onSubmit,
   disabled,
   error,
@@ -667,34 +693,88 @@ function AddKidRow({
 }: {
   name: string;
   age: string;
+  context: NeurodivergenceContext;
   onChangeName: (v: string) => void;
   onChangeAge: (v: string) => void;
+  onChangeContext: (v: NeurodivergenceContext) => void;
   onSubmit: () => void;
   disabled: boolean;
   error: string | null;
   variant?: 'block' | 'inline';
 }) {
+  const theme = useTheme();
   return (
-    <View style={[styles.addRow, variant === 'inline' && { marginTop: 0 }]}>
-      <TextField
-        label={variant === 'inline' ? "Kid's name" : "Add a kid — name"}
-        value={name}
-        onChangeText={onChangeName}
-        placeholder="e.g. Theo"
-        autoComplete="off"
-        autoCorrect={false}
-        style={{ minWidth: 180 }}
-      />
-      <TextField
-        label="Age"
-        value={age}
-        onChangeText={onChangeAge}
-        placeholder="9"
-        keyboardType="number-pad"
-        autoComplete="off"
-        autoCorrect={false}
-        style={{ minWidth: 80 }}
-      />
+    <View
+      style={[
+        styles.addRow,
+        variant === 'inline' && { marginTop: 0 },
+        { flexDirection: 'column', gap: Spacing.three },
+      ]}
+    >
+      <View style={styles.addRowFields}>
+        <TextField
+          label={variant === 'inline' ? "Kid's name" : "Add a kid — name"}
+          value={name}
+          onChangeText={onChangeName}
+          placeholder="e.g. Theo"
+          autoComplete="off"
+          autoCorrect={false}
+          style={{ minWidth: 180 }}
+        />
+        <TextField
+          label="Age"
+          value={age}
+          onChangeText={onChangeAge}
+          placeholder="9"
+          keyboardType="number-pad"
+          autoComplete="off"
+          autoCorrect={false}
+          style={{ minWidth: 80 }}
+        />
+      </View>
+
+      {/* Optional neurodivergence context (PRD §8A). Parent-facing only —
+          never appears on the kid surface. Defaults to 'not_specified',
+          which behaves exactly like the rest of the app already does. */}
+      <View style={{ gap: Spacing.two }}>
+        <ThemedText type="smallBold" themeColor="textSecondary">
+          Is this kid neurodivergent? (optional)
+        </ThemedText>
+        <ThemedText type="small" themeColor="textMuted">
+          We use this to tune the suggestions and coaching for you. Nothing
+          about it ever shows up on the kid's side of the app.
+        </ThemedText>
+        <View style={styles.contextRow}>
+          {CONTEXT_OPTIONS.map((opt) => {
+            const isActive = context === opt.value;
+            return (
+              <Pressable
+                key={opt.value}
+                onPress={() => onChangeContext(opt.value)}
+                style={({ pressed }) => [
+                  styles.contextChip,
+                  {
+                    borderColor: isActive ? theme.accent : theme.border,
+                    backgroundColor: isActive
+                      ? theme.accentSoft
+                      : pressed
+                        ? theme.backgroundSelected
+                        : theme.backgroundElement,
+                  },
+                ]}
+              >
+                <ThemedText
+                  type="smallBold"
+                  style={{ color: isActive ? theme.accent : theme.text }}
+                >
+                  {opt.label}
+                </ThemedText>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
       <View style={styles.addCta}>
         <BrandButton
           label={disabled ? 'Adding…' : 'Add kid'}
@@ -702,6 +782,7 @@ function AddKidRow({
           disabled={disabled}
         />
       </View>
+
       {error && (
         <ThemedText type="small" style={{ color: '#B23A48', width: '100%' }}>
           {error}
@@ -787,6 +868,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingBottom: Spacing.three,
+    // Allow wrapping when the logo + buttons can't fit on one row (very
+    // narrow phones, accessibility text sizes). Buttons drop to a new row
+    // beneath the logo instead of being clipped off the right edge.
+    flexWrap: 'wrap',
+    gap: Spacing.two,
   },
   wordmark: { letterSpacing: 0.5 },
   header: {
@@ -922,6 +1008,23 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     flexWrap: 'wrap',
     marginTop: Spacing.three,
+  },
+  addRowFields: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: Spacing.three,
+    flexWrap: 'wrap',
+  },
+  contextRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
+  contextChip: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
   },
   addCta: { paddingBottom: Spacing.half },
   actionsRow: {

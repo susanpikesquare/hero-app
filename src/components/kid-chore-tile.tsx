@@ -12,7 +12,7 @@
  *   1. Reference thumbnail on the left — "this is what 'done' looks like"
  *   2. Title + reward-weight chip
  *   3. A short subtitle (last hop, or "ready when you are")
- *   4. Up to 3 coaching tips — ADHD-friendly bullets the kid can self-check
+ *   4. Up to 3 coaching tips — executive-function-friendly bullets the kid can self-check
  *   5. Parent override message if there is one
  *   6. One clear CTA: "Take a photo →" / "Try again →" / hidden when done
  *   7. Status badge ONLY for non-default states (waiting, done, try_again).
@@ -57,6 +57,25 @@ type Props = {
   verification: 'photo' | 'checklist';
   /** Whether the inline checklist submission is in flight. */
   busy?: boolean;
+  /**
+   * Per-kid voice (CTA labels, waiting/retry phrasing). Defaults to the
+   * 6-12 "kid" voice. Pass the teen or peer voice for older kids so the
+   * surface doesn't read babyish. See src/lib/kid-mode.ts.
+   */
+  voice?: import('@/lib/kid-mode').KidVoice;
+};
+
+// Default voice when the caller doesn't pass one. Matches the historical
+// kid copy so existing callers (parent-side kid view, etc.) keep their
+// labels until they're updated to pass a mode-aware voice.
+const DEFAULT_VOICE: Pick<
+  import('@/lib/kid-mode').KidVoice,
+  'submitCta' | 'markDoneCta' | 'retryCta' | 'waitingCallout'
+> = {
+  submitCta: 'Take a photo →',
+  markDoneCta: 'Mark done →',
+  retryCta: 'Try again →',
+  waitingCallout: 'Waiting on your grown-up',
 };
 
 export function KidChoreTile({
@@ -71,9 +90,11 @@ export function KidChoreTile({
   tips,
   verification,
   busy = false,
+  voice,
 }: Props) {
   const theme = useTheme();
   const meta = STATUS_META[status];
+  const v = voice ?? DEFAULT_VOICE;
   const isDone = status === 'done';
   const showCTA = status === 'not_yet' || status === 'try_again';
   // We show the status badge for everything EXCEPT the default open state
@@ -238,11 +259,11 @@ export function KidChoreTile({
               ? 'One sec…'
               : verification === 'checklist'
                 ? status === 'try_again'
-                  ? 'Mark done again →'
-                  : 'Mark done →'
+                  ? `${v.markDoneCta.replace(/ →$/, '')} again →`
+                  : v.markDoneCta
                 : status === 'try_again'
-                  ? 'Try again →'
-                  : 'Take a photo →'}
+                  ? v.retryCta
+                  : v.submitCta}
           </Text>
         </View>
       )}
