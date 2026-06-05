@@ -317,7 +317,7 @@ function WebMarketingLanding() {
                 source={require('@/assets/images/icon.png')}
                 accessible
                 accessibilityLabel="Home Hero — the iPhone app icon"
-                style={styles.heroIcon}
+                style={[styles.heroIcon, isWide && styles.heroIconWide]}
                 resizeMode="contain"
               />
             </View>
@@ -601,45 +601,50 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.five,
     paddingBottom: Spacing.eight,
     gap: Spacing.six,
+    // On narrow: stacked column. The container is full-width.
     flexDirection: 'column',
-    alignItems: 'center',
+    alignItems: 'stretch',
   },
   heroWide: {
     paddingTop: Spacing.seven,
     paddingBottom: Spacing.eight,
     flexDirection: 'row',
-    alignItems: 'center',
+    // Top-align both columns so the text doesn't get pushed to the
+    // middle when the icon column is taller.
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: Spacing.eight,
+    gap: Spacing.seven,
   },
+  // Stacked-column defaults — no flex, no forced 100% width. Width is
+  // managed by the parent (.page).
   heroText: {
     gap: Spacing.four,
-    flex: 1,
-    width: '100%',
   },
   heroTextWide: {
+    // On wide, take ~60% of the row by flex. No width: 100% — that
+    // would push the icon column onto a new line.
+    flex: 1.2,
     maxWidth: ReadableContentWidth + Spacing.four,
   },
   heroIconWrap: {
+    // Narrow default: show smaller and centered, but not full-width.
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%',
+    marginTop: Spacing.three,
   },
   heroIconWrapWide: {
     flex: 1,
-    width: 'auto',
-    maxWidth: 480,
+    marginTop: 0,
   },
   heroIcon: {
-    width: '100%',
-    aspectRatio: 1,
-    maxWidth: 380,
-    // Soft drop shadow so the icon reads as an object floating on the page
-    // (matches the Uncorkd hero treatment).
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 28,
-    shadowOffset: { width: 0, height: 16 },
+    // Icon sizes itself. No shadow — the icon already has a designed
+    // background, and the shadow read as a card-on-card.
+    width: 260,
+    height: 260,
+  },
+  heroIconWide: {
+    width: 360,
+    height: 360,
   },
   heroTitle: {
     marginTop: Spacing.one,
