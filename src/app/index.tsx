@@ -246,81 +246,77 @@ function WebMarketingLanding() {
             </View>
           </View>
 
-          {/* Hero — two-column on wide, stacked on narrow.
-              LEFT: eyebrow, headline, sub, CTAs, fine print.
-              RIGHT: large rounded app icon.
-              Modeled on uncorkdwine.app's hero shape (per Susan QA). */}
-          <View style={[styles.hero, isWide && styles.heroWide]}>
-            <View
-              style={[
-                styles.heroText,
-                isWide && styles.heroTextWide,
-              ]}
+          {/* Hero — single column, focused on the headline + CTA. The
+              app icon shows up small, inline with the install CTA — not
+              as a hero artwork. Susan QA: companion-app framing, icon
+              should be small and tasteful. */}
+          <View style={styles.hero}>
+            <BrandHeading level="eyebrow" themeColor="accent">
+              For every family · harmony, peace, joy
+            </BrandHeading>
+            <BrandHeading
+              level={isWide ? 'display' : 'h1'}
+              style={styles.heroTitle}
             >
-              <BrandHeading level="eyebrow" themeColor="accent">
-                For every family · harmony, peace, joy
-              </BrandHeading>
-              <BrandHeading
-                level={isWide ? 'display' : 'h1'}
-                style={styles.heroTitle}
-              >
-                A family operating system in your pocket.
-              </BrandHeading>
-              <ThemedText
-                type="default"
-                themeColor="textSecondary"
-                style={styles.heroSub}
-              >
-                Home Hero is primarily an iPhone app. Your kid uses it on
-                their device; you set the standards and review on yours.
-                Sign in on the web (here) for setup and the longer view.
-              </ThemedText>
-              <View style={styles.heroCTA}>
-                <BrandButton
-                  label={installCtaLabel}
-                  onPress={getTheApp}
-                />
-                <BrandButton
-                  variant="ghost"
-                  label="Is this for you?"
-                  onPress={goToAssessment}
-                />
-              </View>
-              <View style={styles.heroSubCTA}>
-                <Pressable onPress={goToSignup} hitSlop={6}>
-                  <ThemedText
-                    type="small"
-                    style={[styles.heroSubLink, { color: theme.info }]}
-                  >
-                    I have a code · sign in →
-                  </ThemedText>
-                </Pressable>
-              </View>
-              <ThemedText
-                type="small"
-                themeColor="textMuted"
-                style={styles.heroFootnote}
-              >
-                Invite-only while we work with our first cohort. For
-                families with kids ages 4–18.
-              </ThemedText>
-            </View>
+              A companion app for the whole family.
+            </BrandHeading>
+            <ThemedText
+              type="default"
+              themeColor="textSecondary"
+              style={styles.heroSub}
+            >
+              Home Hero works on every device that matters. Your kid uses
+              the app on their phone; you use it on yours. The web (here,
+              when you sign in) is the home base for setup and the longer
+              view. Same family, two surfaces — and nobody's running the
+              show alone.
+            </ThemedText>
 
-            <View
-              style={[
-                styles.heroIconWrap,
-                isWide && styles.heroIconWrapWide,
-              ]}
-            >
+            {/* Install row: small icon (≈80px) + Beta CTA. The icon is a
+                stamp ("here's what the app looks like"), not a hero
+                artwork. borderRadius + overflow clip the white edges of
+                the iOS app icon PNG so it blends with the page. */}
+            <View style={styles.installRow}>
               <Image
                 // eslint-disable-next-line @typescript-eslint/no-require-imports
                 source={require('@/assets/images/icon.png')}
                 accessible
                 accessibilityLabel="Home Hero — the iPhone app icon"
-                style={[styles.heroIcon, isWide && styles.heroIconWide]}
-                resizeMode="contain"
+                style={styles.installIcon}
+                resizeMode="cover"
               />
+              <View style={styles.installCol}>
+                <BrandButton label={installCtaLabel} onPress={getTheApp} />
+                <ThemedText type="small" themeColor="textMuted">
+                  iPhone for now. Android once the iOS loop is proven.
+                </ThemedText>
+              </View>
             </View>
+
+            <View style={styles.heroCTA}>
+              <BrandButton
+                variant="ghost"
+                label="Is this for you?"
+                onPress={goToAssessment}
+              />
+              <Pressable onPress={goToSignup} hitSlop={6}>
+                <ThemedText
+                  type="small"
+                  style={[styles.heroSubLink, { color: theme.info }]}
+                >
+                  I have a code · sign in →
+                </ThemedText>
+              </Pressable>
+            </View>
+
+            <ThemedText
+              type="small"
+              themeColor="textMuted"
+              style={styles.heroFootnote}
+            >
+              Invite-only while we work with our first cohort. For
+              families with kids ages 4–18.
+            </ThemedText>
           </View>
 
           <View
@@ -564,16 +560,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textDecorationLine: 'underline',
   },
-  installSection: {
-    borderWidth: 1,
-  },
-  installRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.four,
-    marginTop: Spacing.three,
-    flexWrap: 'wrap',
-  },
   founderRow: {
     flexDirection: 'column',
     gap: Spacing.four,
@@ -600,51 +586,29 @@ const styles = StyleSheet.create({
   hero: {
     paddingTop: Spacing.five,
     paddingBottom: Spacing.eight,
-    gap: Spacing.six,
-    // On narrow: stacked column. The container is full-width.
-    flexDirection: 'column',
-    alignItems: 'stretch',
-  },
-  heroWide: {
-    paddingTop: Spacing.seven,
-    paddingBottom: Spacing.eight,
-    flexDirection: 'row',
-    // Top-align both columns so the text doesn't get pushed to the
-    // middle when the icon column is taller.
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: Spacing.seven,
-  },
-  // Stacked-column defaults — no flex, no forced 100% width. Width is
-  // managed by the parent (.page).
-  heroText: {
     gap: Spacing.four,
+    maxWidth: ReadableContentWidth + Spacing.eight,
   },
-  heroTextWide: {
-    // On wide, take ~60% of the row by flex. No width: 100% — that
-    // would push the icon column onto a new line.
-    flex: 1.2,
-    maxWidth: ReadableContentWidth + Spacing.four,
-  },
-  heroIconWrap: {
-    // Narrow default: show smaller and centered, but not full-width.
+  installRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: Spacing.four,
     marginTop: Spacing.three,
+    flexWrap: 'wrap',
   },
-  heroIconWrapWide: {
+  installIcon: {
+    width: 80,
+    height: 80,
+    // iOS app icons use ~22% corner radius. Clipping with overflow
+    // hidden + borderRadius removes the white square edges of the PNG
+    // so it blends with the page background.
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  installCol: {
     flex: 1,
-    marginTop: 0,
-  },
-  heroIcon: {
-    // Icon sizes itself. No shadow — the icon already has a designed
-    // background, and the shadow read as a card-on-card.
-    width: 260,
-    height: 260,
-  },
-  heroIconWide: {
-    width: 360,
-    height: 360,
+    minWidth: 200,
+    gap: Spacing.two,
   },
   heroTitle: {
     marginTop: Spacing.one,
