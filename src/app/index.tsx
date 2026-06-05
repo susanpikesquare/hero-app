@@ -210,7 +210,7 @@ function WebMarketingLanding() {
   };
   const installCtaLabel = TESTFLIGHT_URL
     ? 'Get Home Hero on iPhone'
-    : 'Request iPhone access';
+    : 'Join the Beta';
 
   return (
     <ScrollView
@@ -219,9 +219,18 @@ function WebMarketingLanding() {
     >
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.page}>
+          {/* Compact nav. Uncorkd-style: small wordmark on the left,
+              tight links on the right. The big CTA lives in the hero,
+              not the nav. */}
           <View style={styles.nav}>
-            <BrandLogo height={isWide ? 96 : 64} />
+            <BrandLogo height={isWide ? 56 : 44} />
             <View style={styles.navActions}>
+              <Link
+                href="/guide"
+                style={[styles.navLink, { color: theme.textSecondary }]}
+              >
+                How it works
+              </Link>
               <Link
                 href="/kid/join"
                 style={[styles.navLink, { color: theme.textSecondary }]}
@@ -234,58 +243,84 @@ function WebMarketingLanding() {
               >
                 Sign in
               </Link>
-              <BrandButton
-                variant="ghost"
-                label={installCtaLabel}
-                onPress={getTheApp}
-              />
             </View>
           </View>
 
+          {/* Hero — two-column on wide, stacked on narrow.
+              LEFT: eyebrow, headline, sub, CTAs, fine print.
+              RIGHT: large rounded app icon.
+              Modeled on uncorkdwine.app's hero shape (per Susan QA). */}
           <View style={[styles.hero, isWide && styles.heroWide]}>
-            <BrandHeading level="eyebrow" themeColor="accent">
-              For every family · harmony, peace, joy
-            </BrandHeading>
-            <BrandHeading
-              level={isWide ? 'display' : 'h1'}
-              style={styles.heroTitle}
+            <View
+              style={[
+                styles.heroText,
+                isWide && styles.heroTextWide,
+              ]}
             >
-              A family operating system in your pocket.
-            </BrandHeading>
-            <ThemedText
-              type="default"
-              themeColor="textSecondary"
-              style={styles.heroSub}
+              <BrandHeading level="eyebrow" themeColor="accent">
+                For every family · harmony, peace, joy
+              </BrandHeading>
+              <BrandHeading
+                level={isWide ? 'display' : 'h1'}
+                style={styles.heroTitle}
+              >
+                A family operating system in your pocket.
+              </BrandHeading>
+              <ThemedText
+                type="default"
+                themeColor="textSecondary"
+                style={styles.heroSub}
+              >
+                Home Hero is primarily an iPhone app. Your kid uses it on
+                their device; you set the standards and review on yours.
+                Sign in on the web (here) for setup and the longer view.
+              </ThemedText>
+              <View style={styles.heroCTA}>
+                <BrandButton
+                  label={installCtaLabel}
+                  onPress={getTheApp}
+                />
+                <BrandButton
+                  variant="ghost"
+                  label="Is this for you?"
+                  onPress={goToAssessment}
+                />
+              </View>
+              <View style={styles.heroSubCTA}>
+                <Pressable onPress={goToSignup} hitSlop={6}>
+                  <ThemedText
+                    type="small"
+                    style={[styles.heroSubLink, { color: theme.info }]}
+                  >
+                    I have a code · sign in →
+                  </ThemedText>
+                </Pressable>
+              </View>
+              <ThemedText
+                type="small"
+                themeColor="textMuted"
+                style={styles.heroFootnote}
+              >
+                Invite-only while we work with our first cohort. For
+                families with kids ages 4–18.
+              </ThemedText>
+            </View>
+
+            <View
+              style={[
+                styles.heroIconWrap,
+                isWide && styles.heroIconWrapWide,
+              ]}
             >
-              Home Hero is primarily an iPhone app. The kid uses it on
-              their device; you set the standards and review on yours.
-              The web (this site, when you sign in) is the home base for
-              setup and the longer view. Both surfaces, one family.
-            </ThemedText>
-            <View style={styles.heroCTA}>
-              <BrandButton
-                label="Is this for you? 30-second self-check →"
-                onPress={goToAssessment}
-              />
-              <BrandButton
-                variant="ghost"
-                label={installCtaLabel}
-                onPress={getTheApp}
+              <Image
+                // eslint-disable-next-line @typescript-eslint/no-require-imports
+                source={require('@/assets/images/icon.png')}
+                accessible
+                accessibilityLabel="Home Hero — the iPhone app icon"
+                style={styles.heroIcon}
+                resizeMode="contain"
               />
             </View>
-            <View style={styles.heroSubCTA}>
-              <Pressable onPress={goToSignup} hitSlop={6}>
-                <ThemedText
-                  type="small"
-                  style={[styles.heroSubLink, { color: theme.info }]}
-                >
-                  Already have a code? Sign in on web →
-                </ThemedText>
-              </Pressable>
-            </View>
-            <ThemedText type="small" themeColor="textMuted" style={styles.heroFootnote}>
-              Invite-only while we work with our first cohort of families. The self-check is for you, not us — there's no scoring on the other end.
-            </ThemedText>
           </View>
 
           <View
@@ -328,55 +363,6 @@ function WebMarketingLanding() {
                 </View>
               ))}
             </View>
-          </View>
-
-          {/* App download / surface explainer. Comes right after "Why a
-              chore app" so the reader has the value frame, before
-              "How it works" gets into mechanics. */}
-          <View
-            style={[
-              styles.section,
-              styles.installSection,
-              {
-                backgroundColor: theme.background,
-                borderColor: theme.border,
-              },
-            ]}
-          >
-            <BrandHeading level="eyebrow" themeColor="accent">
-              The app
-            </BrandHeading>
-            <BrandHeading level="h2" style={styles.sectionTitle}>
-              Built for the phone you already have in your hand.
-            </BrandHeading>
-            <ThemedText
-              type="default"
-              themeColor="textSecondary"
-              style={styles.lead}
-            >
-              Home Hero is primarily an iPhone app. Your kid uses it on
-              their device or a shared family one; you use it on yours.
-              The web (this site, when you sign in) is the home base for
-              the longer view — adding kids, picking the standard, reading
-              the heatmap with a coffee in your hand. Two surfaces, one
-              family operating system.
-            </ThemedText>
-            <View style={styles.installRow}>
-              <BrandButton label={installCtaLabel} onPress={getTheApp} />
-              <BrandButton
-                variant="ghost"
-                label="Open on web →"
-                onPress={goToSignup}
-              />
-            </View>
-            <ThemedText
-              type="small"
-              themeColor="textMuted"
-              style={styles.heroFootnote}
-            >
-              iPhone for now. Android is on the roadmap once the iOS loop
-              is proven.
-            </ThemedText>
           </View>
 
           <View style={styles.section}>
@@ -614,12 +600,46 @@ const styles = StyleSheet.create({
   hero: {
     paddingTop: Spacing.five,
     paddingBottom: Spacing.eight,
-    gap: Spacing.four,
+    gap: Spacing.six,
+    flexDirection: 'column',
+    alignItems: 'center',
   },
   heroWide: {
     paddingTop: Spacing.seven,
     paddingBottom: Spacing.eight,
-    maxWidth: ReadableContentWidth + Spacing.eight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.eight,
+  },
+  heroText: {
+    gap: Spacing.four,
+    flex: 1,
+    width: '100%',
+  },
+  heroTextWide: {
+    maxWidth: ReadableContentWidth + Spacing.four,
+  },
+  heroIconWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  heroIconWrapWide: {
+    flex: 1,
+    width: 'auto',
+    maxWidth: 480,
+  },
+  heroIcon: {
+    width: '100%',
+    aspectRatio: 1,
+    maxWidth: 380,
+    // Soft drop shadow so the icon reads as an object floating on the page
+    // (matches the Uncorkd hero treatment).
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 28,
+    shadowOffset: { width: 0, height: 16 },
   },
   heroTitle: {
     marginTop: Spacing.one,
@@ -632,7 +652,7 @@ const styles = StyleSheet.create({
   heroCTA: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.four,
+    gap: Spacing.three,
     marginTop: Spacing.two,
     flexWrap: 'wrap',
   },
