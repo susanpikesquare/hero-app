@@ -32,7 +32,7 @@ const INVITE_BODY =
 // Connect → Apps → Home Hero Family → TestFlight → (group) → Public Link.
 // When empty, the "Get the app" CTAs route to the invite-request mailto
 // instead.
-const TESTFLIGHT_URL = '';
+const TESTFLIGHT_URL = 'https://testflight.apple.com/join/BCXFzMnj';
 
 const PILLARS = [
   {
@@ -477,10 +477,13 @@ function WebMarketingLanding() {
                   Erica founded Home Hero out of her years in private practice
                   and her own experience as a parent. She is a Licensed
                   Marriage and Family Therapist with a doctorate in human
-                  sexuality and a master's in transpersonal psychology, and
-                  the founder of The Creation Agency in Los Gatos, where her
-                  practice has long focused on adolescent development and
-                  parental support.
+                  sexuality, a master's in transpersonal psychology, and a
+                  master's-level certificate in creative expression. As
+                  founder and clinical director of The Creation Agency in
+                  Los Gatos, her work focuses on adolescent development,
+                  parental support, and holistic therapeutic services —
+                  drawing on mindfulness and creative expression alongside
+                  traditional talk therapy.
                 </ThemedText>
                 <ThemedText
                   type="default"
@@ -489,10 +492,12 @@ function WebMarketingLanding() {
                 >
                   Before therapy, she spent a decade in the technology
                   industry — which is part of why Home Hero exists at all.
-                  The framework that runs underneath every screen came out
-                  of what she has seen sitting with families: the moves
-                  that actually help, and the gaps that no app on the
-                  market was filling.
+                  That mix of clinical depth and lived experience in
+                  high-pressure Bay Area workplaces shaped how the app
+                  works: the framework that runs underneath every screen
+                  came out of what she has seen sitting with families —
+                  the moves that actually help, and the gaps that no app
+                  on the market was filling.
                 </ThemedText>
               </View>
             </View>
