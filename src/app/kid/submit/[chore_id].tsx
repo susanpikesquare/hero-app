@@ -24,13 +24,21 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useKidSession } from '@/lib/kid-session';
 import { supabase } from '@/lib/supabase';
+import { uploadPickedPhoto } from '@/lib/upload-photo';
 import { useChores } from '@/lib/use-chores';
 
 type Picked = {
   uri: string;
   mimeType: string;
   fileExtension: string;
+  /** Set on native (via ImagePicker `base64: true`); undefined on web. */
+  base64?: string;
 };
+
+// On native we request base64 directly from expo-image-picker — this
+// avoids the broken `fetch(uri).blob()` path on iOS (see
+// src/lib/upload-photo.ts).
+const NEEDS_BASE64 = Platform.OS !== 'web';
 
 async function pickFromLibrary(): Promise<Picked | null> {
   const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -38,6 +46,7 @@ async function pickFromLibrary(): Promise<Picked | null> {
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ['images'],
     quality: 0.85,
+    base64: NEEDS_BASE64,
   });
   if (result.canceled || result.assets.length === 0) return null;
   const a = result.assets[0];
@@ -45,19 +54,24 @@ async function pickFromLibrary(): Promise<Picked | null> {
     uri: a.uri,
     mimeType: a.mimeType ?? 'image/jpeg',
     fileExtension: (a.fileName?.split('.').pop() ?? 'jpg').toLowerCase(),
+    base64: a.base64 ?? undefined,
   };
 }
 
 async function pickFromCamera(): Promise<Picked | null> {
   const perm = await ImagePicker.requestCameraPermissionsAsync();
   if (!perm.granted) return null;
-  const result = await ImagePicker.launchCameraAsync({ quality: 0.85 });
+  const result = await ImagePicker.launchCameraAsync({
+    quality: 0.85,
+    base64: NEEDS_BASE64,
+  });
   if (result.canceled || result.assets.length === 0) return null;
   const a = result.assets[0];
   return {
     uri: a.uri,
     mimeType: a.mimeType ?? 'image/jpeg',
     fileExtension: (a.fileName?.split('.').pop() ?? 'jpg').toLowerCase(),
+    base64: a.base64 ?? undefined,
   };
 }
 
@@ -102,19 +116,16 @@ export default function KidSelfSubmitScreen() {
 
     setSubmitting(true);
     try {
-      const fileResp = await fetch(picked.uri);
-      const blob = await fileResp.blob();
       const ts = Date.now();
       const rand = Math.random().toString(36).slice(2, 8);
       const path = `${family.id}/${kid.id}/${chore.id}/${ts}-${rand}.${picked.fileExtension}`;
 
-      const { error: uploadErr } = await supabase.storage
-        .from('submissions')
-        .upload(path, blob, {
-          contentType: picked.mimeType,
-          upsert: false,
-        });
-      if (uploadErr) throw uploadErr;
+      const uploadResult = await uploadPickedPhoto({
+        bucket: 'submissions',
+        path,
+        picked,
+      });
+      if (!uploadResult.ok) throw new Error(uploadResult.error);
 
       const { data: insertData, error: insertErr } = await supabase
         .from('submissions')

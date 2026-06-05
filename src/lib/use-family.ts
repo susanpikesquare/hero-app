@@ -85,8 +85,8 @@ export function useFamily(enabled: boolean) {
     async (opts: {
       displayName: string;
       age: number | null;
-      neurodivergenceContext?:
-        | Database['public']['Enums']['neurodivergence_context'];
+      /** Multi-select support profiles (adhd/autism/anxiety/sensory/not_sure). */
+      supportProfiles?: string[];
     }) => {
       if (!state.family) throw new Error('No family loaded.');
       const { data, error: insertErr } = await supabase
@@ -96,8 +96,7 @@ export function useFamily(enabled: boolean) {
           role: 'kid',
           display_name: opts.displayName.trim(),
           age: opts.age,
-          neurodivergence_context:
-            opts.neurodivergenceContext ?? 'not_specified',
+          support_profiles: opts.supportProfiles ?? [],
         })
         .select('id')
         .single();

@@ -167,7 +167,7 @@ export function ParentQueueView() {
             >
               {pending.length === 0
                 ? 'No new chores to call. Tap Dashboard for the fuller view.'
-                : 'Tap a card to enlarge the photo. Pick a reason to land your call — your kid sees the message you choose.'}
+                : 'Tap a card to enlarge the photo. Pick a reason to send back — your kid sees the message you choose.'}
             </ThemedText>
           </View>
 
@@ -372,7 +372,7 @@ function QueueCard({
           themeColor="accent"
           style={{ textTransform: 'uppercase', letterSpacing: 1 }}
         >
-          Your call
+          Your turn
         </ThemedText>
       </View>
 

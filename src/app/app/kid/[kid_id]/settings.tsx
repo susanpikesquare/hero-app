@@ -34,8 +34,8 @@ import {
   type KidModeSetting,
 } from '@/lib/kid-mode';
 import {
-  CONTEXT_OPTIONS,
-  type NeurodivergenceContext,
+  PROFILE_OPTIONS,
+  type SupportProfile,
 } from '@/lib/neurodivergence-context';
 import { supabase } from '@/lib/supabase';
 import { useFamily } from '@/lib/use-family';
@@ -52,8 +52,7 @@ export default function KidSettingsScreen() {
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [kidMode, setKidMode] = useState<KidModeSetting>('auto');
-  const [neurodivergenceContext, setNeurodivergenceContext] =
-    useState<NeurodivergenceContext>('not_specified');
+  const [supportProfiles, setSupportProfiles] = useState<SupportProfile[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -103,9 +102,7 @@ export default function KidSettingsScreen() {
     setName(kid.display_name);
     setAge(kid.age != null ? String(kid.age) : '');
     setKidMode((kid.kid_mode ?? 'auto') as KidModeSetting);
-    setNeurodivergenceContext(
-      (kid.neurodivergence_context ?? 'not_specified') as NeurodivergenceContext
-    );
+    setSupportProfiles((kid.support_profiles ?? []) as SupportProfile[]);
   }, [kid]);
 
   const save = async () => {
@@ -134,7 +131,7 @@ export default function KidSettingsScreen() {
           display_name: trimmedName,
           age: nextAge,
           kid_mode: kidMode,
-          neurodivergence_context: neurodivergenceContext,
+          support_profiles: supportProfiles,
         })
         .eq('id', kid.id);
       if (updateErr) throw updateErr;
@@ -320,9 +317,12 @@ export default function KidSettingsScreen() {
             </View>
           </View>
 
-          {/* Optional neurodivergence context (PRD §8A). Parent-facing only —
+          {/* Optional support-profile multi-select. Parent-facing only —
               never appears on the kid surface. Seeds support defaults and
-              surfaces relevant coaching to the parent. */}
+              surfaces relevant coaching to the parent. Susan's QA feedback
+              (June 4): the prior "neurodivergent / neurotypical" framing
+              felt clinical and intimidating. Friendlier wording + specific
+              options + multi-select. */}
           <View
             style={[
               styles.card,
@@ -330,21 +330,28 @@ export default function KidSettingsScreen() {
             ]}
           >
             <BrandHeading level="h2" style={styles.cardTitle}>
-              Is {kid.display_name} neurodivergent?
+              Do any of these apply to {kid.display_name}?
             </BrandHeading>
             <ThemedText type="default" themeColor="textSecondary">
-              Optional. We use this to tune the suggestions and coaching for
-              you. Nothing about it ever shows up on the kid's side of the
-              app — there's no label, no badge, no mention.
+              Optional. Pick all that apply. We use what you tell us to
+              tune the suggestions and the coaching just for you. Nothing
+              about this ever shows up on {kid.display_name}'s side of the
+              app — no label, no badge, no mention.
             </ThemedText>
 
             <View style={styles.modeOptions}>
-              {CONTEXT_OPTIONS.map((opt) => {
-                const isActive = neurodivergenceContext === opt.value;
+              {PROFILE_OPTIONS.map((opt) => {
+                const isActive = supportProfiles.includes(opt.value);
                 return (
                   <Pressable
                     key={opt.value}
-                    onPress={() => setNeurodivergenceContext(opt.value)}
+                    onPress={() =>
+                      setSupportProfiles((prev) =>
+                        prev.includes(opt.value)
+                          ? prev.filter((p) => p !== opt.value)
+                          : [...prev, opt.value]
+                      )
+                    }
                     style={({ pressed }) => [
                       styles.modeOption,
                       {
@@ -373,17 +380,33 @@ export default function KidSettingsScreen() {
                           type="smallBold"
                           style={{ color: theme.accent }}
                         >
-                          ✓ Selected
+                          ✓
                         </ThemedText>
                       )}
                     </View>
                     <ThemedText type="default" themeColor="textSecondary">
                       {opt.hint}
                     </ThemedText>
+                    {opt.sources.length > 0 && (
+                      <ThemedText
+                        type="small"
+                        themeColor="textMuted"
+                        style={{ marginTop: Spacing.one }}
+                      >
+                        Drawn from: {opt.sources.join(' · ')}
+                      </ThemedText>
+                    )}
                   </Pressable>
                 );
               })}
             </View>
+
+            {supportProfiles.length === 0 && (
+              <ThemedText type="small" themeColor="textMuted">
+                Nothing selected → we'll use age-typical defaults. You can
+                always come back here.
+              </ThemedText>
+            )}
           </View>
 
           {/* Per-kid display mode. One Home Hero account holds kids at very

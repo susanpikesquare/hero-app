@@ -184,6 +184,7 @@ export type Database = {
           kid_mode: Database['public']['Enums']['kid_mode'];
           neurodivergence_context: Database['public']['Enums']['neurodivergence_context'];
           role: Database['public']['Enums']['member_role'];
+          support_profiles: string[];
         };
         Insert: {
           age?: number | null;
@@ -198,6 +199,7 @@ export type Database = {
           kid_mode?: Database['public']['Enums']['kid_mode'];
           neurodivergence_context?: Database['public']['Enums']['neurodivergence_context'];
           role: Database['public']['Enums']['member_role'];
+          support_profiles?: string[];
         };
         Update: {
           age?: number | null;
@@ -212,6 +214,7 @@ export type Database = {
           kid_mode?: Database['public']['Enums']['kid_mode'];
           neurodivergence_context?: Database['public']['Enums']['neurodivergence_context'];
           role?: Database['public']['Enums']['member_role'];
+          support_profiles?: string[];
         };
         Relationships: [
           {

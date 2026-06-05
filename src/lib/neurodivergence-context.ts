@@ -1,27 +1,132 @@
 /**
- * Neurodivergence context — parent-provided, optional, parent-facing only.
+ * Support profiles — parent-provided, optional, parent-facing only.
  *
- * Per PRD v0.3.1 §8A and the June 3 working session: Home Hero is a
- * universal product. We don't diagnose, label, or categorize a kid.
- * We do let a parent optionally say "this kid is neurodivergent," because
- * that context legitimately changes:
- *   - The tasks we suggest (smaller, more concrete, lower daily ceiling)
- *   - How tasks are paced (higher support defaults)
- *   - The coaching surfaced (neurodivergence-aware content first)
+ * Susan's QA feedback: the original "neurodivergent / neurotypical /
+ * not specified" picker felt clinical, intimidating, and made parents
+ * feel like they were labeling their kid. New design: a multi-select
+ * with friendlier prompt ("Do any of these apply?"), specific options,
+ * and a "not sure" path.
  *
- * The hard rule: the context is PARENT-FACING ONLY. It never appears in
- * any kid session, kid screen, or kid-facing label. The kid sees the
- * same surface every other kid sees, tuned only by the (unlabeled)
- * support dimensions.
+ * The schema (family_members.support_profiles text[]) stores an array
+ * of selected values. Empty array = no profile applies (the new
+ * default — what we used to call "neurotypical"). Multi-select means a
+ * kid with ADHD + anxiety can have both selected and get both content
+ * lenses surfaced.
  *
- * MVP captures a single general context (`not_specified`, `neurotypical`,
- * `neurodivergent`). Specific profiles (ADHD, autism, anxiety,
- * sensory-sensitive) are Later, per the Workbook parking lot.
+ * What each profile changes (when wired up):
+ *   - Age guidance card: shows a profile-specific lens paragraph in
+ *     addition to the universal developmental signal.
+ *   - Chore suggestions: starting ceiling skews lower; coaching tips
+ *     skew toward step-chunking + visual support.
+ *   - Articles + coaching library: surfaces profile-aware content
+ *     when available.
  *
- * Per-context support defaults (Workbook Q5.4 + Q5.5) are still OPEN
- * with Erica. When she lands her answers, the seeding logic goes in
- * `support-defaults.ts` (TBD). This module only defines the context
- * itself + the UI metadata.
+ * The parent's PARENT-FACING surface uses these; the kid's surface
+ * never sees them as labels (PRD §8A — the no-leak rule still holds).
+ *
+ * Each profile maps to a body of published guidance from a named
+ * authority — see `PROFILE_OPTIONS[i].sources`. Per Workbook Q3.1,
+ * we cite the source so claims aren't asserted on Home Hero's own
+ * authority.
+ */
+
+export type SupportProfile =
+  | 'adhd'
+  | 'autism'
+  | 'anxiety'
+  | 'sensory'
+  | 'not_sure';
+
+export type ProfileOption = {
+  value: SupportProfile;
+  label: string;
+  hint: string;
+  sources: string[];
+};
+
+/**
+ * The picker options shown to a parent. Order: most common → least
+ * common → "not sure." Copy is intentionally non-clinical.
+ */
+export const PROFILE_OPTIONS: ProfileOption[] = [
+  {
+    value: 'adhd',
+    label: 'ADHD or attention challenges',
+    hint:
+      "Has trouble with task initiation, finishing what they start, or remembering multi-step routines. Diagnosed or just suspected — either counts.",
+    sources: [
+      'CHADD (Children and Adults with ADHD)',
+      'Child Mind Institute — ADHD content',
+      'Understood.org — ADHD & executive function',
+    ],
+  },
+  {
+    value: 'autism',
+    label: 'On the autism spectrum',
+    hint:
+      'Sensory differences, strong preference for routine, specific interests, or social communication patterns. Diagnosed or just suspected.',
+    sources: [
+      'Autism Society',
+      'Child Mind Institute — Autism content',
+      'AAP HealthyChildren.org — Autism spectrum',
+    ],
+  },
+  {
+    value: 'anxiety',
+    label: 'Anxiety or big worries',
+    hint:
+      'Worry that interferes with daily life, avoidance of new situations, or strong reactions to small triggers.',
+    sources: [
+      'Anxiety & Depression Association of America (ADAA)',
+      'Child Mind Institute — Anxiety content',
+    ],
+  },
+  {
+    value: 'sensory',
+    label: 'Sensory sensitivity',
+    hint:
+      "Strong reactions to sounds, textures, lights, smells, or food. Can co-occur with autism, ADHD, or stand on its own.",
+    sources: [
+      'STAR Institute for Sensory Processing',
+      'Child Mind Institute — Sensory processing',
+    ],
+  },
+  {
+    value: 'not_sure',
+    label: 'Not sure / would like more support either way',
+    hint:
+      "We'll start with stronger scaffolding (smaller steps, more reminders, more visual support) and you can dial it back anytime.",
+    sources: [],
+  },
+];
+
+/**
+ * Whether the parent has indicated anything at all. Used by the
+ * support-card UI to decide whether to surface the profile-aware lenses.
+ */
+export function hasAnyProfile(profiles: string[] | null | undefined): boolean {
+  if (!profiles) return false;
+  return profiles.length > 0;
+}
+
+/**
+ * Returns the parent-friendly display labels for a parent's selection.
+ * Used in settings to summarize ("Selected: ADHD, anxiety").
+ */
+export function profileLabels(profiles: string[]): string[] {
+  const byValue = new Map<string, string>();
+  for (const opt of PROFILE_OPTIONS) {
+    byValue.set(opt.value, opt.label);
+  }
+  return profiles.map((p) => byValue.get(p) ?? p);
+}
+
+/* ── BACK-COMPAT LAYER ──────────────────────────────────────────────────
+ *
+ * The earlier picker used neurodivergence_context: 'not_specified' |
+ * 'neurotypical' | 'neurodivergent'. The schema still has that column
+ * and the migration backfilled support_profiles from it. Keeping these
+ * types exported so code that hasn't migrated still compiles.
  */
 
 export type NeurodivergenceContext =
@@ -29,16 +134,6 @@ export type NeurodivergenceContext =
   | 'neurotypical'
   | 'neurodivergent';
 
-/**
- * Display metadata for the parent-facing picker. Copy is intentionally
- * non-judgmental and frames the choice as context, not diagnosis:
- *   - No "Are they normal?" / "Are they typical?" wording
- *   - No clinical language
- *   - "Prefer not to say" is first-class, not buried
- *
- * Tomorrow's clinical session (Q5.4) may refine these strings. Treat
- * them as a draft pending Erica's review.
- */
 export const CONTEXT_OPTIONS: {
   value: NeurodivergenceContext;
   label: string;
@@ -54,29 +149,20 @@ export const CONTEXT_OPTIONS: {
     value: 'neurotypical',
     label: 'No, not that I know of',
     hint:
-      "Standard defaults. Use the support sliders to tune support up or down for any kid.",
+      'Standard defaults. Use the support sliders to tune support up or down for any kid.',
   },
   {
     value: 'neurodivergent',
     label: 'Yes, or I suspect so',
     hint:
-      "We'll start with stronger scaffolding — smaller steps, more reminders, more visual support — and surface coaching tuned for executive-function load. You can always adjust the support sliders.",
+      "We'll start with stronger scaffolding and surface coaching tuned for executive-function load. You can always adjust.",
   },
 ];
 
-/**
- * Returns the parent-facing label for a context, for displaying in
- * settings summaries and history. Never use this in any kid-facing
- * surface.
- */
 export function contextLabel(context: NeurodivergenceContext): string {
   return CONTEXT_OPTIONS.find((o) => o.value === context)?.label ?? 'Unknown';
 }
 
-/**
- * Whether the context picker prompt has already been answered for this
- * kid. Used to decide whether to surface a gentle reminder in settings.
- */
 export function isContextSet(context: NeurodivergenceContext): boolean {
   return context !== 'not_specified';
 }

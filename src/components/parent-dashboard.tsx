@@ -18,8 +18,8 @@ import { useTheme } from '@/hooks/use-theme';
 import { articleForAge, ARTICLES } from '@/lib/articles';
 import { useAuth } from '@/lib/auth-context';
 import {
-  CONTEXT_OPTIONS,
-  type NeurodivergenceContext,
+  PROFILE_OPTIONS,
+  type SupportProfile,
 } from '@/lib/neurodivergence-context';
 import { computeKidPulse } from '@/lib/progress-stats';
 import {
@@ -28,6 +28,7 @@ import {
   latestBadge,
 } from '@/lib/rewards';
 import { ensureToday } from '@/lib/chore-instances';
+import { supabase } from '@/lib/supabase';
 import { choresForKid, submissionsForChore, useChores } from '@/lib/use-chores';
 import { useFamily } from '@/lib/use-family';
 import {
@@ -42,7 +43,12 @@ export function ParentDashboard() {
   const { session, signOut } = useAuth();
   const { family, parent, kids, loading: famLoading, error: famError, addKid } =
     useFamily(!!session);
-  const { chores, submissions, loading: choresLoading } = useChores(!!session);
+  const {
+    chores,
+    submissions,
+    loading: choresLoading,
+    reload: reloadChores,
+  } = useChores(!!session);
 
   // Materialize today's chore_instances on the server so the schema is
   // consistent (every active recurring chore has a row for today). Best
@@ -56,9 +62,7 @@ export function ParentDashboard() {
 
   const [newKidName, setNewKidName] = useState('');
   const [newKidAge, setNewKidAge] = useState('');
-  const [newKidContext, setNewKidContext] = useState<NeurodivergenceContext>(
-    'not_specified'
-  );
+  const [newKidProfiles, setNewKidProfiles] = useState<SupportProfile[]>([]);
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
@@ -86,11 +90,11 @@ export function ParentDashboard() {
       const newKidId = await addKid({
         displayName: newKidName,
         age,
-        neurodivergenceContext: newKidContext,
+        supportProfiles: newKidProfiles,
       });
       setNewKidName('');
       setNewKidAge('');
-      setNewKidContext('not_specified');
+      setNewKidProfiles([]);
       if (newKidId) {
         router.push(`/app/kid/${newKidId}/setup`);
       }
@@ -214,10 +218,7 @@ export function ParentDashboard() {
                   </ThemedText>
                   {familyAwaiting > 0 && (
                     <Pressable
-                      onPress={() => {
-                        // No standalone submissions index yet — scroll to the
-                        // Recent submissions card below, where they're listed.
-                      }}
+                      onPress={() => router.push('/app/queue')}
                       hitSlop={6}
                     >
                       <View
@@ -230,7 +231,7 @@ export function ParentDashboard() {
                           type="smallBold"
                           style={{ color: '#8A5A1F' }}
                         >
-                          {familyAwaiting} awaiting your review
+                          {familyAwaiting} ready for your eyes →
                         </ThemedText>
                       </View>
                     </Pressable>
@@ -260,7 +261,7 @@ export function ParentDashboard() {
                   <PulseStat
                     theme={theme}
                     value={String(familyAwaiting)}
-                    label="need your call"
+                    label="ready for your eyes"
                   />
                 </View>
 
@@ -295,7 +296,7 @@ export function ParentDashboard() {
                               ? 'No required chores today'
                               : allDone
                                 ? `✓ All ${pulse.requiredToday} done`
-                                : `${pulse.doneToday} of ${pulse.requiredToday} done${pulse.awaitingReview > 0 ? ` · ${pulse.awaitingReview} awaiting your call` : ''}`}
+                                : `${pulse.doneToday} of ${pulse.requiredToday} done${pulse.awaitingReview > 0 ? ` · ${pulse.awaitingReview} ready for your eyes` : ''}`}
                           </ThemedText>
                           {fraction !== null && !allDone && (
                             <View
@@ -360,10 +361,10 @@ export function ParentDashboard() {
               <AddKidRow
                 name={newKidName}
                 age={newKidAge}
-                context={newKidContext}
+                profiles={newKidProfiles}
                 onChangeName={setNewKidName}
                 onChangeAge={setNewKidAge}
-                onChangeContext={setNewKidContext}
+                onChangeProfiles={setNewKidProfiles}
                 onSubmit={onAddKid}
                 disabled={adding}
                 error={addError}
@@ -486,30 +487,20 @@ export function ParentDashboard() {
                         const subs = submissionsForChore(submissions, chore.id);
                         const hasRef = !!chore.reference_photo_path;
                         return (
-                          <Pressable
+                          <ChoreRow
                             key={chore.id}
-                            onPress={() => router.push(`/app/chores/${chore.id}`)}
-                            style={[
-                              styles.choreRow,
-                              {
-                                backgroundColor: theme.background,
-                                borderColor: theme.border,
-                              },
-                            ]}
-                          >
-                            <View style={{ flex: 1 }}>
-                              <ThemedText type="default">{chore.title}</ThemedText>
-                              <ThemedText type="small" themeColor="textMuted">
-                                {subs.length === 0
-                                  ? 'No submissions yet'
-                                  : `${subs.length} submission${subs.length === 1 ? '' : 's'}`}
-                                {hasRef ? ' · reference set' : ' · no reference yet'}
-                              </ThemedText>
-                            </View>
-                            <ThemedText type="small" themeColor="textSecondary">
-                              {hasRef ? 'Edit →' : 'Set up →'}
-                            </ThemedText>
-                          </Pressable>
+                            chore={chore}
+                            subsCount={subs.length}
+                            hasRef={hasRef}
+                            theme={theme}
+                            onOpen={() =>
+                              router.push(`/app/chores/${chore.id}`)
+                            }
+                            onDeleted={async () => {
+                              // Reload chores so the row disappears.
+                              await reloadChores();
+                            }}
+                          />
                         );
                       })}
                     </View>
@@ -549,10 +540,10 @@ export function ParentDashboard() {
                 <AddKidRow
                   name={newKidName}
                   age={newKidAge}
-                  context={newKidContext}
+                  profiles={newKidProfiles}
                   onChangeName={setNewKidName}
                   onChangeAge={setNewKidAge}
-                  onChangeContext={setNewKidContext}
+                  onChangeProfiles={setNewKidProfiles}
                   onSubmit={onAddKid}
                   disabled={adding}
                   error={addError}
@@ -712,10 +703,10 @@ export function ParentDashboard() {
 function AddKidRow({
   name,
   age,
-  context,
+  profiles,
   onChangeName,
   onChangeAge,
-  onChangeContext,
+  onChangeProfiles,
   onSubmit,
   disabled,
   error,
@@ -723,10 +714,10 @@ function AddKidRow({
 }: {
   name: string;
   age: string;
-  context: NeurodivergenceContext;
+  profiles: SupportProfile[];
   onChangeName: (v: string) => void;
   onChangeAge: (v: string) => void;
-  onChangeContext: (v: NeurodivergenceContext) => void;
+  onChangeProfiles: (v: SupportProfile[]) => void;
   onSubmit: () => void;
   disabled: boolean;
   error: string | null;
@@ -763,24 +754,30 @@ function AddKidRow({
         />
       </View>
 
-      {/* Optional neurodivergence context (PRD §8A). Parent-facing only —
-          never appears on the kid surface. Defaults to 'not_specified',
-          which behaves exactly like the rest of the app already does. */}
+      {/* Optional support profiles (PRD §8A). Parent-facing only. Pick
+          all that apply — friendlier framing than the old single-pick
+          "neurodivergent?" enum (Susan QA, June 4). */}
       <View style={{ gap: Spacing.two }}>
         <ThemedText type="smallBold" themeColor="textSecondary">
-          Is this kid neurodivergent? (optional)
+          Do any of these apply? (optional, pick all that fit)
         </ThemedText>
         <ThemedText type="small" themeColor="textMuted">
-          We use this to tune the suggestions and coaching for you. Nothing
-          about it ever shows up on the kid's side of the app.
+          We use what you tell us to tune the suggestions just for you.
+          Nothing shows up on the kid's side of the app.
         </ThemedText>
         <View style={styles.contextRow}>
-          {CONTEXT_OPTIONS.map((opt) => {
-            const isActive = context === opt.value;
+          {PROFILE_OPTIONS.map((opt) => {
+            const isActive = profiles.includes(opt.value);
             return (
               <Pressable
                 key={opt.value}
-                onPress={() => onChangeContext(opt.value)}
+                onPress={() =>
+                  onChangeProfiles(
+                    isActive
+                      ? profiles.filter((p) => p !== opt.value)
+                      : [...profiles, opt.value]
+                  )
+                }
                 style={({ pressed }) => [
                   styles.contextChip,
                   {
@@ -836,6 +833,138 @@ function AddKidRow({
  *     is the value — it powers the metacognition + the kid-initiated
  *     metric.
  */
+/**
+ * Per-chore row on the parent dashboard. Tap the row to open the chore
+ * detail (configure reference photo, tips, etc.). Tap the small "×" on
+ * the right to delete — first tap turns the row into a confirm prompt
+ * (Delete / Cancel), second tap to "Delete" actually deletes. No native
+ * dialog, no modal — works on web AND mobile.
+ */
+function ChoreRow({
+  chore,
+  subsCount,
+  hasRef,
+  theme,
+  onOpen,
+  onDeleted,
+}: {
+  chore: { id: string; title: string };
+  subsCount: number;
+  hasRef: boolean;
+  theme: ReturnType<typeof useTheme>;
+  onOpen: () => void;
+  onDeleted: () => Promise<void>;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('chores')
+        .delete()
+        .eq('id', chore.id);
+      if (error) throw error;
+      await onDeleted();
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn('delete chore failed:', err);
+      setConfirming(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <View
+      style={[
+        styles.choreRow,
+        { backgroundColor: theme.background, borderColor: theme.border },
+      ]}
+    >
+      <Pressable
+        onPress={onOpen}
+        disabled={confirming}
+        style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.three }}
+      >
+        <View style={{ flex: 1 }}>
+          <ThemedText type="default">{chore.title}</ThemedText>
+          <ThemedText type="small" themeColor="textMuted">
+            {subsCount === 0
+              ? 'No submissions yet'
+              : `${subsCount} submission${subsCount === 1 ? '' : 's'}`}
+            {hasRef ? ' · reference set' : ' · no reference yet'}
+          </ThemedText>
+        </View>
+        {!confirming && (
+          <ThemedText type="small" themeColor="textSecondary">
+            {hasRef ? 'Edit →' : 'Set up →'}
+          </ThemedText>
+        )}
+      </Pressable>
+
+      {confirming ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            gap: Spacing.two,
+            alignItems: 'center',
+            marginLeft: Spacing.two,
+          }}
+        >
+          <Pressable
+            onPress={handleDelete}
+            disabled={deleting}
+            style={{
+              paddingHorizontal: Spacing.three,
+              paddingVertical: Spacing.one,
+              borderRadius: Radius.pill,
+              backgroundColor: '#B23A48',
+              opacity: deleting ? 0.6 : 1,
+            }}
+          >
+            <ThemedText
+              type="smallBold"
+              style={{ color: 'white' }}
+            >
+              {deleting ? 'Deleting…' : 'Delete'}
+            </ThemedText>
+          </Pressable>
+          <Pressable
+            onPress={() => setConfirming(false)}
+            disabled={deleting}
+            hitSlop={6}
+          >
+            <ThemedText type="small" themeColor="textSecondary">
+              Cancel
+            </ThemedText>
+          </Pressable>
+        </View>
+      ) : (
+        <Pressable
+          onPress={() => setConfirming(true)}
+          hitSlop={10}
+          style={{
+            paddingHorizontal: Spacing.two,
+            paddingVertical: Spacing.one,
+            marginLeft: Spacing.one,
+          }}
+          accessibilityLabel={`Delete chore: ${chore.title}`}
+        >
+          <ThemedText
+            type="default"
+            style={{ color: theme.textMuted, fontSize: 20, lineHeight: 22 }}
+          >
+            ×
+          </ThemedText>
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
 function NudgeRow({
   kidId,
   kidName,

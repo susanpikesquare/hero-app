@@ -27,6 +27,21 @@ import {
 } from '@/lib/kid-session';
 import { supabase } from '@/lib/supabase';
 
+/**
+ * Format a kid join code as the user types. Codes look like ABCDE-FGHJK
+ * (5 letters, dash, 5 letters). We:
+ *   - strip everything that isn't a letter
+ *   - uppercase
+ *   - cap at 10 letters
+ *   - insert the dash after the 5th letter automatically, so the kid
+ *     never has to find a dash key on a phone keyboard
+ */
+function formatJoinCode(raw: string): string {
+  const letters = raw.replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 10);
+  if (letters.length <= 5) return letters;
+  return `${letters.slice(0, 5)}-${letters.slice(5)}`;
+}
+
 export default function KidJoinScreen() {
   const theme = useTheme();
   const router = useRouter();
@@ -138,7 +153,7 @@ export default function KidJoinScreen() {
           <TextField
             label="Your join code"
             value={code}
-            onChangeText={setCode}
+            onChangeText={(raw) => setCode(formatJoinCode(raw))}
             autoCapitalize="characters"
             autoComplete="off"
             autoCorrect={false}

@@ -18,8 +18,13 @@ import {
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
+import { uploadPickedPhoto } from '@/lib/upload-photo';
 import { useChores } from '@/lib/use-chores';
 import { useFamily } from '@/lib/use-family';
+
+// Native needs base64 from the picker to avoid the broken
+// fetch(uri).blob() path on iOS. See src/lib/upload-photo.ts.
+const NEEDS_BASE64 = Platform.OS !== 'web';
 
 async function pickFromLibrary() {
   const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -27,6 +32,7 @@ async function pickFromLibrary() {
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ['images'],
     quality: 0.85,
+    base64: NEEDS_BASE64,
   });
   if (result.canceled || result.assets.length === 0) return null;
   const a = result.assets[0];
@@ -34,19 +40,24 @@ async function pickFromLibrary() {
     uri: a.uri,
     mimeType: a.mimeType ?? 'image/jpeg',
     fileExtension: (a.fileName?.split('.').pop() ?? 'jpg').toLowerCase(),
+    base64: a.base64 ?? undefined,
   };
 }
 
 async function pickFromCamera() {
   const perm = await ImagePicker.requestCameraPermissionsAsync();
   if (!perm.granted) return null;
-  const result = await ImagePicker.launchCameraAsync({ quality: 0.85 });
+  const result = await ImagePicker.launchCameraAsync({
+    quality: 0.85,
+    base64: NEEDS_BASE64,
+  });
   if (result.canceled || result.assets.length === 0) return null;
   const a = result.assets[0];
   return {
     uri: a.uri,
     mimeType: a.mimeType ?? 'image/jpeg',
     fileExtension: (a.fileName?.split('.').pop() ?? 'jpg').toLowerCase(),
+    base64: a.base64 ?? undefined,
   };
 }
 
@@ -66,6 +77,7 @@ export default function ChoreDetailScreen() {
     uri: string;
     mimeType: string;
     fileExtension: string;
+    base64?: string;
   } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,16 +120,16 @@ export default function ChoreDetailScreen() {
     }
     setUploading(true);
     try {
-      const resp = await fetch(picked.uri);
-      const blob = await resp.blob();
       const ts = Date.now();
       const rand = Math.random().toString(36).slice(2, 8);
       const path = `${family.id}/${chore.id}/${ts}-${rand}.${picked.fileExtension}`;
 
-      const { error: uploadErr } = await supabase.storage
-        .from('reference-photos')
-        .upload(path, blob, { contentType: picked.mimeType, upsert: false });
-      if (uploadErr) throw uploadErr;
+      const uploadResult = await uploadPickedPhoto({
+        bucket: 'reference-photos',
+        path,
+        picked,
+      });
+      if (!uploadResult.ok) throw new Error(uploadResult.error);
 
       const { error: updateErr } = await supabase
         .from('chores')
