@@ -1,6 +1,5 @@
 import { Link, useRouter } from 'expo-router';
 import {
-  Image,
   Linking,
   Platform,
   Pressable,
@@ -27,12 +26,6 @@ const INVITE_EMAIL = 'susan@pikesquare.co';
 const INVITE_SUBJECT = 'Home Hero — invite request';
 const INVITE_BODY =
   "Hi,\n\nI'd like an invite code for Home Hero. A bit about my family:\n\n— ";
-
-// TestFlight public link. Set this when Susan enables it in App Store
-// Connect → Apps → Home Hero Family → TestFlight → (group) → Public Link.
-// When empty, the "Get the app" CTAs route to the invite-request mailto
-// instead.
-const TESTFLIGHT_URL = '';
 
 const PILLARS = [
   {
@@ -197,20 +190,6 @@ function WebMarketingLanding() {
   // and the Founding-100 section so prospects move through the mirror
   // before being asked to commit.
   const goToAssessment = () => router.push('/assessment');
-  // The app is primarily phone-based. Web is the home base for parent
-  // setup + heatmap review. When a TestFlight public link is
-  // configured, "Get the app" deep-links there; otherwise it falls
-  // back to the invite-request mailto.
-  const getTheApp = () => {
-    if (TESTFLIGHT_URL) {
-      Linking.openURL(TESTFLIGHT_URL);
-    } else {
-      requestInvite();
-    }
-  };
-  const installCtaLabel = TESTFLIGHT_URL
-    ? 'Get Home Hero on iPhone'
-    : 'Join the Beta';
 
   return (
     <ScrollView
@@ -219,18 +198,9 @@ function WebMarketingLanding() {
     >
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.page}>
-          {/* Compact nav. Uncorkd-style: small wordmark on the left,
-              tight links on the right. The big CTA lives in the hero,
-              not the nav. */}
           <View style={styles.nav}>
-            <BrandLogo height={isWide ? 56 : 44} />
+            <BrandLogo height={isWide ? 96 : 64} />
             <View style={styles.navActions}>
-              <Link
-                href="/guide"
-                style={[styles.navLink, { color: theme.textSecondary }]}
-              >
-                How it works
-              </Link>
               <Link
                 href="/kid/join"
                 style={[styles.navLink, { color: theme.textSecondary }]}
@@ -243,14 +213,15 @@ function WebMarketingLanding() {
               >
                 Sign in
               </Link>
+              <BrandButton
+                variant="ghost"
+                label="I have a code"
+                onPress={goToSignup}
+              />
             </View>
           </View>
 
-          {/* Hero — single column, focused on the headline + CTA. The
-              app icon shows up small, inline with the install CTA — not
-              as a hero artwork. Susan QA: companion-app framing, icon
-              should be small and tasteful. */}
-          <View style={styles.hero}>
+          <View style={[styles.hero, isWide && styles.heroWide]}>
             <BrandHeading level="eyebrow" themeColor="accent">
               For every family · harmony, peace, joy
             </BrandHeading>
@@ -258,64 +229,31 @@ function WebMarketingLanding() {
               level={isWide ? 'display' : 'h1'}
               style={styles.heroTitle}
             >
-              A companion app for the whole family.
+              A family operating system, so you can stop running the house and start being in it.
             </BrandHeading>
             <ThemedText
               type="default"
               themeColor="textSecondary"
               style={styles.heroSub}
             >
-              Home Hero works on every device that matters. Your kid uses
-              the app on their phone; you use it on yours. The web (here,
-              when you sign in) is the home base for setup and the longer
-              view. Same family, two surfaces — and nobody's running the
-              show alone.
+              Home Hero takes the daily managing — the reminders, the
+              standard-keeping, the specific feedback — off the parent's
+              voice and onto a calm, neutral surface. So the parts of
+              parenting that actually need you get you.
             </ThemedText>
-
-            {/* Install row: small icon (≈80px) + Beta CTA. The icon is a
-                stamp ("here's what the app looks like"), not a hero
-                artwork. borderRadius + overflow clip the white edges of
-                the iOS app icon PNG so it blends with the page. */}
-            <View style={styles.installRow}>
-              <Image
-                // eslint-disable-next-line @typescript-eslint/no-require-imports
-                source={require('@/assets/images/icon.png')}
-                accessible
-                accessibilityLabel="Home Hero — the iPhone app icon"
-                style={styles.installIcon}
-                resizeMode="cover"
-              />
-              <View style={styles.installCol}>
-                <BrandButton label={installCtaLabel} onPress={getTheApp} />
-                <ThemedText type="small" themeColor="textMuted">
-                  iPhone for now. Android once the iOS loop is proven.
-                </ThemedText>
-              </View>
-            </View>
-
             <View style={styles.heroCTA}>
               <BrandButton
-                variant="ghost"
-                label="Is this for you?"
+                label="Is this for you? 30-second self-check →"
                 onPress={goToAssessment}
               />
-              <Pressable onPress={goToSignup} hitSlop={6}>
-                <ThemedText
-                  type="small"
-                  style={[styles.heroSubLink, { color: theme.info }]}
-                >
-                  I have a code · sign in →
-                </ThemedText>
-              </Pressable>
+              <BrandButton
+                variant="ghost"
+                label="I have a code"
+                onPress={goToSignup}
+              />
             </View>
-
-            <ThemedText
-              type="small"
-              themeColor="textMuted"
-              style={styles.heroFootnote}
-            >
-              Invite-only while we work with our first cohort. For
-              families with kids ages 4–18.
+            <ThemedText type="small" themeColor="textMuted" style={styles.heroFootnote}>
+              Invite-only while we work with our first cohort of families. The self-check is for you, not us — there's no scoring on the other end.
             </ThemedText>
           </View>
 
@@ -437,47 +375,16 @@ function WebMarketingLanding() {
             <BrandHeading level="h2" style={styles.sectionTitle}>
               Erica Hospes, LMFT
             </BrandHeading>
-            <View
-              style={[
-                styles.founderRow,
-                isWide && styles.founderRowWide,
-              ]}
-            >
-              <Image
-                // eslint-disable-next-line @typescript-eslint/no-require-imports
-                source={require('@/assets/images/erica_hospes.png')}
-                accessible
-                accessibilityLabel="Erica Hospes, LMFT — founder of Home Hero"
-                style={[
-                  styles.founderPhoto,
-                  { borderColor: theme.border },
-                ]}
-                resizeMode="cover"
-              />
-              <View style={styles.founderBio}>
-                <ThemedText type="default" themeColor="text" style={styles.lead}>
-                  Erica founded Home Hero out of her years in private practice
-                  and her own experience as a parent. She is a Licensed
-                  Marriage and Family Therapist with a doctorate in human
-                  sexuality and a master's in transpersonal psychology, and
-                  the founder of The Creation Agency in Los Gatos, where her
-                  practice has long focused on adolescent development and
-                  parental support.
-                </ThemedText>
-                <ThemedText
-                  type="default"
-                  themeColor="textSecondary"
-                  style={styles.lead}
-                >
-                  Before therapy, she spent a decade in the technology
-                  industry — which is part of why Home Hero exists at all.
-                  The framework that runs underneath every screen came out
-                  of what she has seen sitting with families: the moves
-                  that actually help, and the gaps that no app on the
-                  market was filling.
-                </ThemedText>
-              </View>
-            </View>
+            <ThemedText type="default" themeColor="textSecondary" style={styles.lead}>
+              Erica founded Home Hero out of her own experience as a parent
+              and her years in private practice. The framework that runs
+              underneath every screen — the voice, the language, the
+              developmental fit by age — came out of her conviction that no
+              parent should have to be the family's standard alone.
+            </ThemedText>
+            <ThemedText type="small" themeColor="textMuted" style={styles.lead}>
+              Bio in progress — final version coming soon.
+            </ThemedText>
           </View>
 
           <View
@@ -553,33 +460,6 @@ const styles = StyleSheet.create({
   heroFootnote: {
     marginTop: Spacing.one,
   },
-  heroSubCTA: {
-    marginTop: Spacing.two,
-  },
-  heroSubLink: {
-    fontWeight: '600',
-    textDecorationLine: 'underline',
-  },
-  founderRow: {
-    flexDirection: 'column',
-    gap: Spacing.four,
-    marginTop: Spacing.three,
-  },
-  founderRowWide: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  founderPhoto: {
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    borderWidth: 2,
-  },
-  founderBio: {
-    flex: 1,
-    gap: Spacing.three,
-    maxWidth: ReadableContentWidth,
-  },
   wordmark: {
     letterSpacing: 0.5,
   },
@@ -587,28 +467,11 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.five,
     paddingBottom: Spacing.eight,
     gap: Spacing.four,
+  },
+  heroWide: {
+    paddingTop: Spacing.seven,
+    paddingBottom: Spacing.eight,
     maxWidth: ReadableContentWidth + Spacing.eight,
-  },
-  installRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.four,
-    marginTop: Spacing.three,
-    flexWrap: 'wrap',
-  },
-  installIcon: {
-    width: 80,
-    height: 80,
-    // iOS app icons use ~22% corner radius. Clipping with overflow
-    // hidden + borderRadius removes the white square edges of the PNG
-    // so it blends with the page background.
-    borderRadius: 18,
-    overflow: 'hidden',
-  },
-  installCol: {
-    flex: 1,
-    minWidth: 200,
-    gap: Spacing.two,
   },
   heroTitle: {
     marginTop: Spacing.one,
@@ -621,7 +484,7 @@ const styles = StyleSheet.create({
   heroCTA: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.three,
+    gap: Spacing.four,
     marginTop: Spacing.two,
     flexWrap: 'wrap',
   },
