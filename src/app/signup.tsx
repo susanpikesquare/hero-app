@@ -73,11 +73,18 @@ export default function SignupScreen() {
       return;
     }
     if (!signUpData.session) {
-      // Supabase still has "Confirm email" turned ON. For v0 we need it off
-      // so we can run the redemption RPC inside the same session.
+      // Supabase project still has "Confirm email" turned ON, so we couldn't
+      // mint a session. End users can't fix that — surface a friendly error
+      // and log the actual cause for Susan/dev.
+      // eslint-disable-next-line no-console
+      console.error(
+        'Signup blocked: Supabase project requires email confirmation. ' +
+          'Disable Auth → Providers → Email → Confirm email.'
+      );
       setSubmitting(false);
       setError(
-        'Email confirmation is still required on this Supabase project. Disable Auth → Providers → Email → Confirm email, then try again.'
+        "Something's off on our end — we couldn't finish setting up your account. " +
+          'Please email susan@pikesquare.co and we’ll sort it out fast.'
       );
       return;
     }
@@ -151,7 +158,7 @@ export default function SignupScreen() {
         autoCorrect={false}
         value={inviteCode}
         onChangeText={setInviteCode}
-        placeholder="HOMEY"
+        placeholder="from your invite email"
       />
       <TextField
         label="Family name"

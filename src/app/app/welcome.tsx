@@ -41,8 +41,8 @@ import { useFamily } from '@/lib/use-family';
 export default function WelcomeScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { session } = useAuth();
-  const { family, loading } = useFamily(!!session);
+  const { session, signOut } = useAuth();
+  const { family, loading, error, reload } = useFamily(!!session);
   const [completing, setCompleting] = useState(false);
 
   const markWelcomed = async () => {
@@ -64,12 +64,43 @@ export default function WelcomeScreen() {
     }
   };
 
-  if (loading || !family) {
+  if (loading) {
     return (
       <View style={[styles.center, { backgroundColor: theme.background }]}>
         <ThemedText type="default" themeColor="textSecondary">
           One moment…
         </ThemedText>
+      </View>
+    );
+  }
+
+  // If we couldn't load the family — or the load succeeded but there's no
+  // family attached to this auth user — surface a real error with a way
+  // out instead of stranding the parent on an infinite spinner. The most
+  // common cause is RLS/session weirdness on a stale auth cookie; signing
+  // out and back in fixes it.
+  if (!family) {
+    return (
+      <View style={[styles.center, { backgroundColor: theme.background }]}>
+        <View style={styles.errorBlock}>
+          <BrandHeading level="h2">We hit a snag loading your family.</BrandHeading>
+          <ThemedText type="default" themeColor="textSecondary">
+            {error
+              ? `Details: ${error}`
+              : "Your account is signed in but we couldn't find a family attached. Try reloading — if that doesn't work, sign out and back in."}
+          </ThemedText>
+          <View style={styles.errorActions}>
+            <BrandButton label="Try again" onPress={reload} />
+            <BrandButton
+              variant="ghost"
+              label="Sign out"
+              onPress={async () => {
+                await signOut();
+                router.replace('/login');
+              }}
+            />
+          </View>
+        </View>
       </View>
     );
   }
@@ -226,7 +257,18 @@ function Aspiration({
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.four },
+  errorBlock: {
+    maxWidth: ReadableContentWidth,
+    gap: Spacing.three,
+    alignItems: 'flex-start',
+  },
+  errorActions: {
+    flexDirection: 'row',
+    gap: Spacing.three,
+    flexWrap: 'wrap',
+    marginTop: Spacing.two,
+  },
   safe: { width: '100%', alignItems: 'center' },
   page: {
     width: '100%',

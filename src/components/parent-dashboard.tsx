@@ -74,17 +74,22 @@ export function ParentDashboard() {
     }
     const trimmedAge = newKidAge.trim();
     let age: number | null = null;
-    if (trimmedAge) {
-      const parsed = Number.parseInt(trimmedAge, 10);
-      if (!Number.isFinite(parsed) || parsed < 4 || parsed > 18) {
-        setAddError("Age should be a number between 4 and 18 — we'll suggest chores for it.");
-        return;
-      }
-      age = parsed;
-    } else {
-      setAddError("Add your kid's age so we can suggest age-appropriate chores.");
+    if (!trimmedAge) {
+      setAddError("Age is required — we use it to suggest age-appropriate chores.");
       return;
     }
+    const parsed = Number.parseInt(trimmedAge, 10);
+    if (!Number.isFinite(parsed)) {
+      setAddError('Age should be a number.');
+      return;
+    }
+    if (parsed < 4 || parsed > 18) {
+      setAddError(
+        `Home Hero is built for ages 4–18. ${parsed < 4 ? 'For younger kids, this app probably isn’t the right fit yet.' : 'For older kids, the framework still works — pick "Age 18" and it’ll suggest senior-year chores.'}`
+      );
+      return;
+    }
+    age = parsed;
     setAdding(true);
     try {
       const newKidId = await addKid({
@@ -743,7 +748,7 @@ function AddKidRow({
           style={{ minWidth: 180 }}
         />
         <TextField
-          label="Age"
+          label="Age *"
           value={age}
           onChangeText={onChangeAge}
           placeholder="9"
@@ -751,6 +756,7 @@ function AddKidRow({
           autoComplete="off"
           autoCorrect={false}
           style={{ minWidth: 80 }}
+          hint="Required — sets the starter chores and developmental tone."
         />
       </View>
 

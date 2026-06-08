@@ -261,6 +261,25 @@ export default function SettingsScreen() {
 
             <View style={styles.divider} />
 
+            <View style={styles.kvRow}>
+              <ThemedText type="smallBold" themeColor="textSecondary">
+                Why you started
+              </ThemedText>
+              <ThemedText type="small" themeColor="textMuted">
+                The welcome screen names the felt experience that brought you
+                here. Revisit it anytime you want a reminder.
+              </ThemedText>
+              <View style={{ marginTop: Spacing.two }}>
+                <BrandButton
+                  variant="ghost"
+                  label="Revisit the welcome screen"
+                  onPress={() => router.push('/app/welcome')}
+                />
+              </View>
+            </View>
+
+            <View style={styles.divider} />
+
             <View style={styles.actions}>
               <Pressable
                 onPress={onSignOut}

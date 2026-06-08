@@ -19,7 +19,7 @@ export default function NewChoreScreen() {
   const { family, kids, loading: famLoading } = useFamily(!!session);
   const { addChore } = useChores(!!session);
 
-  const [title, setTitle] = useState('Bedroom');
+  const [title, setTitle] = useState('');
   const [kidId, setKidId] = useState<string | null>(null);
   const [isOptional, setIsOptional] = useState(false);
   const [rewardWeight, setRewardWeight] = useState(1);
@@ -58,7 +58,7 @@ export default function NewChoreScreen() {
       await addChore({
         familyId: family.id,
         kidId,
-        title,
+        title: title.trim(),
         kind: title.toLowerCase().includes('bedroom') ? 'bedroom' : 'custom',
         isOptional,
         rewardWeight: isOptional ? rewardWeight : 1,
