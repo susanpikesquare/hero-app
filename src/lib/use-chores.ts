@@ -71,26 +71,41 @@ export function useChores(enabled: boolean) {
         | 'photo_verification'
         | 'parent_verification'
         | 'self_attest';
-    }) => {
+      /** Free-form tips the kid sees on their chore tile. One string per
+       *  bullet — most parents enter one tip per line in the UI, then we
+       *  split before passing in. */
+      coachingTips?: string[];
+      /** Path inside the reference-photos storage bucket. Set after a
+       *  successful upload — leave undefined to create a chore without a
+       *  reference photo (parent can add one later from the edit screen). */
+      referencePhotoPath?: string | null;
+    }): Promise<string | null> => {
       // Keep verification_kind in sync with task_type for the duration the
       // legacy column is still read by the AI pipeline + kid tile.
       const taskType = opts.taskType ?? 'photo_verification';
       const verification_kind: 'photo' | 'checklist' =
         taskType === 'photo_verification' ? 'photo' : 'checklist';
-      const { error: insertErr } = await supabase.from('chores').insert({
-        family_id: opts.familyId,
-        kid_id: opts.kidId,
-        title: opts.title.trim(),
-        kind: opts.kind,
-        is_optional: opts.isOptional ?? false,
-        reward_weight: opts.rewardWeight ?? 1,
-        recurrence_type: opts.recurrenceType ?? 'daily',
-        recurrence_days: opts.recurrenceDays ?? [],
-        task_type: taskType,
-        verification_kind,
-      });
+      const { data, error: insertErr } = await supabase
+        .from('chores')
+        .insert({
+          family_id: opts.familyId,
+          kid_id: opts.kidId,
+          title: opts.title.trim(),
+          kind: opts.kind,
+          is_optional: opts.isOptional ?? false,
+          reward_weight: opts.rewardWeight ?? 1,
+          recurrence_type: opts.recurrenceType ?? 'daily',
+          recurrence_days: opts.recurrenceDays ?? [],
+          task_type: taskType,
+          verification_kind,
+          coaching_tips: opts.coachingTips ?? [],
+          reference_photo_path: opts.referencePhotoPath ?? null,
+        })
+        .select('id')
+        .single();
       if (insertErr) throw insertErr;
       await reload();
+      return data?.id ?? null;
     },
     [reload]
   );

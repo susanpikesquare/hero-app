@@ -1,3 +1,18 @@
+/**
+ * Chore detail / edit screen.
+ *
+ * Per QA review on 2026-06-05: the original version of this screen only
+ * let the parent manage the reference photo, which meant any other
+ * setting error (wrong title, wrong recurrence, wrong type) forced a
+ * delete + recreate. This rewrite makes every field editable in place
+ * and keeps the reference-photo upload flow intact.
+ *
+ * Save model: one "Save changes" button at the bottom commits all
+ * edits in a single UPDATE. The reference photo, if a new one was
+ * picked, uploads first so the new path can be written into the same
+ * row update.
+ */
+
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -8,6 +23,7 @@ import { BrandButton } from '@/components/brand-button';
 import { BrandHeading } from '@/components/brand-heading';
 import { BrandLogo } from '@/components/brand-logo';
 import { PhotoViewer } from '@/components/photo-viewer';
+import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import {
   MaxContentWidth,
@@ -22,11 +38,18 @@ import { uploadPickedPhoto } from '@/lib/upload-photo';
 import { useChores } from '@/lib/use-chores';
 import { useFamily } from '@/lib/use-family';
 
+type Picked = {
+  uri: string;
+  mimeType: string;
+  fileExtension: string;
+  base64?: string;
+};
+
 // Native needs base64 from the picker to avoid the broken
 // fetch(uri).blob() path on iOS. See src/lib/upload-photo.ts.
 const NEEDS_BASE64 = Platform.OS !== 'web';
 
-async function pickFromLibrary() {
+async function pickFromLibrary(): Promise<Picked | null> {
   const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!perm.granted) return null;
   const result = await ImagePicker.launchImageLibraryAsync({
@@ -44,7 +67,7 @@ async function pickFromLibrary() {
   };
 }
 
-async function pickFromCamera() {
+async function pickFromCamera(): Promise<Picked | null> {
   const perm = await ImagePicker.requestCameraPermissionsAsync();
   if (!perm.granted) return null;
   const result = await ImagePicker.launchCameraAsync({
@@ -61,6 +84,9 @@ async function pickFromCamera() {
   };
 }
 
+type TaskType = 'photo_verification' | 'parent_verification' | 'self_attest';
+type RecurrenceType = 'daily' | 'weekly' | 'none';
+
 export default function ChoreDetailScreen() {
   const theme = useTheme();
   const router = useRouter();
@@ -72,16 +98,38 @@ export default function ChoreDetailScreen() {
   const chore = chores.find((c) => c.id === params.chore_id);
   const assignedKid = chore ? kids.find((k) => k.id === chore.kid_id) : null;
 
+  // ─── Editable form state, hydrated from `chore` once it loads. ──
+  const [title, setTitle] = useState('');
+  const [taskType, setTaskType] = useState<TaskType>('photo_verification');
+  const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>('daily');
+  const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
+  const [isOptional, setIsOptional] = useState(false);
+  const [rewardWeight, setRewardWeight] = useState(1);
+  const [tipsText, setTipsText] = useState('');
+
+  // ─── Reference photo state. ─────────────────────────────────────
   const [referenceUrl, setReferenceUrl] = useState<string | null>(null);
-  const [picked, setPicked] = useState<{
-    uri: string;
-    mimeType: string;
-    fileExtension: string;
-    base64?: string;
-  } | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [picked, setPicked] = useState<Picked | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
+
+  // ─── Save state. ────────────────────────────────────────────────
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
+
+  // Hydrate the form from the loaded chore.
+  useEffect(() => {
+    if (!chore) return;
+    setTitle(chore.title ?? '');
+    setTaskType((chore.task_type as TaskType | null) ?? 'photo_verification');
+    setRecurrenceType(
+      (chore.recurrence_type as RecurrenceType | null) ?? 'daily'
+    );
+    setRecurrenceDays(chore.recurrence_days ?? []);
+    setIsOptional(!!chore.is_optional);
+    setRewardWeight(chore.reward_weight ?? 1);
+    setTipsText((chore.coaching_tips ?? []).join('\n'));
+  }, [chore]);
 
   // Load signed URL for any existing reference photo.
   useEffect(() => {
@@ -112,37 +160,84 @@ export default function ChoreDetailScreen() {
     if (result) setPicked(result);
   };
 
-  const handleUpload = async () => {
+  const handleSave = async () => {
     setError(null);
-    if (!picked || !family || !chore) {
-      setError('Pick a photo first.');
+    setSavedMessage(null);
+    if (!family || !chore) return;
+    if (!title.trim()) {
+      setError('Give the chore a title.');
       return;
     }
-    setUploading(true);
+    if (recurrenceType === 'weekly' && recurrenceDays.length === 0) {
+      setError('Pick at least one day of the week.');
+      return;
+    }
+
+    setSaving(true);
     try {
-      const ts = Date.now();
-      const rand = Math.random().toString(36).slice(2, 8);
-      const path = `${family.id}/${chore.id}/${ts}-${rand}.${picked.fileExtension}`;
+      // 1. Upload a new reference photo if one was picked. We do this
+      //    BEFORE the row update so a partial failure (photo uploaded
+      //    but row update failed) leaves the photo as an orphan rather
+      //    than a stale path on the row.
+      let nextReferencePath: string | null | undefined = undefined;
+      if (picked && taskType === 'photo_verification') {
+        const ts = Date.now();
+        const rand = Math.random().toString(36).slice(2, 8);
+        const path = `${family.id}/${chore.id}/${ts}-${rand}.${picked.fileExtension}`;
+        const uploadResult = await uploadPickedPhoto({
+          bucket: 'reference-photos',
+          path,
+          picked,
+        });
+        if (!uploadResult.ok) throw new Error(uploadResult.error);
+        nextReferencePath = path;
+      } else if (taskType !== 'photo_verification') {
+        // If the chore is no longer photo-verified, clear any stale
+        // reference photo path.
+        nextReferencePath = null;
+      }
 
-      const uploadResult = await uploadPickedPhoto({
-        bucket: 'reference-photos',
-        path,
-        picked,
-      });
-      if (!uploadResult.ok) throw new Error(uploadResult.error);
+      // 2. Tips split.
+      const coachingTips = tipsText
+        .split('\n')
+        .map((t) => t.trim())
+        .filter(Boolean);
 
-      const { error: updateErr } = await supabase
+      // 3. Single UPDATE with everything that changed.
+      const verification_kind: 'photo' | 'checklist' =
+        taskType === 'photo_verification' ? 'photo' : 'checklist';
+      const updatePayload = {
+        title: title.trim(),
+        kind: title.toLowerCase().includes('bedroom') ? 'bedroom' : chore.kind ?? 'custom',
+        task_type: taskType,
+        verification_kind,
+        recurrence_type: recurrenceType,
+        recurrence_days: recurrenceType === 'weekly' ? recurrenceDays : [],
+        is_optional: isOptional,
+        reward_weight: isOptional ? rewardWeight : 1,
+        coaching_tips: coachingTips,
+        // Always include reference_photo_path so the column is set
+        // consistently. When `nextReferencePath` is undefined (no new
+        // pick, still photo_verification), keep the existing path.
+        reference_photo_path:
+          nextReferencePath !== undefined
+            ? nextReferencePath
+            : (chore.reference_photo_path ?? null),
+      };
+
+      const { error: updErr } = await supabase
         .from('chores')
-        .update({ reference_photo_path: path })
+        .update(updatePayload)
         .eq('id', chore.id);
-      if (updateErr) throw updateErr;
+      if (updErr) throw updErr;
 
       setPicked(null);
       await reload();
+      setSavedMessage('Saved ✓');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not upload reference photo.');
+      setError(err instanceof Error ? err.message : 'Could not save changes.');
     } finally {
-      setUploading(false);
+      setSaving(false);
     }
   };
 
@@ -186,13 +281,19 @@ export default function ChoreDetailScreen() {
 
           <View style={styles.header}>
             <BrandHeading level="eyebrow" themeColor="accent">
-              {assignedKid?.display_name ?? 'A kid'} · Chore
+              {assignedKid?.display_name ?? 'A kid'} · Edit chore
             </BrandHeading>
             <BrandHeading level="h1" style={styles.title}>
               {chore.title}
             </BrandHeading>
+            <ThemedText type="default" themeColor="textSecondary">
+              Change anything that needs to change. Hit Save when you’re
+              done. Deleting the chore from the dashboard wipes the row
+              and its history — editing here keeps everything.
+            </ThemedText>
           </View>
 
+          {/* Title */}
           <View
             style={[
               styles.card,
@@ -200,101 +301,385 @@ export default function ChoreDetailScreen() {
             ]}
           >
             <BrandHeading level="h2" style={styles.cardTitle}>
-              Reference photo
+              Basics
             </BrandHeading>
-            <ThemedText type="default" themeColor="textSecondary">
-              Show the AI what {assignedKid?.display_name ?? 'your kid'}’s
-              {' '}
-              {chore.title.toLowerCase()} looks like when it’s done. The AI
-              compares submitted photos against this one and gives kid-friendly
-              feedback.
-            </ThemedText>
+            <TextField
+              label="Chore title"
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Bedroom"
+              autoComplete="off"
+            />
 
-            <Pressable
-              onPress={() => {
-                if (picked || referenceUrl) setViewerOpen(true);
-              }}
-              style={[
-                styles.preview,
-                { backgroundColor: theme.background, borderColor: theme.border },
-              ]}
-            >
-              {picked ? (
-                <Image source={{ uri: picked.uri }} style={styles.previewImg} resizeMode="contain" />
-              ) : referenceUrl ? (
-                <Image
-                  source={{ uri: referenceUrl }}
-                  style={styles.previewImg}
-                  resizeMode="contain"
-                />
-              ) : (
-                <ThemedText type="default" themeColor="textMuted">
-                  No reference photo yet.
-                </ThemedText>
-              )}
-              {(picked || referenceUrl) && (
-                <View
-                  style={[
-                    styles.zoomHint,
-                    { backgroundColor: theme.background, borderColor: theme.border },
-                  ]}
-                >
-                  <ThemedText type="small" themeColor="textSecondary">
-                    Tap to enlarge
-                  </ThemedText>
-                </View>
-              )}
-            </Pressable>
-
-            <View style={styles.pickRow}>
-              {Platform.OS !== 'web' && (
+            <View style={styles.pickWrap}>
+              <ThemedText type="smallBold" themeColor="textSecondary">
+                Type of chore
+              </ThemedText>
+              <View style={styles.chipGrid}>
                 <Pressable
-                  onPress={() => handlePick('camera')}
-                  disabled={uploading}
+                  onPress={() => setIsOptional(false)}
                   style={[
-                    styles.pickBtn,
-                    { backgroundColor: theme.accent },
+                    styles.chip,
+                    {
+                      backgroundColor: !isOptional ? theme.accent : 'transparent',
+                      borderColor: !isOptional ? theme.accent : theme.border,
+                    },
                   ]}
                 >
-                  <ThemedText type="smallBold" style={{ color: theme.background }}>
-                    📸 Use camera
+                  <ThemedText
+                    type="default"
+                    style={{ color: !isOptional ? theme.background : theme.text }}
+                  >
+                    Required (daily)
                   </ThemedText>
                 </Pressable>
-              )}
-              <Pressable
-                onPress={() => handlePick('library')}
-                disabled={uploading}
-                style={[
-                  styles.pickBtn,
-                  Platform.OS === 'web'
-                    ? { backgroundColor: theme.accent }
-                    : { borderWidth: 1, borderColor: theme.border },
-                ]}
-              >
-                <ThemedText
-                  type="smallBold"
-                  style={{
-                    color: Platform.OS === 'web' ? theme.background : theme.text,
-                  }}
+                <Pressable
+                  onPress={() => setIsOptional(true)}
+                  style={[
+                    styles.chip,
+                    {
+                      backgroundColor: isOptional ? theme.info : 'transparent',
+                      borderColor: isOptional ? theme.info : theme.border,
+                    },
+                  ]}
                 >
-                  {Platform.OS === 'web' ? '📁 Pick a photo' : 'Pick from photos'}
-                </ThemedText>
-              </Pressable>
+                  <ThemedText
+                    type="default"
+                    style={{ color: isOptional ? theme.background : theme.text }}
+                  >
+                    Optional extra job
+                  </ThemedText>
+                </Pressable>
+              </View>
             </View>
 
-            {picked && (
-              <BrandButton
-                label={uploading ? 'Uploading…' : referenceUrl ? 'Replace reference' : 'Save reference'}
-                onPress={handleUpload}
-                disabled={uploading}
-              />
+            {isOptional && (
+              <View style={styles.pickWrap}>
+                <ThemedText type="smallBold" themeColor="textSecondary">
+                  Reward weight
+                </ThemedText>
+                <View style={styles.chipGrid}>
+                  {[1, 2, 3, 5].map((w) => {
+                    const selected = w === rewardWeight;
+                    return (
+                      <Pressable
+                        key={w}
+                        onPress={() => setRewardWeight(w)}
+                        style={[
+                          styles.chip,
+                          {
+                            backgroundColor: selected ? theme.info : 'transparent',
+                            borderColor: selected ? theme.info : theme.border,
+                          },
+                        ]}
+                      >
+                        <ThemedText
+                          type="default"
+                          style={{ color: selected ? theme.background : theme.text }}
+                        >
+                          +{w}
+                        </ThemedText>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
             )}
+          </View>
 
-            {error && (
-              <ThemedText type="small" style={{ color: '#B23A48' }}>
-                {error}
-              </ThemedText>
+          {/* How it gets done */}
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+            ]}
+          >
+            <BrandHeading level="h2" style={styles.cardTitle}>
+              How it gets done
+            </BrandHeading>
+            <View style={styles.chipGrid}>
+              {[
+                {
+                  value: 'photo_verification' as const,
+                  label: 'Photo + AI check',
+                },
+                {
+                  value: 'parent_verification' as const,
+                  label: 'Parent confirms',
+                },
+                {
+                  value: 'self_attest' as const,
+                  label: 'Mark done (no review)',
+                },
+              ].map((opt) => {
+                const selected = opt.value === taskType;
+                return (
+                  <Pressable
+                    key={opt.value}
+                    onPress={() => setTaskType(opt.value)}
+                    style={[
+                      styles.chip,
+                      {
+                        backgroundColor: selected ? theme.accent : 'transparent',
+                        borderColor: selected ? theme.accent : theme.border,
+                      },
+                    ]}
+                  >
+                    <ThemedText
+                      type="default"
+                      style={{ color: selected ? theme.background : theme.text }}
+                    >
+                      {opt.label}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <ThemedText type="small" themeColor="textMuted">
+              {taskType === 'photo_verification'
+                ? "Kid takes a picture; the AI gives kind, specific feedback. Best for tidy room, made bed, fed pet."
+                : taskType === 'parent_verification'
+                  ? "Kid taps Mark done; you confirm in the queue. Best for homework, practice, reading."
+                  : 'Kid taps Mark done; it counts immediately. Best for self-care: brush teeth, shower.'}
+            </ThemedText>
+          </View>
+
+          {/* Recurrence */}
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+            ]}
+          >
+            <BrandHeading level="h2" style={styles.cardTitle}>
+              When it shows up
+            </BrandHeading>
+            <View style={styles.chipGrid}>
+              {[
+                { value: 'daily' as const, label: 'Every day' },
+                { value: 'weekly' as const, label: 'Specific days' },
+                { value: 'none' as const, label: 'One time' },
+              ].map((opt) => {
+                const selected = opt.value === recurrenceType;
+                return (
+                  <Pressable
+                    key={opt.value}
+                    onPress={() => setRecurrenceType(opt.value)}
+                    style={[
+                      styles.chip,
+                      {
+                        backgroundColor: selected ? theme.accent : 'transparent',
+                        borderColor: selected ? theme.accent : theme.border,
+                      },
+                    ]}
+                  >
+                    <ThemedText
+                      type="default"
+                      style={{ color: selected ? theme.background : theme.text }}
+                    >
+                      {opt.label}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </View>
+            {recurrenceType === 'weekly' && (
+              <View style={{ gap: Spacing.two }}>
+                <ThemedText type="small" themeColor="textMuted">
+                  Tap the days this chore is due.
+                </ThemedText>
+                <View style={styles.chipGrid}>
+                  {[
+                    { value: 1, label: 'Mon' },
+                    { value: 2, label: 'Tue' },
+                    { value: 3, label: 'Wed' },
+                    { value: 4, label: 'Thu' },
+                    { value: 5, label: 'Fri' },
+                    { value: 6, label: 'Sat' },
+                    { value: 7, label: 'Sun' },
+                  ].map((d) => {
+                    const selected = recurrenceDays.includes(d.value);
+                    return (
+                      <Pressable
+                        key={d.value}
+                        onPress={() =>
+                          setRecurrenceDays((prev) =>
+                            prev.includes(d.value)
+                              ? prev.filter((x) => x !== d.value)
+                              : [...prev, d.value].sort((a, b) => a - b)
+                          )
+                        }
+                        style={[
+                          styles.chip,
+                          {
+                            backgroundColor: selected ? theme.info : 'transparent',
+                            borderColor: selected ? theme.info : theme.border,
+                          },
+                        ]}
+                      >
+                        <ThemedText
+                          type="default"
+                          style={{ color: selected ? theme.background : theme.text }}
+                        >
+                          {d.label}
+                        </ThemedText>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
             )}
+          </View>
+
+          {/* Tips */}
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+            ]}
+          >
+            <BrandHeading level="h2" style={styles.cardTitle}>
+              Tips for {assignedKid?.display_name ?? 'your kid'}
+            </BrandHeading>
+            <TextField
+              label="Tips (optional)"
+              value={tipsText}
+              onChangeText={setTipsText}
+              placeholder={'e.g.\nBed is made\nNothing on the floor\nDesk wiped'}
+              multiline
+              numberOfLines={4}
+              style={{ minHeight: 110, textAlignVertical: 'top' }}
+              autoComplete="off"
+              hint="One tip per line. Shown on the kid's chore tile so they know what 'done' looks like."
+            />
+          </View>
+
+          {/* Reference photo — only relevant for photo_verification. */}
+          {taskType === 'photo_verification' && (
+            <View
+              style={[
+                styles.card,
+                { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+              ]}
+            >
+              <BrandHeading level="h2" style={styles.cardTitle}>
+                Reference photo
+              </BrandHeading>
+              <ThemedText type="default" themeColor="textSecondary">
+                Show the AI what {assignedKid?.display_name ?? 'your kid'}’s
+                {' '}
+                {title.trim() ? title.trim().toLowerCase() : 'chore'} looks like when it’s done.
+              </ThemedText>
+
+              <Pressable
+                onPress={() => {
+                  if (picked || referenceUrl) setViewerOpen(true);
+                }}
+                style={[
+                  styles.preview,
+                  { backgroundColor: theme.background, borderColor: theme.border },
+                ]}
+              >
+                {picked ? (
+                  <Image source={{ uri: picked.uri }} style={styles.previewImg} resizeMode="contain" />
+                ) : referenceUrl ? (
+                  <Image
+                    source={{ uri: referenceUrl }}
+                    style={styles.previewImg}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <ThemedText type="default" themeColor="textMuted">
+                    No reference photo yet.
+                  </ThemedText>
+                )}
+                {(picked || referenceUrl) && (
+                  <View
+                    style={[
+                      styles.zoomHint,
+                      { backgroundColor: theme.background, borderColor: theme.border },
+                    ]}
+                  >
+                    <ThemedText type="small" themeColor="textSecondary">
+                      Tap to enlarge
+                    </ThemedText>
+                  </View>
+                )}
+              </Pressable>
+
+              <View style={styles.pickRow}>
+                {Platform.OS !== 'web' && (
+                  <Pressable
+                    onPress={() => handlePick('camera')}
+                    disabled={saving}
+                    style={[styles.pickBtn, { backgroundColor: theme.accent }]}
+                  >
+                    <ThemedText type="smallBold" style={{ color: theme.background }}>
+                      📸 Use camera
+                    </ThemedText>
+                  </Pressable>
+                )}
+                <Pressable
+                  onPress={() => handlePick('library')}
+                  disabled={saving}
+                  style={[
+                    styles.pickBtn,
+                    Platform.OS === 'web'
+                      ? { backgroundColor: theme.accent }
+                      : { borderWidth: 1, borderColor: theme.border },
+                  ]}
+                >
+                  <ThemedText
+                    type="smallBold"
+                    style={{
+                      color: Platform.OS === 'web' ? theme.background : theme.text,
+                    }}
+                  >
+                    {Platform.OS === 'web' ? '📁 Pick a photo' : 'Pick from photos'}
+                  </ThemedText>
+                </Pressable>
+                {picked && (
+                  <Pressable onPress={() => setPicked(null)} disabled={saving} hitSlop={6}>
+                    <ThemedText
+                      type="small"
+                      themeColor="textSecondary"
+                      style={{ textDecorationLine: 'underline' }}
+                    >
+                      Discard new photo
+                    </ThemedText>
+                  </Pressable>
+                )}
+              </View>
+              {picked && (
+                <ThemedText type="small" themeColor="textMuted">
+                  The new photo uploads when you hit Save changes below.
+                </ThemedText>
+              )}
+            </View>
+          )}
+
+          {error && (
+            <ThemedText type="small" style={{ color: '#B23A48' }}>
+              {error}
+            </ThemedText>
+          )}
+          {savedMessage && !error && (
+            <ThemedText type="small" themeColor="accent">
+              {savedMessage}
+            </ThemedText>
+          )}
+
+          <View style={styles.cta}>
+            <BrandButton
+              label={saving ? 'Saving…' : 'Save changes'}
+              onPress={handleSave}
+              disabled={saving}
+            />
+            <BrandButton
+              variant="ghost"
+              label="Done"
+              onPress={() => router.replace('/app')}
+            />
           </View>
         </View>
       </SafeAreaView>
@@ -318,7 +703,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
     paddingBottom: Spacing.eight,
-    gap: Spacing.five,
+    gap: Spacing.four,
   },
   nav: {
     flexDirection: 'row',
@@ -326,17 +711,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingBottom: Spacing.three,
   },
-  header: { gap: Spacing.two, maxWidth: ReadableContentWidth },
+  header: { gap: Spacing.two, maxWidth: ReadableContentWidth + Spacing.seven },
   title: { marginTop: Spacing.one },
   card: {
     borderRadius: Radius.lg,
     borderWidth: 1,
     padding: Spacing.six,
-    gap: Spacing.four,
+    gap: Spacing.three,
   },
   cardTitle: { marginBottom: Spacing.one },
+  pickWrap: { gap: Spacing.two },
+  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  chip: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+  },
   preview: {
-    minHeight: 360,
+    minHeight: 280,
     borderRadius: Radius.lg,
     borderWidth: 1,
     alignItems: 'center',
@@ -344,7 +737,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     padding: Spacing.two,
   },
-  previewImg: { width: '100%', height: 360 },
+  previewImg: { width: '100%', height: 280 },
   zoomHint: {
     position: 'absolute',
     bottom: Spacing.two,
@@ -354,14 +747,19 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     borderWidth: 1,
   },
-  pickRow: { flexDirection: 'row', gap: Spacing.three, flexWrap: 'wrap' },
+  pickRow: { flexDirection: 'row', gap: Spacing.three, flexWrap: 'wrap', alignItems: 'center' },
   pickBtn: {
-    flexGrow: 1,
-    minWidth: 200,
     paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.four,
     borderRadius: Radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  cta: {
+    marginTop: Spacing.two,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    flexWrap: 'wrap',
   },
 });

@@ -1,6 +1,7 @@
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { AuthShell } from '@/components/auth-shell';
 import { BrandButton } from '@/components/brand-button';
@@ -9,8 +10,55 @@ import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
+import { uploadPickedPhoto } from '@/lib/upload-photo';
 import { useChores } from '@/lib/use-chores';
 import { useFamily } from '@/lib/use-family';
+
+type PickedPhoto = {
+  uri: string;
+  mimeType: string;
+  fileExtension: string;
+  base64?: string;
+};
+
+// On native we request base64 directly — avoids the broken
+// fetch(uri).blob() path on iOS. See src/lib/upload-photo.ts.
+const NEEDS_BASE64 = Platform.OS !== 'web';
+
+async function pickFromLibrary(): Promise<PickedPhoto | null> {
+  const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!perm.granted) return null;
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    quality: 0.85,
+    base64: NEEDS_BASE64,
+  });
+  if (result.canceled || result.assets.length === 0) return null;
+  const a = result.assets[0];
+  return {
+    uri: a.uri,
+    mimeType: a.mimeType ?? 'image/jpeg',
+    fileExtension: (a.fileName?.split('.').pop() ?? 'jpg').toLowerCase(),
+    base64: a.base64 ?? undefined,
+  };
+}
+
+async function pickFromCamera(): Promise<PickedPhoto | null> {
+  const perm = await ImagePicker.requestCameraPermissionsAsync();
+  if (!perm.granted) return null;
+  const result = await ImagePicker.launchCameraAsync({
+    quality: 0.85,
+    base64: NEEDS_BASE64,
+  });
+  if (result.canceled || result.assets.length === 0) return null;
+  const a = result.assets[0];
+  return {
+    uri: a.uri,
+    mimeType: a.mimeType ?? 'image/jpeg',
+    fileExtension: (a.fileName?.split('.').pop() ?? 'jpg').toLowerCase(),
+    base64: a.base64 ?? undefined,
+  };
+}
 
 export default function NewChoreScreen() {
   const router = useRouter();
@@ -31,8 +79,22 @@ export default function NewChoreScreen() {
   const [taskType, setTaskType] = useState<
     'photo_verification' | 'parent_verification' | 'self_attest'
   >('photo_verification');
+  // Free-form tips — parent enters one per line. We split on newlines
+  // before passing to addChore.
+  const [tipsText, setTipsText] = useState('');
+  // Reference photo (photo_verification chores only). Optional — parent
+  // can leave it blank and set later. Uploaded to reference-photos bucket
+  // AFTER the chore row is created, then linked back.
+  const [referencePhoto, setReferencePhoto] = useState<PickedPhoto | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const pickReferencePhoto = async (source: 'camera' | 'library') => {
+    setError(null);
+    const result =
+      source === 'camera' ? await pickFromCamera() : await pickFromLibrary();
+    if (result) setReferencePhoto(result);
+  };
 
   useEffect(() => {
     if (!kidId && kids.length > 0) setKidId(kids[0].id);
@@ -55,6 +117,39 @@ export default function NewChoreScreen() {
     }
     setSubmitting(true);
     try {
+      // 1. If a reference photo was picked, upload it FIRST so we can
+      //    pass the path into the chore row at insert time. If upload
+      //    fails, we still create the chore (the parent can retry the
+      //    photo later from the edit screen) but surface the failure.
+      let referencePhotoPath: string | null = null;
+      let uploadFailedMessage: string | null = null;
+      if (referencePhoto && taskType === 'photo_verification') {
+        const ts = Date.now();
+        const rand = Math.random().toString(36).slice(2, 8);
+        // We don't have a chore_id yet — bucket by family + kid + ts.
+        // The path is stable per upload so the URL doesn't churn.
+        const path = `${family.id}/${kidId}/new-${ts}-${rand}.${referencePhoto.fileExtension}`;
+        const uploadResult = await uploadPickedPhoto({
+          bucket: 'reference-photos',
+          path,
+          picked: referencePhoto,
+        });
+        if (uploadResult.ok) {
+          referencePhotoPath = path;
+        } else {
+          uploadFailedMessage = `The chore was created but the reference photo didn't upload (${uploadResult.error}). Open the chore from the dashboard to try again.`;
+        }
+      }
+
+      // 2. Split tips on newlines, trim, drop empties. This is the
+      //    parent's "what done looks like" coaching that shows up on
+      //    the kid's chore tile.
+      const coachingTips = tipsText
+        .split('\n')
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+      // 3. Create the chore row with everything stitched in.
       await addChore({
         familyId: family.id,
         kidId,
@@ -65,7 +160,16 @@ export default function NewChoreScreen() {
         recurrenceType,
         recurrenceDays: recurrenceType === 'weekly' ? recurrenceDays : [],
         taskType,
+        coachingTips,
+        referencePhotoPath,
       });
+
+      if (uploadFailedMessage) {
+        // Show the partial-success message rather than navigating
+        // silently — parent needs to know about the missing photo.
+        setError(uploadFailedMessage);
+        return;
+      }
       router.replace('/app');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not create chore.');
@@ -333,6 +437,101 @@ export default function NewChoreScreen() {
         )}
       </View>
 
+      {/* Coaching tips — what 'done' means in your home, in your words.
+          Shown on the kid's chore tile so they don't have to guess. */}
+      <TextField
+        label="Tips for your kid (optional)"
+        value={tipsText}
+        onChangeText={setTipsText}
+        placeholder={'e.g.\nBed is made\nNothing on the floor\nDesk wiped'}
+        multiline
+        numberOfLines={4}
+        style={{ minHeight: 90, textAlignVertical: 'top' }}
+        autoComplete="off"
+        hint="One tip per line. The kid sees these on their chore tile so they know what counts as done."
+      />
+
+      {/* Reference photo — only relevant for photo-verification chores.
+          Optional at create time; parent can add one later from the
+          edit screen. */}
+      {taskType === 'photo_verification' && (
+        <View style={styles.pickWrap}>
+          <ThemedText type="smallBold" themeColor="textSecondary">
+            Reference photo (optional)
+          </ThemedText>
+          <ThemedText type="small" themeColor="textMuted">
+            Show the AI what a finished {title.trim() ? title.trim().toLowerCase() : 'chore'} looks like. Without one, the kid's photo goes straight to your review queue.
+          </ThemedText>
+
+          {referencePhoto && (
+            <View
+              style={[
+                styles.refPreview,
+                { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+              ]}
+            >
+              <Image
+                source={{ uri: referencePhoto.uri }}
+                style={styles.refPreviewImg}
+                resizeMode="contain"
+              />
+            </View>
+          )}
+
+          <View style={styles.refPickRow}>
+            {Platform.OS !== 'web' && (
+              <Pressable
+                onPress={() => pickReferencePhoto('camera')}
+                disabled={submitting}
+                style={[styles.refPickBtn, { backgroundColor: theme.accent }]}
+              >
+                <ThemedText type="smallBold" style={{ color: theme.background }}>
+                  📸 Use camera
+                </ThemedText>
+              </Pressable>
+            )}
+            <Pressable
+              onPress={() => pickReferencePhoto('library')}
+              disabled={submitting}
+              style={[
+                styles.refPickBtn,
+                Platform.OS === 'web'
+                  ? { backgroundColor: theme.accent }
+                  : { borderWidth: 1, borderColor: theme.border },
+              ]}
+            >
+              <ThemedText
+                type="smallBold"
+                style={{
+                  color: Platform.OS === 'web' ? theme.background : theme.text,
+                }}
+              >
+                {referencePhoto
+                  ? '📁 Pick a different photo'
+                  : Platform.OS === 'web'
+                    ? '📁 Pick a photo'
+                    : 'Pick from photos'}
+              </ThemedText>
+            </Pressable>
+            {referencePhoto && (
+              <Pressable
+                onPress={() => setReferencePhoto(null)}
+                disabled={submitting}
+                hitSlop={6}
+              >
+                <ThemedText
+                  type="small"
+                  themeColor="textSecondary"
+                  style={{ textDecorationLine: 'underline' }}
+                >
+                  Remove
+                </ThemedText>
+              </Pressable>
+            )}
+          </View>
+        </View>
+      )}
+
       {isOptional && (
         <View style={styles.pickWrap}>
           <ThemedText type="smallBold" themeColor="textSecondary">
@@ -395,6 +594,30 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     borderRadius: Radius.pill,
     borderWidth: 1,
+  },
+  refPreview: {
+    height: 220,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    marginTop: Spacing.two,
+  },
+  refPreviewImg: { width: '100%', height: '100%' },
+  refPickRow: {
+    flexDirection: 'row',
+    gap: Spacing.three,
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginTop: Spacing.two,
+  },
+  refPickBtn: {
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
+    borderRadius: Radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cta: {
     marginTop: Spacing.two,
