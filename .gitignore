@@ -1,5 +1,9 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
+# Office lock files — Word/Excel create ~$filename when a doc is open,
+# and a stale one in the working tree fails fastlane's ensure_git_status_clean.
+~$*
+
 # dependencies
 node_modules/
 
