@@ -267,13 +267,30 @@ export const ARTICLES: Article[] = [
   },
 ];
 
+/**
+ * Pick the article best matched to a kid's age. Always returns an
+ * article when ARTICLES is non-empty so callers don't need a magic-
+ * index fallback (QA P3 + P4 — the dashboard previously fell back to
+ * ARTICLES[1] which would silently shift if the list was reordered).
+ *
+ * Rules:
+ *   - In-bucket: return the matching article.
+ *   - Below the lowest bucket OR no age: return the lowest-age article.
+ *   - Above the highest bucket: return the highest-age article.
+ *   - ARTICLES empty (shouldn't happen): return null.
+ */
 export function articleForAge(age: number | null | undefined): Article | null {
-  if (typeof age !== 'number') return ARTICLES[1] ?? null;
-  return (
-    ARTICLES.find(
-      (a) => age >= a.ageBucket.min && age <= a.ageBucket.max
-    ) ?? null
+  if (ARTICLES.length === 0) return null;
+  const sorted = [...ARTICLES].sort(
+    (a, b) => a.ageBucket.min - b.ageBucket.min
   );
+  if (typeof age !== 'number') return sorted[0];
+  const inBucket = sorted.find(
+    (a) => age >= a.ageBucket.min && age <= a.ageBucket.max
+  );
+  if (inBucket) return inBucket;
+  if (age < sorted[0].ageBucket.min) return sorted[0];
+  return sorted[sorted.length - 1];
 }
 
 export function articleBySlug(slug: string): Article | null {

@@ -142,8 +142,18 @@ export function ParentQueueView() {
               />
               <BrandButton
                 variant="ghost"
+                label="Articles"
+                onPress={() => router.push('/app/articles')}
+              />
+              <BrandButton
+                variant="ghost"
                 label="Dashboard"
                 onPress={() => router.push('/app/dashboard')}
+              />
+              <BrandButton
+                variant="ghost"
+                label="Settings"
+                onPress={() => router.push('/app/settings')}
               />
               <BrandButton variant="ghost" label="Sign out" onPress={onSignOut} />
             </View>
@@ -267,6 +277,14 @@ function QueueCard({
   onReject: () => Promise<void>;
 }) {
   const [viewerOpen, setViewerOpen] = useState(false);
+
+  // After 90s with no verdict we assume the AI is offline / failed for
+  // this submission. Don't keep flashing "pending" forever — switch to
+  // "No AI verdict" so the parent knows to make the call themselves
+  // instead of waiting (QA P6).
+  const msSinceSubmit = Date.now() - new Date(submittedAt).getTime();
+  const aiVerdictTimedOut = !aiVerdict && msSinceSubmit > 90_000;
+
   const verdictBg =
     aiVerdict === 'pass'
       ? theme.accentSoft
@@ -284,11 +302,12 @@ function QueueCard({
       ? 'AI: pass'
       : aiVerdict === 'needs_work'
         ? 'AI: needs work'
-        : 'AI: pending';
+        : aiVerdictTimedOut
+          ? 'No AI verdict'
+          : 'AI: pending';
 
   const timeAgo = (() => {
-    const ms = Date.now() - new Date(submittedAt).getTime();
-    const m = Math.round(ms / 60_000);
+    const m = Math.round(msSinceSubmit / 60_000);
     if (m < 60) return `${m}m ago`;
     const h = Math.round(m / 60);
     if (h < 24) return `${h}h ago`;
@@ -372,7 +391,7 @@ function QueueCard({
           themeColor="accent"
           style={{ textTransform: 'uppercase', letterSpacing: 1 }}
         >
-          Your turn
+          Your call
         </ThemedText>
       </View>
 
@@ -511,9 +530,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   actionsHeader: { marginTop: Spacing.one },
+  // Override buttons stack vertically so 4 approve + 1 reject (each
+  // emoji + label) don't wrap into ragged rows on phone widths. Each
+  // button is full-width with left-aligned content for a clear,
+  // tap-friendly list (QA H6).
   actions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: 'column',
     gap: Spacing.two,
   },
   actionBtn: {

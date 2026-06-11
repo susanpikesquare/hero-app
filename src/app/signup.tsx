@@ -21,6 +21,7 @@ export default function SignupScreen() {
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,12 +29,30 @@ export default function SignupScreen() {
   const submit = async () => {
     setError(null);
 
-    if (!inviteCode.trim() || !familyName.trim() || !displayName.trim() || !email.trim()) {
-      setError('All fields are required.');
+    // Per-field validation so the parent knows exactly what's missing
+    // rather than a generic "all fields required" lump (QA P7).
+    if (!inviteCode.trim()) {
+      setError('Type in your invite code — it’s in the email we sent.');
+      return;
+    }
+    if (!familyName.trim()) {
+      setError("Give your family a name — what should we call you in the app?");
+      return;
+    }
+    if (!displayName.trim()) {
+      setError("Add your first name so we know what to call you.");
+      return;
+    }
+    if (!email.trim()) {
+      setError('Add an email — that’s how you’ll sign back in.');
       return;
     }
     if (password.length < MIN_PASSWORD) {
       setError(`Password needs at least ${MIN_PASSWORD} characters.`);
+      return;
+    }
+    if (password !== passwordConfirm) {
+      setError("The two passwords don't match. Type the same one twice.");
       return;
     }
     if (!acceptedTerms) {
@@ -194,6 +213,15 @@ export default function SignupScreen() {
         onChangeText={setPassword}
         placeholder="At least 8 characters"
         hint="Pick something you'll remember. You can change it later."
+      />
+      <TextField
+        label="Confirm password"
+        autoComplete="new-password"
+        autoCapitalize="none"
+        secureTextEntry
+        value={passwordConfirm}
+        onChangeText={setPasswordConfirm}
+        placeholder="Type it again"
       />
 
       <Pressable

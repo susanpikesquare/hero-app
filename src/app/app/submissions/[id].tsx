@@ -80,7 +80,18 @@ export default function SubmissionDetailScreen() {
     }
   };
 
-  const submission = submissions.find((s) => s.id === params.id);
+  // Local copy of the submission row so we can poll just THIS row
+  // (QA H9) without thrashing useChores. We seed from the list cache
+  // and let the polling refresh keep us in sync once the AI verdict
+  // lands.
+  type SubmissionLite = (typeof submissions)[number] | null;
+  const [localSubmission, setLocalSubmission] = useState<SubmissionLite>(null);
+  useEffect(() => {
+    const listed = submissions.find((s) => s.id === params.id);
+    if (listed) setLocalSubmission(listed);
+  }, [submissions, params.id]);
+
+  const submission = localSubmission;
   const chore = submission ? chores.find((c) => c.id === submission.chore_id) : null;
   const kid = submission
     ? kids.find((k) => k.id === submission.submitted_by)
@@ -106,16 +117,37 @@ export default function SubmissionDetailScreen() {
     };
   }, [submission?.photo_path]);
 
-  // Poll for AI eval result while it's still pending and the submission
-  // is recent (don't poll forever on old submissions where the eval failed).
+  // Poll only THIS submission row for the AI verdict while it's pending
+  // and recent (don't poll forever on old failed evals). Polling the
+  // full useChores feed every 3s was wasteful — one row is enough (QA H9).
   const aiPending = submission && !submission.ai_evaluated_at;
   const submittedAt = submission ? new Date(submission.submitted_at).getTime() : 0;
   const recentEnough = Date.now() - submittedAt < 90 * 1000;
   useEffect(() => {
-    if (!aiPending || !recentEnough) return;
-    const id = setInterval(() => reload(), 3000);
-    return () => clearInterval(id);
-  }, [aiPending, recentEnough, reload]);
+    if (!aiPending || !recentEnough || !submission?.id) return;
+    const submissionId = submission.id;
+    const intervalId = setInterval(async () => {
+      const { data } = await supabase
+        .from('submissions')
+        .select('id, ai_verdict, ai_feedback, ai_evaluated_at')
+        .eq('id', submissionId)
+        .maybeSingle();
+      if (data?.ai_evaluated_at) {
+        clearInterval(intervalId);
+        setLocalSubmission((prev) =>
+          prev
+            ? {
+                ...prev,
+                ai_verdict: data.ai_verdict,
+                ai_feedback: data.ai_feedback,
+                ai_evaluated_at: data.ai_evaluated_at,
+              }
+            : prev
+        );
+      }
+    }, 3000);
+    return () => clearInterval(intervalId);
+  }, [aiPending, recentEnough, submission?.id]);
 
   if (loading) {
     return (
@@ -579,9 +611,11 @@ const styles = StyleSheet.create({
     padding: Spacing.five,
     gap: Spacing.two,
   },
+  // Override buttons stack vertically — see parent-queue-view.tsx for
+  // the same fix; 4 approval reasons + 1 reject wrap badly on phone
+  // widths. Full-width column reads cleaner (QA H6).
   overrideBtnGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: 'column',
     gap: Spacing.two,
     marginTop: Spacing.three,
   },

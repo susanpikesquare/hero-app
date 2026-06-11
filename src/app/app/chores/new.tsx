@@ -460,7 +460,7 @@ export default function NewChoreScreen() {
             Reference photo (optional)
           </ThemedText>
           <ThemedText type="small" themeColor="textMuted">
-            Show the AI what a finished {title.trim() ? title.trim().toLowerCase() : 'chore'} looks like. Without one, the kid's photo goes straight to your review queue.
+            Show the AI what {title.trim() ? `“${title.trim()}”` : 'this chore'} looks like when it’s done at your house. Without one, the kid’s photo goes straight to your review queue.
           </ThemedText>
 
           {referencePhoto && (

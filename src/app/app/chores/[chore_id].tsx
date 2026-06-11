@@ -566,9 +566,7 @@ export default function ChoreDetailScreen() {
                 Reference photo
               </BrandHeading>
               <ThemedText type="default" themeColor="textSecondary">
-                Show the AI what {assignedKid?.display_name ?? 'your kid'}’s
-                {' '}
-                {title.trim() ? title.trim().toLowerCase() : 'chore'} looks like when it’s done.
+                Show the AI what {title.trim() ? `“${title.trim()}”` : 'this chore'} looks like when it’s done at your house. {assignedKid?.display_name ?? 'Your kid'}’s submitted photos get compared against this one.
               </ThemedText>
 
               <Pressable

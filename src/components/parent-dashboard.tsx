@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrandButton } from '@/components/brand-button';
@@ -15,7 +15,7 @@ import {
   Spacing,
 } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { articleForAge, ARTICLES } from '@/lib/articles';
+import { articleForAge } from '@/lib/articles';
 import { useAuth } from '@/lib/auth-context';
 import {
   PROFILE_OPTIONS,
@@ -125,7 +125,12 @@ export function ParentDashboard() {
     );
   }
 
-  const recentSubmissions = submissions.slice(0, 5);
+  // Show the 10 most-recent submissions on the dashboard (was 5). Old
+  // history beyond that is reachable via "More in the review queue"
+  // below the list. Eventually we'll want a dedicated history view,
+  // but for v0 a higher cap + the queue link is enough (QA H10).
+  const recentSubmissions = submissions.slice(0, 10);
+  const hasMoreSubmissions = submissions.length > recentSubmissions.length;
 
   return (
     <ScrollView
@@ -390,53 +395,62 @@ export function ParentDashboard() {
               return (
                 <Card key={kid.id} theme={theme} tone="elevated">
                   <View style={styles.kidHeader}>
-                    <View style={{ gap: 4 }}>
+                    <View style={{ gap: 4, flex: 1, minWidth: 200 }}>
                       <BrandHeading level="h2" style={styles.cardTitle}>
                         {kid.display_name}
                       </BrandHeading>
-                      <View style={styles.kidMetaRow}>
-                        <ThemedText type="small" themeColor="textMuted">
-                          {kid.age != null ? `Age ${kid.age} · ` : ''}
-                          {kidChores.length === 0
-                            ? 'no chores yet'
-                            : `${kidChores.length} chore${kidChores.length === 1 ? '' : 's'}`}
-                        </ThemedText>
-                        <ThemedText type="small" themeColor="textMuted">
-                          ·
-                        </ThemedText>
-                        <Pressable
-                          onPress={() => router.push(`/app/kid/${kid.id}/progress`)}
-                          hitSlop={8}
-                        >
-                          <ThemedText
-                            type="small"
-                            themeColor="info"
-                            style={{ textDecorationLine: 'underline' }}
-                          >
-                            Progress
-                          </ThemedText>
-                        </Pressable>
-                        <ThemedText type="small" themeColor="textMuted">
-                          ·
-                        </ThemedText>
-                        <Pressable
-                          onPress={() => router.push(`/app/kid/${kid.id}/settings`)}
-                          hitSlop={8}
-                        >
-                          <ThemedText
-                            type="small"
-                            themeColor="info"
-                            style={{ textDecorationLine: 'underline' }}
-                          >
-                            Manage
-                          </ThemedText>
-                        </Pressable>
-                      </View>
+                      <ThemedText type="small" themeColor="textMuted">
+                        {kid.age != null ? `Age ${kid.age} · ` : ''}
+                        {kidChores.length === 0
+                          ? 'no chores yet'
+                          : `${kidChores.length} chore${kidChores.length === 1 ? '' : 's'}`}
+                      </ThemedText>
                     </View>
+                    {/* Hand-to button. On web we open the kid view in a NEW
+                        tab so the parent keeps their dashboard session —
+                        on native we navigate normally (it really is a
+                        device handoff). Web label adapts so it's clear
+                        what'll happen (QA H3). */}
                     <BrandButton
-                      label={`Hand to ${kid.display_name}`}
-                      onPress={() => router.push(`/app/kid/${kid.id}`)}
+                      label={
+                        Platform.OS === 'web'
+                          ? `Open ${kid.display_name}'s view`
+                          : `Hand to ${kid.display_name}`
+                      }
+                      onPress={() => {
+                        const href = `/app/kid/${kid.id}`;
+                        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                          window.open(href, '_blank', 'noopener,noreferrer');
+                        } else {
+                          router.push(href);
+                        }
+                      }}
                     />
+                  </View>
+
+                  {/* Per-kid secondary actions in a clean row instead of
+                      tiny underlined text mashed against the title (QA H4). */}
+                  <View style={styles.kidActionsRow}>
+                    <Pressable
+                      onPress={() => router.push(`/app/kid/${kid.id}/progress`)}
+                      hitSlop={6}
+                      style={[
+                        styles.kidActionChip,
+                        { borderColor: theme.border, backgroundColor: theme.background },
+                      ]}
+                    >
+                      <ThemedText type="smallBold">Progress</ThemedText>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => router.push(`/app/kid/${kid.id}/settings`)}
+                      hitSlop={6}
+                      style={[
+                        styles.kidActionChip,
+                        { borderColor: theme.border, backgroundColor: theme.background },
+                      ]}
+                    >
+                      <ThemedText type="smallBold">Manage</ThemedText>
+                    </Pressable>
                   </View>
 
                   {showRewardChip && (
@@ -558,11 +572,12 @@ export function ParentDashboard() {
             </View>
           )}
 
-          {/* For parents — coaching content */}
+          {/* For parents — coaching content. articleForAge always returns
+              a deterministic best-fit article (see src/lib/articles.ts)
+              so we don't need a magic-index fallback here (QA P3+P4). */}
           {(() => {
             const youngestWithAge = kids.find((k) => k.age != null);
-            const featured =
-              articleForAge(youngestWithAge?.age ?? null) ?? ARTICLES[1];
+            const featured = articleForAge(youngestWithAge?.age ?? null);
             if (!featured) return null;
             return (
               <Card theme={theme} tone="elevated">
@@ -696,6 +711,21 @@ export function ParentDashboard() {
                     </Pressable>
                   );
                 })}
+                {hasMoreSubmissions && (
+                  <Pressable
+                    onPress={() => router.push('/app/queue')}
+                    style={{ paddingVertical: Spacing.two }}
+                    hitSlop={6}
+                  >
+                    <ThemedText
+                      type="small"
+                      themeColor="info"
+                      style={{ textDecorationLine: 'underline' }}
+                    >
+                      More in the review queue →
+                    </ThemedText>
+                  </Pressable>
+                )}
               </View>
             )}
           </Card>
@@ -1154,6 +1184,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.one,
     flexWrap: 'wrap',
+  },
+  kidActionsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+    marginTop: Spacing.one,
+  },
+  kidActionChip: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
   },
   navActions: {
     flexDirection: 'row',
