@@ -172,6 +172,7 @@ export default function SubmissionDetailScreen() {
   }
 
   const hasReference = chore?.reference_photo_path;
+  const hasPhoto = !!submission.photo_path;
   const verdict = submission.ai_verdict;
   const feedback = submission.ai_feedback;
   const parentOverride = submission.parent_override;
@@ -212,43 +213,66 @@ export default function SubmissionDetailScreen() {
             </ThemedText>
           </View>
 
-          <Pressable
-            onPress={() => signedUrl && setViewerOpen(true)}
-            style={[
-              styles.photoFrame,
-              { backgroundColor: theme.backgroundElement, borderColor: theme.border },
-            ]}
-          >
-            {signedUrl ? (
-              <>
-                <Image
-                  source={{ uri: signedUrl }}
-                  style={styles.photo}
-                  resizeMode="contain"
-                />
-                <View
-                  style={[
-                    styles.zoomHint,
-                    { backgroundColor: theme.background, borderColor: theme.border },
-                  ]}
-                >
-                  <ThemedText type="small" themeColor="textSecondary">
-                    Tap to enlarge
-                  </ThemedText>
-                </View>
-              </>
-            ) : urlError ? (
-              <ThemedText type="small" style={{ color: '#B23A48', textAlign: 'center' }}>
-                {urlError}
+          {/* Photo frame only when the submission actually has a photo.
+              Self-attest checklist chores (brush teeth, shower) have no
+              photo, so render a compact "self-reported" strip instead of
+              a frame stuck on "Loading photo…" (Susan QA, 2026-06-12). */}
+          {hasPhoto ? (
+            <Pressable
+              onPress={() => signedUrl && setViewerOpen(true)}
+              style={[
+                styles.photoFrame,
+                { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+              ]}
+            >
+              {signedUrl ? (
+                <>
+                  <Image
+                    source={{ uri: signedUrl }}
+                    style={styles.photo}
+                    resizeMode="contain"
+                  />
+                  <View
+                    style={[
+                      styles.zoomHint,
+                      { backgroundColor: theme.background, borderColor: theme.border },
+                    ]}
+                  >
+                    <ThemedText type="small" themeColor="textSecondary">
+                      Tap to enlarge
+                    </ThemedText>
+                  </View>
+                </>
+              ) : urlError ? (
+                <ThemedText type="small" style={{ color: '#B23A48', textAlign: 'center' }}>
+                  {urlError}
+                </ThemedText>
+              ) : (
+                <ThemedText type="default" themeColor="textMuted">
+                  Loading photo…
+                </ThemedText>
+              )}
+            </Pressable>
+          ) : (
+            <View
+              style={[
+                styles.selfReportStrip,
+                { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+              ]}
+            >
+              <ThemedText type="default" style={{ fontSize: 22 }}>
+                ✅
               </ThemedText>
-            ) : (
-              <ThemedText type="default" themeColor="textMuted">
-                Loading photo…
+              <ThemedText type="default" themeColor="textSecondary" style={{ flex: 1 }}>
+                {kid?.display_name ?? 'Your kid'} marked this done. It’s a
+                self-care habit — no photo to review.
               </ThemedText>
-            )}
-          </Pressable>
+            </View>
+          )}
 
-          {!hasReference ? (
+          {/* AI review card — only meaningful for photo chores. Self-attest
+              chores skip it entirely (nothing was graded). */}
+          {!hasPhoto ? null : !hasReference ? (
             <AiCard
               theme={theme}
               tone="info"
@@ -588,6 +612,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: Spacing.two,
+  },
+  selfReportStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    padding: Spacing.four,
   },
   photo: { width: '100%', height: '100%' },
   zoomHint: {

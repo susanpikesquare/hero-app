@@ -231,6 +231,7 @@ export function ParentQueueView() {
                     aiVerdict={sub.ai_verdict}
                     aiFeedback={sub.ai_feedback}
                     signedUrl={signedUrl}
+                    hasPhoto={!!sub.photo_path}
                     busy={busy}
                     onApprove={async (reason) => {
                       const ok = await apply(sub.id, 'approved', reason);
@@ -259,6 +260,7 @@ function QueueCard({
   aiVerdict,
   aiFeedback,
   signedUrl,
+  hasPhoto,
   busy,
   onApprove,
   onReject,
@@ -270,6 +272,8 @@ function QueueCard({
   aiVerdict: 'pass' | 'needs_work' | null;
   aiFeedback: string | null;
   signedUrl: string | null | undefined;
+  /** False for self-attest checklist chores (no photo to review). */
+  hasPhoto: boolean;
   busy: boolean;
   onApprove: (
     reason: 'good_enough_today' | 'worked_hard' | 'help_with_rest'
@@ -285,20 +289,26 @@ function QueueCard({
   const msSinceSubmit = Date.now() - new Date(submittedAt).getTime();
   const aiVerdictTimedOut = !aiVerdict && msSinceSubmit > 90_000;
 
-  const verdictBg =
-    aiVerdict === 'pass'
+  const verdictBg = !hasPhoto
+    ? theme.backgroundElement
+    : aiVerdict === 'pass'
       ? theme.accentSoft
       : aiVerdict === 'needs_work'
         ? '#F3E8D6'
         : theme.backgroundElement;
-  const verdictFg =
-    aiVerdict === 'pass'
+  const verdictFg = !hasPhoto
+    ? theme.textSecondary
+    : aiVerdict === 'pass'
       ? theme.accent
       : aiVerdict === 'needs_work'
         ? '#8A5A1F'
         : theme.textSecondary;
-  const verdictLabel =
-    aiVerdict === 'pass'
+  // No-photo (self-attest) submissions never went through AI image
+  // review — they're self-reported. Label the chip honestly rather than
+  // showing a misleading "AI: pass" (Susan QA, 2026-06-12).
+  const verdictLabel = !hasPhoto
+    ? 'Self-reported'
+    : aiVerdict === 'pass'
       ? 'AI: pass'
       : aiVerdict === 'needs_work'
         ? 'AI: needs work'
@@ -322,37 +332,58 @@ function QueueCard({
         { backgroundColor: theme.backgroundElement, borderColor: theme.border },
       ]}
     >
-      <Pressable
-        onPress={() => signedUrl && setViewerOpen(true)}
-        style={[
-          styles.photoFrame,
-          { backgroundColor: theme.background, borderColor: theme.border },
-        ]}
-      >
-        {signedUrl ? (
-          <Image
-            source={{ uri: signedUrl }}
-            style={styles.photo}
-            resizeMode="contain"
-          />
-        ) : (
-          <ThemedText type="default" themeColor="textMuted">
-            Loading photo…
-          </ThemedText>
-        )}
-        {signedUrl && (
-          <View
-            style={[
-              styles.zoomHint,
-              { backgroundColor: theme.background, borderColor: theme.border },
-            ]}
-          >
-            <ThemedText type="small" themeColor="textSecondary">
-              Tap to enlarge
+      {/* Photo frame ONLY for chores that actually have a photo. Self-
+          attest checklist chores (brush teeth, shower) have no photo, so
+          we render a compact "no photo to review" strip instead of a
+          giant frame stuck on "Loading photo…" (Susan QA, 2026-06-12). */}
+      {hasPhoto ? (
+        <Pressable
+          onPress={() => signedUrl && setViewerOpen(true)}
+          style={[
+            styles.photoFrame,
+            { backgroundColor: theme.background, borderColor: theme.border },
+          ]}
+        >
+          {signedUrl ? (
+            <Image
+              source={{ uri: signedUrl }}
+              style={styles.photo}
+              resizeMode="contain"
+            />
+          ) : (
+            <ThemedText type="default" themeColor="textMuted">
+              Loading photo…
             </ThemedText>
-          </View>
-        )}
-      </Pressable>
+          )}
+          {signedUrl && (
+            <View
+              style={[
+                styles.zoomHint,
+                { backgroundColor: theme.background, borderColor: theme.border },
+              ]}
+            >
+              <ThemedText type="small" themeColor="textSecondary">
+                Tap to enlarge
+              </ThemedText>
+            </View>
+          )}
+        </Pressable>
+      ) : (
+        <View
+          style={[
+            styles.selfReportStrip,
+            { backgroundColor: theme.background, borderColor: theme.border },
+          ]}
+        >
+          <ThemedText type="default" style={{ fontSize: 22 }}>
+            ✅
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary" style={{ flex: 1 }}>
+            {kidName} marked this done. No photo for this one — it’s a
+            self-care habit.
+          </ThemedText>
+        </View>
+      )}
 
       <View style={styles.cardHeader}>
         <View style={{ flex: 1 }}>
@@ -375,7 +406,10 @@ function QueueCard({
         </View>
       </View>
 
-      {aiFeedback && (
+      {/* AI feedback line — only for photo chores. For self-attest the
+          strip above already says "marked this done", so the canned
+          "Self-reported as done." would just be redundant. */}
+      {hasPhoto && aiFeedback && (
         <ThemedText
           type="default"
           themeColor="textSecondary"
@@ -505,6 +539,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
     padding: Spacing.two,
+  },
+  selfReportStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    padding: Spacing.four,
   },
   photo: { width: '100%', height: '100%' },
   zoomHint: {
