@@ -68,6 +68,23 @@ export default function KidSetupScreen() {
     [kid?.age]
   );
 
+  // Group bucket suggestions into two product-meaningful categories
+  // (Susan QA, 2026-06-08). Personal-habit chores teach a kid to take
+  // care of themselves; household chores teach contribution. Showing
+  // them mixed in one long list buried the distinction.
+  // The underlying chore-suggestions data is already tagged by `kind`
+  // — self-care chores are no-photo checklist items (brush teeth,
+  // shower, deodorant); everything else (bedroom, bathroom, kitchen,
+  // laundry, living, entry, pet, outdoor) is a household responsibility.
+  const habitChores = useMemo(
+    () => bucket.chores.filter((c) => c.kind === 'self-care'),
+    [bucket]
+  );
+  const householdChores = useMemo(
+    () => bucket.chores.filter((c) => c.kind !== 'self-care'),
+    [bucket]
+  );
+
   // Start with EVERYTHING unchecked so the parent makes a deliberate
   // pick rather than inheriting "all of them" (Susan QA, 2026-06-08:
   // pre-selecting everything pushed parents toward overload — the
@@ -132,6 +149,9 @@ export default function KidSetupScreen() {
       kind: string;
       tips: string[];
       verification: 'photo' | 'checklist';
+      /** Bonus chores go in as is_optional=true so they show under the
+       *  kid's "Extras" section rather than the daily required list. */
+      isOptional: boolean;
     }[] = [];
     for (const s of bucket.chores) {
       if (selected[s.title]) {
@@ -140,6 +160,7 @@ export default function KidSetupScreen() {
           kind: s.kind,
           tips: s.tips,
           verification: s.verification,
+          isOptional: false,
         });
       }
     }
@@ -149,6 +170,11 @@ export default function KidSetupScreen() {
         kind: 'custom',
         tips: [],
         verification: 'photo',
+        // Custom additions on this screen are framed as "bonus tasks the
+        // kid can take on by choice" (Susan QA, 2026-06-08). The dashboard
+        // → New chore form still creates required chores by default;
+        // this is just the setup-flow convention.
+        isOptional: true,
       });
     }
     if (toCreate.length === 0) {
@@ -165,6 +191,7 @@ export default function KidSetupScreen() {
         kind: c.kind,
         coaching_tips: c.tips,
         verification_kind: c.verification,
+        is_optional: c.isOptional,
       }));
       const { error: insertErr } = await supabase.from('chores').insert(rows);
       if (insertErr) throw insertErr;
@@ -278,21 +305,67 @@ export default function KidSetupScreen() {
               {(() => {
                 const { min, max } = bucket.dailyTaskCeiling;
                 const range = min === max ? `${min}` : `${min}–${max}`;
-                return `Published guidance suggests ${range} daily chores at ${bucket.label.toLowerCase()}. Tap the ones you want to start with — you can always add more later.`;
+                return `Published guidance suggests ${range} daily chores at ${bucket.label.toLowerCase()}. Pick from the two groups below — you can always add more later.`;
               })()}
             </ThemedText>
 
-            <View style={styles.suggList}>
-              {bucket.chores.map((s) => (
-                <SuggestionRow
-                  key={s.title}
-                  s={s}
-                  selected={!!selected[s.title]}
-                  onToggle={() => toggleSuggestion(s.title)}
-                  alreadyAdded={existingTitlesLower.has(s.title.toLowerCase())}
-                />
-              ))}
-            </View>
+            {/* Group 1 — Personal habits (self-care). Routines a kid does
+                for themselves. No-photo checklist verification. */}
+            {habitChores.length > 0 && (
+              <View style={styles.suggGroup}>
+                <ThemedText
+                  type="smallBold"
+                  themeColor="accent"
+                  style={{ textTransform: 'uppercase', letterSpacing: 1 }}
+                >
+                  Personal habits
+                </ThemedText>
+                <ThemedText type="small" themeColor="textMuted">
+                  Self-care routines — brushing, showering, deodorant.
+                  Kid taps Done; no photo.
+                </ThemedText>
+                <View style={styles.suggList}>
+                  {habitChores.map((s) => (
+                    <SuggestionRow
+                      key={s.title}
+                      s={s}
+                      selected={!!selected[s.title]}
+                      onToggle={() => toggleSuggestion(s.title)}
+                      alreadyAdded={existingTitlesLower.has(s.title.toLowerCase())}
+                    />
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Group 2 — Around the house. Contribution chores that show
+                what "helping out" looks like in your home. */}
+            {householdChores.length > 0 && (
+              <View style={styles.suggGroup}>
+                <ThemedText
+                  type="smallBold"
+                  themeColor="accent"
+                  style={{ textTransform: 'uppercase', letterSpacing: 1 }}
+                >
+                  Around the house
+                </ThemedText>
+                <ThemedText type="small" themeColor="textMuted">
+                  Contributions to the household — bedroom, bathroom,
+                  kitchen, laundry. Photo verification.
+                </ThemedText>
+                <View style={styles.suggList}>
+                  {householdChores.map((s) => (
+                    <SuggestionRow
+                      key={s.title}
+                      s={s}
+                      selected={!!selected[s.title]}
+                      onToggle={() => toggleSuggestion(s.title)}
+                      alreadyAdded={existingTitlesLower.has(s.title.toLowerCase())}
+                    />
+                  ))}
+                </View>
+              </View>
+            )}
 
             {/* Provenance — show the parent the trusted sources the
                 suggestions in this bucket draw from. Same set as the
@@ -327,10 +400,13 @@ export default function KidSetupScreen() {
             ]}
           >
             <BrandHeading level="h2" style={styles.cardTitle}>
-              Add your own
+              Bonus tasks (by choice)
             </BrandHeading>
             <ThemedText type="small" themeColor="textMuted">
-              Something specific to your home? Add it below.
+              Extras your kid can take on when they want to — a project,
+              a help-out, something specific to your home. These save as
+              opt-in extras (they show in the kid’s Extras section, not
+              the daily required list).
             </ThemedText>
 
             {customChores.length > 0 && (
@@ -532,6 +608,10 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   cardTitle: { marginBottom: Spacing.one },
+  suggGroup: {
+    gap: Spacing.two,
+    marginTop: Spacing.four,
+  },
   suggList: { gap: Spacing.two, marginTop: Spacing.two },
   sourcesBlock: { marginTop: Spacing.four, gap: Spacing.one },
   warningCard: {
