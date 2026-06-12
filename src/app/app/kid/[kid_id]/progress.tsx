@@ -219,10 +219,11 @@ export default function KidProgressScreen() {
                       total: 0,
                       wins: 0,
                     };
-                    const choreRate =
-                      stats.total > 0
-                        ? Math.round((stats.wins / stats.total) * 100)
-                        : 0;
+                    // Show a plain "done N times" count rather than a win-
+                    // rate %. Self-attest chores auto-pass so a % is always
+                    // ~100% and meaningless; a count is honest for every
+                    // chore type (Susan QA, 2026-06-12).
+                    const doneCount = stats.wins;
                     return (
                       <View
                         key={chore.id}
@@ -236,9 +237,9 @@ export default function KidProgressScreen() {
                             {chore.title}
                           </ThemedText>
                           <ThemedText type="small" themeColor="textMuted">
-                            {stats.total === 0
-                              ? 'No submissions in this window'
-                              : `${stats.wins} of ${stats.total} submissions counted as a win`}
+                            {doneCount === 0
+                              ? 'Not done yet in this window'
+                              : `Done ${doneCount} time${doneCount === 1 ? '' : 's'} in the last 91 days`}
                           </ThemedText>
                         </View>
                         <View
@@ -246,11 +247,7 @@ export default function KidProgressScreen() {
                             styles.choreRate,
                             {
                               backgroundColor:
-                                stats.total === 0
-                                  ? theme.background
-                                  : choreRate >= 70
-                                    ? theme.accentSoft
-                                    : '#F3E8D6',
+                                doneCount === 0 ? theme.background : theme.accentSoft,
                               borderColor: theme.border,
                             },
                           ]}
@@ -258,15 +255,10 @@ export default function KidProgressScreen() {
                           <ThemedText
                             type="smallBold"
                             style={{
-                              color:
-                                stats.total === 0
-                                  ? theme.textMuted
-                                  : choreRate >= 70
-                                    ? theme.accent
-                                    : '#8A5A1F',
+                              color: doneCount === 0 ? theme.textMuted : theme.accent,
                             }}
                           >
-                            {stats.total === 0 ? '—' : `${choreRate}%`}
+                            {doneCount === 0 ? '—' : `${descriptor.emoji} ${doneCount}`}
                           </ThemedText>
                         </View>
                       </View>
