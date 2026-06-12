@@ -121,7 +121,7 @@ export default function KidProgressScreen() {
               themeColor="textSecondary"
               style={styles.lead}
             >
-              A look at chore wins, streaks, and the days that landed. Tap any
+              A look at chores done, streaks, and the days that landed. Tap any
               square to see what happened.
             </ThemedText>
           </View>
@@ -178,16 +178,16 @@ export default function KidProgressScreen() {
               Daily activity
             </BrandHeading>
             <ThemedText type="small" themeColor="textMuted">
-              Each square is a day. Greener = more wins. Empty = nothing
-              submitted that day.
+              Each square is a day. Greener = more done that day. Empty = a
+              quiet one.
             </ThemedText>
 
             <View style={{ marginTop: Spacing.three }}>
               <CalendarHeatmap
                 weeks={weeks}
                 metric="wins"
-                unitSingular={descriptor.unitSingular || 'win'}
-                unitPlural={descriptor.unitPlural || 'wins'}
+                unitSingular={descriptor.unitSingular || 'chore'}
+                unitPlural={descriptor.unitPlural || 'chores'}
               />
             </View>
           </View>
