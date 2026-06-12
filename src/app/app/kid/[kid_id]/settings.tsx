@@ -492,7 +492,11 @@ export default function KidSettingsScreen() {
           {/* Developmental frame — re-read anytime, especially helpful when
               the parent feels frustrated and needs to recalibrate against
               what's actually typical at this age. */}
-          <AgeGuidanceCard age={kid.age} kidName={kid.display_name} />
+          <AgeGuidanceCard
+            age={kid.age}
+            kidName={kid.display_name}
+            profiles={(kid.support_profiles ?? []) as SupportProfile[]}
+          />
 
           {/* Kid login */}
           <View

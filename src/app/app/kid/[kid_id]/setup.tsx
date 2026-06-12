@@ -16,6 +16,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AgeGuidanceCard } from '@/components/age-guidance-card';
+import type { SupportProfile } from '@/lib/neurodivergence-context';
 import { BrandButton } from '@/components/brand-button';
 import { BrandHeading } from '@/components/brand-heading';
 import { BrandLogo } from '@/components/brand-logo';
@@ -84,6 +85,17 @@ export default function KidSetupScreen() {
     () => bucket.chores.filter((c) => c.kind !== 'self-care'),
     [bucket]
   );
+
+  // Whether the parent flagged any support profile (ADHD, anxiety,
+  // autism, sensory, not_sure). When set, published guidance points to
+  // starting at the LOW end of the age range — fewer chores, more
+  // scaffolding — so we skew the recommended count and the copy
+  // accordingly (Susan QA, 2026-06-08).
+  const kidProfiles = useMemo(
+    () => (kid?.support_profiles ?? []) as SupportProfile[],
+    [kid?.support_profiles]
+  );
+  const hasProfiles = kidProfiles.length > 0;
 
   // Start with EVERYTHING unchecked so the parent makes a deliberate
   // pick rather than inheriting "all of them" (Susan QA, 2026-06-08:
@@ -290,7 +302,11 @@ export default function KidSetupScreen() {
               age plus how that shapes the chore-picking decision. When the
               kid's neurodivergence_context is set, a neurodivergent-lens
               callout surfaces below as well. */}
-          <AgeGuidanceCard age={kid.age} kidName={kid.display_name} />
+          <AgeGuidanceCard
+            age={kid.age}
+            kidName={kid.display_name}
+            profiles={(kid.support_profiles ?? []) as SupportProfile[]}
+          />
 
           <View
             style={[
@@ -304,8 +320,16 @@ export default function KidSetupScreen() {
             <ThemedText type="default" themeColor="text" style={{ lineHeight: 24 }}>
               {(() => {
                 const { min, max } = bucket.dailyTaskCeiling;
+                const ageLabel = bucket.label.toLowerCase();
+                // When a support profile is set, recommend starting at
+                // the bottom of the range (fewer chores, more room to
+                // build a win) rather than the full span.
+                if (hasProfiles) {
+                  const startCount = min;
+                  return `With the support profile you set, published guidance points to starting small — around ${startCount} ${startCount === 1 ? 'chore' : 'chores'} at ${ageLabel}, then adding more once it's sticking. Pick from the two groups below.`;
+                }
                 const range = min === max ? `${min}` : `${min}–${max}`;
-                return `Published guidance suggests ${range} daily chores at ${bucket.label.toLowerCase()}. Pick from the two groups below — you can always add more later.`;
+                return `Published guidance suggests ${range} daily chores at ${ageLabel}. Pick from the two groups below — you can always add more later.`;
               })()}
             </ThemedText>
 
@@ -468,11 +492,17 @@ export default function KidSetupScreen() {
           {/* Soft task-load warning (Workbook Q3.3). When the selected
               count plus pre-existing chores would exceed the
               age-appropriate ceiling published guidance suggests, surface
-              a gentle inline note. Never blocking — parent can proceed. */}
+              a gentle inline note. Never blocking — parent can proceed.
+              When a support profile is set, the effective ceiling drops
+              to the midpoint of the range (start small, build the win)
+              so the warning fires sooner (Susan QA, 2026-06-08). */}
           {(() => {
             const selectedCount =
               countSelections(selected, customChores) + existingTitlesLower.size;
-            const ceiling = bucket.dailyTaskCeiling.max;
+            const { min, max } = bucket.dailyTaskCeiling;
+            const ceiling = hasProfiles
+              ? Math.max(min, Math.ceil((min + max) / 2))
+              : max;
             if (selectedCount <= ceiling) return null;
             return (
               <View
@@ -493,8 +523,10 @@ export default function KidSetupScreen() {
                 </ThemedText>
                 <ThemedText type="default" themeColor="text">
                   That’s {selectedCount} chores for {bucket.label.toLowerCase()}.
-                  Published guidance generally suggests {bucket.dailyTaskCeiling.min}–{ceiling} at this age.
-                  Going higher tends to break the contribution experience rather than build it — but you know your home best. You can proceed.
+                  {hasProfiles
+                    ? ` With the support profile you set, starting closer to ${ceiling} tends to work better — fewer chores done consistently beats more chores half-done.`
+                    : ` Published guidance generally suggests ${min}–${max} at this age.`}
+                  {' '}Going higher tends to break the contribution experience rather than build it — but you know your home best. You can proceed.
                 </ThemedText>
               </View>
             );

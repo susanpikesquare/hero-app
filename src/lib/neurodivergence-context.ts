@@ -101,6 +101,30 @@ export const PROFILE_OPTIONS: ProfileOption[] = [
 ];
 
 /**
+ * Per-profile chore-picking tuning. ONE short, non-clinical sentence per
+ * profile describing how to shape the chore load — surfaced on the
+ * age-guidance card so the parent sees the framework respond differently
+ * to ADHD vs anxiety vs autism vs sensory (Susan QA, 2026-06-08).
+ *
+ * These are scaffolding guidance, NOT clinical advice — they describe
+ * how to structure tasks, drawn from the published sources cited on each
+ * PROFILE_OPTIONS entry. Erica's content pass will deepen these into
+ * per-age-band paragraphs; this is the first, honest, differentiated cut.
+ */
+export const PROFILE_CHORE_TUNING: Record<SupportProfile, string> = {
+  adhd:
+    'Task initiation is the hard part, not effort. Favor single-step chores with a clear visual finish line, lean on the reference photo, and keep the daily list short so starting never feels like a mountain.',
+  autism:
+    'Predictability is the win. Keep the same chores in the same order each day, make “done” concrete and unambiguous, and warn before any change to the routine rather than springing it.',
+  anxiety:
+    'Certainty lowers the stakes. Pick chores with an obvious, achievable “done,” avoid open-ended or perfection-shaped tasks, and let early wins build before adding anything new.',
+  sensory:
+    'Watch the sensory load of the task itself — textures, smells, noise, wet hands. Offer swaps (gloves, a quieter time of day) and don’t make a chore a sensory battle.',
+  not_sure:
+    'Start with stronger scaffolding — fewer chores, smaller steps, more visual support — and dial it back as you see what lands. You can change this anytime.',
+};
+
+/**
  * Whether the parent has indicated anything at all. Used by the
  * support-card UI to decide whether to surface the profile-aware lenses.
  */
