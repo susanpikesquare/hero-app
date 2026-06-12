@@ -13,10 +13,9 @@
  * row update.
  */
 
-import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Image, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrandButton } from '@/components/brand-button';
@@ -33,56 +32,11 @@ import {
 } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
+import { type Picked, pickFromCamera, pickFromLibrary } from '@/lib/photo-pick';
 import { supabase } from '@/lib/supabase';
 import { uploadPickedPhoto } from '@/lib/upload-photo';
 import { useChores } from '@/lib/use-chores';
 import { useFamily } from '@/lib/use-family';
-
-type Picked = {
-  uri: string;
-  mimeType: string;
-  fileExtension: string;
-  base64?: string;
-};
-
-// Native needs base64 from the picker to avoid the broken
-// fetch(uri).blob() path on iOS. See src/lib/upload-photo.ts.
-const NEEDS_BASE64 = Platform.OS !== 'web';
-
-async function pickFromLibrary(): Promise<Picked | null> {
-  const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!perm.granted) return null;
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ['images'],
-    quality: 0.85,
-    base64: NEEDS_BASE64,
-  });
-  if (result.canceled || result.assets.length === 0) return null;
-  const a = result.assets[0];
-  return {
-    uri: a.uri,
-    mimeType: a.mimeType ?? 'image/jpeg',
-    fileExtension: (a.fileName?.split('.').pop() ?? 'jpg').toLowerCase(),
-    base64: a.base64 ?? undefined,
-  };
-}
-
-async function pickFromCamera(): Promise<Picked | null> {
-  const perm = await ImagePicker.requestCameraPermissionsAsync();
-  if (!perm.granted) return null;
-  const result = await ImagePicker.launchCameraAsync({
-    quality: 0.85,
-    base64: NEEDS_BASE64,
-  });
-  if (result.canceled || result.assets.length === 0) return null;
-  const a = result.assets[0];
-  return {
-    uri: a.uri,
-    mimeType: a.mimeType ?? 'image/jpeg',
-    fileExtension: (a.fileName?.split('.').pop() ?? 'jpg').toLowerCase(),
-    base64: a.base64 ?? undefined,
-  };
-}
 
 type TaskType = 'photo_verification' | 'parent_verification' | 'self_attest';
 type RecurrenceType = 'daily' | 'weekly' | 'none';
@@ -643,34 +597,22 @@ export default function ChoreDetailScreen() {
               )}
 
               <View style={styles.pickRow}>
-                {Platform.OS !== 'web' && (
-                  <Pressable
-                    onPress={() => handlePick('camera')}
-                    disabled={saving}
-                    style={[styles.pickBtn, { backgroundColor: theme.accent }]}
-                  >
-                    <ThemedText type="smallBold" style={{ color: theme.background }}>
-                      📸 Add from camera
-                    </ThemedText>
-                  </Pressable>
-                )}
+                <Pressable
+                  onPress={() => handlePick('camera')}
+                  disabled={saving}
+                  style={[styles.pickBtn, { backgroundColor: theme.accent }]}
+                >
+                  <ThemedText type="smallBold" style={{ color: theme.background }}>
+                    📸 Take a photo
+                  </ThemedText>
+                </Pressable>
                 <Pressable
                   onPress={() => handlePick('library')}
                   disabled={saving}
-                  style={[
-                    styles.pickBtn,
-                    Platform.OS === 'web'
-                      ? { backgroundColor: theme.accent }
-                      : { borderWidth: 1, borderColor: theme.border },
-                  ]}
+                  style={[styles.pickBtn, { borderWidth: 1, borderColor: theme.border }]}
                 >
-                  <ThemedText
-                    type="smallBold"
-                    style={{
-                      color: Platform.OS === 'web' ? theme.background : theme.text,
-                    }}
-                  >
-                    {Platform.OS === 'web' ? '📁 Add a photo' : 'Add from photos'}
+                  <ThemedText type="smallBold" style={{ color: theme.text }}>
+                    🖼️ Choose from photos
                   </ThemedText>
                 </Pressable>
               </View>

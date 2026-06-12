@@ -27,13 +27,11 @@
  *           object, return to the pick state.
  */
 
-import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -44,58 +42,11 @@ import { KidShell, KidStyles } from '@/components/kid-shell';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
+import { type Picked, pickFromCamera, pickFromLibrary } from '@/lib/photo-pick';
 import { supabase } from '@/lib/supabase';
 import { uploadPickedPhoto } from '@/lib/upload-photo';
 import { useChores } from '@/lib/use-chores';
 import { useFamily } from '@/lib/use-family';
-
-type Picked = {
-  uri: string;
-  mimeType: string;
-  fileExtension: string;
-  /** Set on native (via ImagePicker `base64: true`); undefined on web. */
-  base64?: string;
-};
-
-// On native we request base64 directly from expo-image-picker — this
-// avoids the broken `fetch(uri).blob()` path on iOS (see
-// src/lib/upload-photo.ts).
-const NEEDS_BASE64 = Platform.OS !== 'web';
-
-async function pickFromLibrary(): Promise<Picked | null> {
-  const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!perm.granted) return null;
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ['images'],
-    quality: 0.85,
-    base64: NEEDS_BASE64,
-  });
-  if (result.canceled || result.assets.length === 0) return null;
-  const a = result.assets[0];
-  return {
-    uri: a.uri,
-    mimeType: a.mimeType ?? 'image/jpeg',
-    fileExtension: (a.fileName?.split('.').pop() ?? 'jpg').toLowerCase(),
-    base64: a.base64 ?? undefined,
-  };
-}
-
-async function pickFromCamera(): Promise<Picked | null> {
-  const perm = await ImagePicker.requestCameraPermissionsAsync();
-  if (!perm.granted) return null;
-  const result = await ImagePicker.launchCameraAsync({
-    quality: 0.85,
-    base64: NEEDS_BASE64,
-  });
-  if (result.canceled || result.assets.length === 0) return null;
-  const a = result.assets[0];
-  return {
-    uri: a.uri,
-    mimeType: a.mimeType ?? 'image/jpeg',
-    fileExtension: (a.fileName?.split('.').pop() ?? 'jpg').toLowerCase(),
-    base64: a.base64 ?? undefined,
-  };
-}
 
 type Mode = 'loading' | 'pick' | 'submitting' | 'waiting_ai' | 'reviewing' | 'sent';
 
@@ -618,46 +569,30 @@ export default function SubmitScreen() {
       </View>
 
       <View style={styles.pickRow}>
-        {Platform.OS !== 'web' && (
-          <Pressable
-            style={[
-              KidStyles.bigButton,
-              styles.pickBtn,
-              { backgroundColor: theme.accent },
-            ]}
-            onPress={() => handlePick('camera')}
-            disabled={mode === 'submitting'}
-          >
-            <Text
-              style={[KidStyles.bigButtonLabel, { color: theme.background }]}
-            >
-              📸 Use camera
-            </Text>
-          </Pressable>
-        )}
         <Pressable
           style={[
             KidStyles.bigButton,
             styles.pickBtn,
-            {
-              backgroundColor:
-                Platform.OS === 'web' ? theme.accent : 'transparent',
-              borderWidth: Platform.OS === 'web' ? 0 : 1,
-              borderColor: theme.border,
-            },
+            { backgroundColor: theme.accent },
+          ]}
+          onPress={() => handlePick('camera')}
+          disabled={mode === 'submitting'}
+        >
+          <Text style={[KidStyles.bigButtonLabel, { color: theme.background }]}>
+            📸 Take a photo
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[
+            KidStyles.bigButton,
+            styles.pickBtn,
+            { backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.border },
           ]}
           onPress={() => handlePick('library')}
           disabled={mode === 'submitting'}
         >
-          <Text
-            style={[
-              KidStyles.bigButtonLabel,
-              {
-                color: Platform.OS === 'web' ? theme.background : theme.text,
-              },
-            ]}
-          >
-            {Platform.OS === 'web' ? '📁 Pick a photo' : 'Pick from photos'}
+          <Text style={[KidStyles.bigButtonLabel, { color: theme.text }]}>
+            🖼️ Choose from photos
           </Text>
         </Pressable>
       </View>

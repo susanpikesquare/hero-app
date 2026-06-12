@@ -1,7 +1,6 @@
-import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Image, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { AuthShell } from '@/components/auth-shell';
 import { BrandButton } from '@/components/brand-button';
@@ -10,55 +9,10 @@ import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
+import { type Picked as PickedPhoto, pickFromCamera, pickFromLibrary } from '@/lib/photo-pick';
 import { uploadPickedPhoto } from '@/lib/upload-photo';
 import { useChores } from '@/lib/use-chores';
 import { useFamily } from '@/lib/use-family';
-
-type PickedPhoto = {
-  uri: string;
-  mimeType: string;
-  fileExtension: string;
-  base64?: string;
-};
-
-// On native we request base64 directly — avoids the broken
-// fetch(uri).blob() path on iOS. See src/lib/upload-photo.ts.
-const NEEDS_BASE64 = Platform.OS !== 'web';
-
-async function pickFromLibrary(): Promise<PickedPhoto | null> {
-  const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!perm.granted) return null;
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ['images'],
-    quality: 0.85,
-    base64: NEEDS_BASE64,
-  });
-  if (result.canceled || result.assets.length === 0) return null;
-  const a = result.assets[0];
-  return {
-    uri: a.uri,
-    mimeType: a.mimeType ?? 'image/jpeg',
-    fileExtension: (a.fileName?.split('.').pop() ?? 'jpg').toLowerCase(),
-    base64: a.base64 ?? undefined,
-  };
-}
-
-async function pickFromCamera(): Promise<PickedPhoto | null> {
-  const perm = await ImagePicker.requestCameraPermissionsAsync();
-  if (!perm.granted) return null;
-  const result = await ImagePicker.launchCameraAsync({
-    quality: 0.85,
-    base64: NEEDS_BASE64,
-  });
-  if (result.canceled || result.assets.length === 0) return null;
-  const a = result.assets[0];
-  return {
-    uri: a.uri,
-    mimeType: a.mimeType ?? 'image/jpeg',
-    fileExtension: (a.fileName?.split('.').pop() ?? 'jpg').toLowerCase(),
-    base64: a.base64 ?? undefined,
-  };
-}
 
 export default function NewChoreScreen() {
   const router = useRouter();
@@ -479,38 +433,25 @@ export default function NewChoreScreen() {
           )}
 
           <View style={styles.refPickRow}>
-            {Platform.OS !== 'web' && (
-              <Pressable
-                onPress={() => pickReferencePhoto('camera')}
-                disabled={submitting}
-                style={[styles.refPickBtn, { backgroundColor: theme.accent }]}
-              >
-                <ThemedText type="smallBold" style={{ color: theme.background }}>
-                  📸 Use camera
-                </ThemedText>
-              </Pressable>
-            )}
+            <Pressable
+              onPress={() => pickReferencePhoto('camera')}
+              disabled={submitting}
+              style={[styles.refPickBtn, { backgroundColor: theme.accent }]}
+            >
+              <ThemedText type="smallBold" style={{ color: theme.background }}>
+                📸 Take a photo
+              </ThemedText>
+            </Pressable>
             <Pressable
               onPress={() => pickReferencePhoto('library')}
               disabled={submitting}
               style={[
                 styles.refPickBtn,
-                Platform.OS === 'web'
-                  ? { backgroundColor: theme.accent }
-                  : { borderWidth: 1, borderColor: theme.border },
+                { borderWidth: 1, borderColor: theme.border },
               ]}
             >
-              <ThemedText
-                type="smallBold"
-                style={{
-                  color: Platform.OS === 'web' ? theme.background : theme.text,
-                }}
-              >
-                {referencePhoto
-                  ? '📁 Pick a different photo'
-                  : Platform.OS === 'web'
-                    ? '📁 Pick a photo'
-                    : 'Pick from photos'}
+              <ThemedText type="smallBold" style={{ color: theme.text }}>
+                {referencePhoto ? '🖼️ Choose a different photo' : '🖼️ Choose from photos'}
               </ThemedText>
             </Pressable>
             {referencePhoto && (
