@@ -767,27 +767,35 @@ function AddKidRow({
         { flexDirection: 'column', gap: Spacing.three },
       ]}
     >
+      {/* Name + Age laid out as a 2-column row. The TextField component
+          puts `style` on the inner <input>, which on web fills its
+          parent — so to actually shape the column widths we wrap each
+          field in a View with explicit flex / fixed-width. Name flexes
+          to fill, Age is a compact fixed-width column. Wraps to two
+          rows on narrow phones (QA wide-layout fix). */}
       <View style={styles.addRowFields}>
-        <TextField
-          label={variant === 'inline' ? "Kid's name" : "Add a kid — name"}
-          value={name}
-          onChangeText={onChangeName}
-          placeholder="e.g. Theo"
-          autoComplete="off"
-          autoCorrect={false}
-          style={{ minWidth: 180 }}
-        />
-        <TextField
-          label="Age *"
-          value={age}
-          onChangeText={onChangeAge}
-          placeholder="9"
-          keyboardType="number-pad"
-          autoComplete="off"
-          autoCorrect={false}
-          style={{ minWidth: 80 }}
-          hint="Required — sets the starter chores and developmental tone."
-        />
+        <View style={styles.addNameCol}>
+          <TextField
+            label={variant === 'inline' ? "Kid's name" : "Add a kid — name"}
+            value={name}
+            onChangeText={onChangeName}
+            placeholder="e.g. Theo"
+            autoComplete="off"
+            autoCorrect={false}
+          />
+        </View>
+        <View style={styles.addAgeCol}>
+          <TextField
+            label="Age *"
+            value={age}
+            onChangeText={onChangeAge}
+            placeholder="9"
+            keyboardType="number-pad"
+            autoComplete="off"
+            autoCorrect={false}
+            hint="Required — sets starter chores."
+          />
+        </View>
       </View>
 
       {/* Optional support profiles (PRD §8A). Parent-facing only. Pick
@@ -1314,9 +1322,16 @@ const styles = StyleSheet.create({
   },
   addRowFields: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
     gap: Spacing.three,
     flexWrap: 'wrap',
+  },
+  addNameCol: {
+    flex: 1,
+    minWidth: 240,
+  },
+  addAgeCol: {
+    width: 140,
   },
   contextRow: {
     flexDirection: 'row',
