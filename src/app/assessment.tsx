@@ -264,7 +264,7 @@ export default function AssessmentScreen() {
             <ThemedText
               type="small"
               style={{ color: theme.info, textDecorationLine: 'underline' }}
-              onPress={() => Linking.openURL('/guide')}
+              onPress={() => router.push('/guide')}
             >
               Read how it works
             </ThemedText>{' '}
@@ -300,6 +300,7 @@ function CompletionStep({
   onBack: () => void;
 }) {
   const theme = useTheme();
+  const router = useRouter();
   const score = scoreAssessment(result);
   // Max possible = 12 (6 questions × 2 points for "yes"). The cutoffs
   // are deliberately wide; we'd rather greet a low-scoring parent with
@@ -466,7 +467,7 @@ function CompletionStep({
                 <BrandButton
                   variant="ghost"
                   label="Read the guide →"
-                  onPress={() => Linking.openURL('/guide')}
+                  onPress={() => router.push('/guide')}
                 />
               </View>
             )}
