@@ -37,12 +37,14 @@ import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { useFamily } from '@/lib/use-family';
+import { useAppGates } from './_layout';
 
 export default function WelcomeScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { session, signOut } = useAuth();
   const { family, loading, error, reload } = useFamily(!!session);
+  const { recheck } = useAppGates();
   const [completing, setCompleting] = useState(false);
 
   const markWelcomed = async () => {
@@ -58,6 +60,12 @@ export default function WelcomeScreen() {
         // again next time; we'd rather that than strand them here.
         console.error('Could not mark welcome complete:', error);
       }
+      // Force the route-gate layout to re-read parent_welcomed_at BEFORE
+      // we navigate, otherwise its stale state redirects us right back
+      // here in a loop (which crashed the iOS app on 2026-06-08). The
+      // layout exposes recheck() via useAppGates context for exactly
+      // this case.
+      await recheck();
       router.replace('/app');
     } finally {
       setCompleting(false);
