@@ -75,16 +75,24 @@ export function useChores(enabled: boolean) {
        *  bullet — most parents enter one tip per line in the UI, then we
        *  split before passing in. */
       coachingTips?: string[];
-      /** Path inside the reference-photos storage bucket. Set after a
-       *  successful upload — leave undefined to create a chore without a
-       *  reference photo (parent can add one later from the edit screen). */
+      /** Single reference photo path (back-compat — wrapped into the
+       *  gallery array). Prefer `referencePhotoPaths` for multiple. */
       referencePhotoPath?: string | null;
+      /** Full gallery of reference photo paths. Takes precedence over
+       *  `referencePhotoPath`. The first element becomes the primary
+       *  (reference_photo_path) that the AI evaluator compares against. */
+      referencePhotoPaths?: string[];
     }): Promise<string | null> => {
       // Keep verification_kind in sync with task_type for the duration the
       // legacy column is still read by the AI pipeline + kid tile.
       const taskType = opts.taskType ?? 'photo_verification';
       const verification_kind: 'photo' | 'checklist' =
         taskType === 'photo_verification' ? 'photo' : 'checklist';
+      // Reconcile the single + array inputs into one gallery. Primary
+      // (reference_photo_path) is kept in sync as the first element.
+      const galleryPaths =
+        opts.referencePhotoPaths ??
+        (opts.referencePhotoPath ? [opts.referencePhotoPath] : []);
       const { data, error: insertErr } = await supabase
         .from('chores')
         .insert({
@@ -99,7 +107,8 @@ export function useChores(enabled: boolean) {
           task_type: taskType,
           verification_kind,
           coaching_tips: opts.coachingTips ?? [],
-          reference_photo_path: opts.referencePhotoPath ?? null,
+          reference_photo_path: galleryPaths[0] ?? null,
+          reference_photo_paths: galleryPaths,
         })
         .select('id')
         .single();

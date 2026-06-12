@@ -29,6 +29,21 @@ const SIGN_TTL_SECONDS = 60 * 60; // 1 hour
 
 type UrlMap = Record<string, string>;
 
+/**
+ * A chore's reference photo paths as a clean array. Prefers the gallery
+ * column (reference_photo_paths); falls back to the single
+ * reference_photo_path for safety. Empty array = no reference.
+ */
+export function choreReferencePaths(chore: {
+  reference_photo_paths?: string[] | null;
+  reference_photo_path?: string | null;
+}): string[] {
+  if (chore.reference_photo_paths && chore.reference_photo_paths.length > 0) {
+    return chore.reference_photo_paths;
+  }
+  return chore.reference_photo_path ? [chore.reference_photo_path] : [];
+}
+
 export function useReferenceUrls(paths: (string | null | undefined)[]) {
   const [urls, setUrls] = useState<UrlMap>({});
 

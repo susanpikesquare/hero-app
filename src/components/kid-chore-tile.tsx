@@ -46,8 +46,10 @@ type Props = {
   rewardWeight: number;
   onPress: () => void;
   isOptional: boolean;
-  /** Signed URL for the reference photo. `null` = no reference uploaded. */
-  referenceUrl: string | null;
+  /** Signed URLs for the chore's reference photos (gallery). Empty array
+   *  = no reference uploaded. The first is the thumbnail; tapping opens
+   *  the zoomable viewer paging through all of them. */
+  referenceUrls: string[];
   /** Up to 3 short coaching tips. Empty array = none configured. */
   tips: string[];
   /**
@@ -96,7 +98,7 @@ export function KidChoreTile({
   rewardWeight,
   onPress,
   isOptional,
-  referenceUrl,
+  referenceUrls,
   tips,
   verification,
   busy = false,
@@ -105,6 +107,8 @@ export function KidChoreTile({
 }: Props) {
   const theme = useTheme();
   const [exampleOpen, setExampleOpen] = useState(false);
+  const firstReferenceUrl = referenceUrls[0] ?? null;
+  const referenceCount = referenceUrls.length;
   const meta = STATUS_META[status];
   const v = voice ?? DEFAULT_VOICE;
   const isDone = status === 'done';
@@ -159,20 +163,22 @@ export function KidChoreTile({
           tappable so the kid can zoom in on the example and match it
           (Susan QA, 2026-06-12). A magnify badge signals it's tappable. */}
       <View style={styles.topRow}>
-        {referenceUrl ? (
+        {firstReferenceUrl ? (
           <Pressable
             onPress={() => setExampleOpen(true)}
             accessibilityRole="imagebutton"
-            accessibilityLabel={`See a bigger picture of what ${title.toLowerCase()} looks like when done`}
+            accessibilityLabel={`See ${referenceCount > 1 ? `${referenceCount} bigger pictures` : 'a bigger picture'} of what ${title.toLowerCase()} looks like when done`}
             style={styles.thumbWrap}
           >
             <Image
-              source={{ uri: referenceUrl }}
+              source={{ uri: firstReferenceUrl }}
               style={[styles.thumb, { borderColor: theme.border }]}
               resizeMode="cover"
             />
             <View style={[styles.zoomBadge, { backgroundColor: theme.accent }]}>
-              <Text style={styles.zoomBadgeText}>🔍</Text>
+              <Text style={styles.zoomBadgeText}>
+                {referenceCount > 1 ? `+${referenceCount - 1}` : '🔍'}
+              </Text>
             </View>
           </Pressable>
         ) : (
@@ -328,7 +334,7 @@ export function KidChoreTile({
           thumbnail. Lets the kid study what "done" looks like. */}
       <PhotoViewer
         visible={exampleOpen}
-        uri={referenceUrl}
+        uris={referenceUrls}
         alt={`What ${title.toLowerCase()} looks like when done`}
         onClose={() => setExampleOpen(false)}
       />

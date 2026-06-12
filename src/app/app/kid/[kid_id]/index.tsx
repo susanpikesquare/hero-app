@@ -19,7 +19,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { choresForKid, submissionsForChore, useChores } from '@/lib/use-chores';
 import { useFamily } from '@/lib/use-family';
-import { useReferenceUrls } from '@/lib/use-reference-urls';
+import { choreReferencePaths, useReferenceUrls } from '@/lib/use-reference-urls';
 
 export default function KidHomeScreen() {
   const theme = useTheme();
@@ -33,9 +33,7 @@ export default function KidHomeScreen() {
     useChores(!!session);
   // Batch-fetch signed URLs for reference photos so each chore tile can
   // show "what 'done' looks like" inline.
-  const referenceUrls = useReferenceUrls(
-    chores.map((c) => c.reference_photo_path)
-  );
+  const referenceUrls = useReferenceUrls(chores.flatMap(choreReferencePaths));
 
   // Inline mark-done for self-care (checklist) chores — no photo, no AI eval.
   // Same shape as the kid-own-device version in /kid/index.tsx; the
@@ -255,9 +253,9 @@ export default function KidHomeScreen() {
               ? overrideKidMessage(last.parent_override, last.parent_override_reason)
               : null;
             const status = choreStatusToday(chore.id, kidId, submissions);
-            const refUrl = chore.reference_photo_path
-              ? (referenceUrls[chore.reference_photo_path] ?? null)
-              : null;
+            const refUrls = choreReferencePaths(chore)
+              .map((p) => referenceUrls[p])
+              .filter((u): u is string => !!u);
             const isChecklist = chore.verification_kind === 'checklist';
             return (
               <KidChoreTile
@@ -288,7 +286,7 @@ export default function KidHomeScreen() {
                     : undefined
                 }
                 isOptional={false}
-                referenceUrl={refUrl}
+                referenceUrls={refUrls}
                 tips={chore.coaching_tips}
                 verification={chore.verification_kind}
                 busy={markingDoneId === chore.id}
@@ -318,9 +316,9 @@ export default function KidHomeScreen() {
               ? overrideKidMessage(last.parent_override, last.parent_override_reason)
               : null;
             const status = choreStatusToday(chore.id, kidId, submissions);
-            const refUrl = chore.reference_photo_path
-              ? (referenceUrls[chore.reference_photo_path] ?? null)
-              : null;
+            const refUrls = choreReferencePaths(chore)
+              .map((p) => referenceUrls[p])
+              .filter((u): u is string => !!u);
             const isChecklist = chore.verification_kind === 'checklist';
             return (
               <KidChoreTile
@@ -349,7 +347,7 @@ export default function KidHomeScreen() {
                     : undefined
                 }
                 isOptional
-                referenceUrl={refUrl}
+                referenceUrls={refUrls}
                 tips={chore.coaching_tips}
                 verification={chore.verification_kind}
                 busy={markingDoneId === chore.id}

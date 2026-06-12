@@ -107,9 +107,13 @@ export default function ChoreDetailScreen() {
   const [rewardWeight, setRewardWeight] = useState(1);
   const [tipsText, setTipsText] = useState('');
 
-  // ─── Reference photo state. ─────────────────────────────────────
-  const [referenceUrl, setReferenceUrl] = useState<string | null>(null);
-  const [picked, setPicked] = useState<Picked | null>(null);
+  // ─── Reference photo gallery state. ─────────────────────────────
+  // existingPhotos: photos already saved on the chore (with signed URLs).
+  // picks: new photos chosen this session, not yet uploaded.
+  const [existingPhotos, setExistingPhotos] = useState<
+    { path: string; url: string | null }[]
+  >([]);
+  const [picks, setPicks] = useState<Picked[]>([]);
   const [viewerOpen, setViewerOpen] = useState(false);
 
   // ─── Save state. ────────────────────────────────────────────────
@@ -131,34 +135,50 @@ export default function ChoreDetailScreen() {
     setTipsText((chore.coaching_tips ?? []).join('\n'));
   }, [chore]);
 
-  // Load signed URL for any existing reference photo.
+  // Load signed URLs for all existing reference photos (the gallery).
+  // Falls back to the single reference_photo_path for chores created
+  // before the array column existed (the migration backfills, so this
+  // is belt-and-suspenders).
+  const existingPathsKey = (
+    chore?.reference_photo_paths && chore.reference_photo_paths.length > 0
+      ? chore.reference_photo_paths
+      : chore?.reference_photo_path
+        ? [chore.reference_photo_path]
+        : []
+  ).join('|');
   useEffect(() => {
     let cancelled = false;
-    if (!chore?.reference_photo_path) {
-      setReferenceUrl(null);
+    const paths = existingPathsKey ? existingPathsKey.split('|') : [];
+    if (paths.length === 0) {
+      setExistingPhotos([]);
       return;
     }
-    supabase.storage
-      .from('reference-photos')
-      .createSignedUrl(chore.reference_photo_path, 60 * 10)
-      .then(({ data, error: signErr }) => {
-        if (cancelled) return;
-        if (signErr) {
-          setReferenceUrl(null);
-          return;
-        }
-        setReferenceUrl(data?.signedUrl ?? null);
-      });
+    (async () => {
+      const { data } = await supabase.storage
+        .from('reference-photos')
+        .createSignedUrls(paths, 60 * 10);
+      if (cancelled) return;
+      const urlByPath = new Map<string, string>();
+      for (const row of data ?? []) {
+        if (row.path && row.signedUrl) urlByPath.set(row.path, row.signedUrl);
+      }
+      setExistingPhotos(paths.map((p) => ({ path: p, url: urlByPath.get(p) ?? null })));
+    })();
     return () => {
       cancelled = true;
     };
-  }, [chore?.reference_photo_path]);
+  }, [existingPathsKey]);
 
   const handlePick = async (source: 'camera' | 'library') => {
     setError(null);
     const result = source === 'camera' ? await pickFromCamera() : await pickFromLibrary();
-    if (result) setPicked(result);
+    if (result) setPicks((prev) => [...prev, result]);
   };
+
+  const removeExisting = (path: string) =>
+    setExistingPhotos((prev) => prev.filter((p) => p.path !== path));
+  const removePick = (uri: string) =>
+    setPicks((prev) => prev.filter((p) => p.uri !== uri));
 
   const handleSave = async () => {
     setError(null);
@@ -175,26 +195,27 @@ export default function ChoreDetailScreen() {
 
     setSaving(true);
     try {
-      // 1. Upload a new reference photo if one was picked. We do this
-      //    BEFORE the row update so a partial failure (photo uploaded
-      //    but row update failed) leaves the photo as an orphan rather
-      //    than a stale path on the row.
-      let nextReferencePath: string | null | undefined = undefined;
-      if (picked && taskType === 'photo_verification') {
-        const ts = Date.now();
-        const rand = Math.random().toString(36).slice(2, 8);
-        const path = `${family.id}/${chore.id}/${ts}-${rand}.${picked.fileExtension}`;
-        const uploadResult = await uploadPickedPhoto({
-          bucket: 'reference-photos',
-          path,
-          picked,
-        });
-        if (!uploadResult.ok) throw new Error(uploadResult.error);
-        nextReferencePath = path;
-      } else if (taskType !== 'photo_verification') {
-        // If the chore is no longer photo-verified, clear any stale
-        // reference photo path.
-        nextReferencePath = null;
+      // 1. Build the final reference-photo gallery.
+      //    - Non-photo task types clear the gallery entirely.
+      //    - Otherwise: keep the existing photos the parent didn't remove,
+      //      then upload any new picks and append them. We upload BEFORE
+      //      the row update so a partial failure leaves orphan files rather
+      //      than stale paths on the row.
+      let finalPaths: string[] = [];
+      if (taskType === 'photo_verification') {
+        finalPaths = existingPhotos.map((p) => p.path);
+        for (const pick of picks) {
+          const ts = Date.now();
+          const rand = Math.random().toString(36).slice(2, 8);
+          const path = `${family.id}/${chore.id}/${ts}-${rand}.${pick.fileExtension}`;
+          const uploadResult = await uploadPickedPhoto({
+            bucket: 'reference-photos',
+            path,
+            picked: pick,
+          });
+          if (!uploadResult.ok) throw new Error(uploadResult.error);
+          finalPaths.push(path);
+        }
       }
 
       // 2. Tips split.
@@ -203,7 +224,9 @@ export default function ChoreDetailScreen() {
         .map((t) => t.trim())
         .filter(Boolean);
 
-      // 3. Single UPDATE with everything that changed.
+      // 3. Single UPDATE with everything that changed. The primary
+      //    reference_photo_path (what the AI compares against) is kept in
+      //    sync as the first gallery photo.
       const verification_kind: 'photo' | 'checklist' =
         taskType === 'photo_verification' ? 'photo' : 'checklist';
       const updatePayload = {
@@ -216,13 +239,8 @@ export default function ChoreDetailScreen() {
         is_optional: isOptional,
         reward_weight: isOptional ? rewardWeight : 1,
         coaching_tips: coachingTips,
-        // Always include reference_photo_path so the column is set
-        // consistently. When `nextReferencePath` is undefined (no new
-        // pick, still photo_verification), keep the existing path.
-        reference_photo_path:
-          nextReferencePath !== undefined
-            ? nextReferencePath
-            : (chore.reference_photo_path ?? null),
+        reference_photo_path: finalPaths[0] ?? null,
+        reference_photo_paths: finalPaths,
       };
 
       const { error: updErr } = await supabase
@@ -231,7 +249,7 @@ export default function ChoreDetailScreen() {
         .eq('id', chore.id);
       if (updErr) throw updErr;
 
-      setPicked(null);
+      setPicks([]);
       await reload();
       setSavedMessage('Saved ✓');
     } catch (err) {
@@ -563,47 +581,66 @@ export default function ChoreDetailScreen() {
               ]}
             >
               <BrandHeading level="h2" style={styles.cardTitle}>
-                Reference photo
+                Reference photos
               </BrandHeading>
               <ThemedText type="default" themeColor="textSecondary">
-                Show the AI what {title.trim() ? `“${title.trim()}”` : 'this chore'} looks like when it’s done at your house. {assignedKid?.display_name ?? 'Your kid'}’s submitted photos get compared against this one.
+                Show the AI — and {assignedKid?.display_name ?? 'your kid'} — what {title.trim() ? `“${title.trim()}”` : 'this chore'} looks like when it’s done at your house. You can add several (e.g. different angles). The first one is what the AI compares against.
               </ThemedText>
 
-              <Pressable
-                onPress={() => {
-                  if (picked || referenceUrl) setViewerOpen(true);
-                }}
-                style={[
-                  styles.preview,
-                  { backgroundColor: theme.background, borderColor: theme.border },
-                ]}
-              >
-                {picked ? (
-                  <Image source={{ uri: picked.uri }} style={styles.previewImg} resizeMode="contain" />
-                ) : referenceUrl ? (
-                  <Image
-                    source={{ uri: referenceUrl }}
-                    style={styles.previewImg}
-                    resizeMode="contain"
-                  />
-                ) : (
-                  <ThemedText type="default" themeColor="textMuted">
-                    No reference photo yet.
-                  </ThemedText>
-                )}
-                {(picked || referenceUrl) && (
-                  <View
-                    style={[
-                      styles.zoomHint,
-                      { backgroundColor: theme.background, borderColor: theme.border },
-                    ]}
-                  >
-                    <ThemedText type="small" themeColor="textSecondary">
-                      Tap to enlarge
-                    </ThemedText>
-                  </View>
-                )}
-              </Pressable>
+              {/* Gallery grid: existing saved photos + new picks, each
+                  removable. Tap any thumbnail to open the zoomable viewer. */}
+              {(existingPhotos.length > 0 || picks.length > 0) && (
+                <View style={styles.galleryGrid}>
+                  {existingPhotos.map((p, i) => (
+                    <View key={`ex-${p.path}`} style={styles.galleryItem}>
+                      <Pressable onPress={() => setViewerOpen(true)}>
+                        {p.url ? (
+                          <Image source={{ uri: p.url }} style={styles.galleryImg} resizeMode="cover" />
+                        ) : (
+                          <View style={[styles.galleryImg, styles.galleryPlaceholder, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                            <ThemedText type="small" themeColor="textMuted">…</ThemedText>
+                          </View>
+                        )}
+                      </Pressable>
+                      {i === 0 && (
+                        <View style={[styles.primaryBadge, { backgroundColor: theme.accent }]}>
+                          <ThemedText type="small" style={{ color: theme.background, fontSize: 10 }}>
+                            AI
+                          </ThemedText>
+                        </View>
+                      )}
+                      <Pressable
+                        onPress={() => removeExisting(p.path)}
+                        disabled={saving}
+                        style={[styles.removePhotoBtn, { backgroundColor: '#B23A48' }]}
+                        hitSlop={6}
+                        accessibilityLabel="Remove photo"
+                      >
+                        <ThemedText type="small" style={{ color: 'white', fontSize: 14 }}>×</ThemedText>
+                      </Pressable>
+                    </View>
+                  ))}
+                  {picks.map((pick) => (
+                    <View key={`new-${pick.uri}`} style={styles.galleryItem}>
+                      <Image source={{ uri: pick.uri }} style={styles.galleryImg} resizeMode="cover" />
+                      <View style={[styles.newBadge, { backgroundColor: theme.info }]}>
+                        <ThemedText type="small" style={{ color: theme.background, fontSize: 10 }}>
+                          NEW
+                        </ThemedText>
+                      </View>
+                      <Pressable
+                        onPress={() => removePick(pick.uri)}
+                        disabled={saving}
+                        style={[styles.removePhotoBtn, { backgroundColor: '#B23A48' }]}
+                        hitSlop={6}
+                        accessibilityLabel="Remove new photo"
+                      >
+                        <ThemedText type="small" style={{ color: 'white', fontSize: 14 }}>×</ThemedText>
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+              )}
 
               <View style={styles.pickRow}>
                 {Platform.OS !== 'web' && (
@@ -613,7 +650,7 @@ export default function ChoreDetailScreen() {
                     style={[styles.pickBtn, { backgroundColor: theme.accent }]}
                   >
                     <ThemedText type="smallBold" style={{ color: theme.background }}>
-                      📸 Use camera
+                      📸 Add from camera
                     </ThemedText>
                   </Pressable>
                 )}
@@ -633,24 +670,13 @@ export default function ChoreDetailScreen() {
                       color: Platform.OS === 'web' ? theme.background : theme.text,
                     }}
                   >
-                    {Platform.OS === 'web' ? '📁 Pick a photo' : 'Pick from photos'}
+                    {Platform.OS === 'web' ? '📁 Add a photo' : 'Add from photos'}
                   </ThemedText>
                 </Pressable>
-                {picked && (
-                  <Pressable onPress={() => setPicked(null)} disabled={saving} hitSlop={6}>
-                    <ThemedText
-                      type="small"
-                      themeColor="textSecondary"
-                      style={{ textDecorationLine: 'underline' }}
-                    >
-                      Discard new photo
-                    </ThemedText>
-                  </Pressable>
-                )}
               </View>
-              {picked && (
+              {picks.length > 0 && (
                 <ThemedText type="small" themeColor="textMuted">
-                  The new photo uploads when you hit Save changes below.
+                  {picks.length} new photo{picks.length === 1 ? '' : 's'} will upload when you hit Save changes below.
                 </ThemedText>
               )}
             </View>
@@ -684,7 +710,10 @@ export default function ChoreDetailScreen() {
 
       <PhotoViewer
         visible={viewerOpen}
-        uri={picked?.uri ?? referenceUrl}
+        uris={[
+          ...existingPhotos.map((p) => p.url),
+          ...picks.map((pick) => pick.uri),
+        ]}
         alt="Reference photo"
         onClose={() => setViewerOpen(false)}
       />
@@ -736,6 +765,53 @@ const styles = StyleSheet.create({
     padding: Spacing.two,
   },
   previewImg: { width: '100%', height: 280 },
+  galleryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.three,
+  },
+  galleryItem: {
+    width: 110,
+    height: 110,
+  },
+  galleryImg: {
+    width: 110,
+    height: 110,
+    borderRadius: Radius.md,
+  },
+  galleryPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  removePhotoBtn: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  primaryBadge: {
+    position: 'absolute',
+    bottom: 4,
+    left: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: Radius.pill,
+  },
+  newBadge: {
+    position: 'absolute',
+    bottom: 4,
+    left: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: Radius.pill,
+  },
   zoomHint: {
     position: 'absolute',
     bottom: Spacing.two,

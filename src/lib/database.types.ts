@@ -25,6 +25,7 @@ export type Database = {
           recurrence_days: number[];
           recurrence_type: Database['public']['Enums']['recurrence_type'];
           reference_photo_path: string | null;
+          reference_photo_paths: string[];
           reward_weight: number;
           starts_on: string;
           task_type: Database['public']['Enums']['task_type'];
@@ -43,6 +44,7 @@ export type Database = {
           recurrence_days?: number[];
           recurrence_type?: Database['public']['Enums']['recurrence_type'];
           reference_photo_path?: string | null;
+          reference_photo_paths?: string[];
           reward_weight?: number;
           starts_on?: string;
           task_type?: Database['public']['Enums']['task_type'];
@@ -61,6 +63,7 @@ export type Database = {
           recurrence_days?: number[];
           recurrence_type?: Database['public']['Enums']['recurrence_type'];
           reference_photo_path?: string | null;
+          reference_photo_paths?: string[];
           reward_weight?: number;
           starts_on?: string;
           task_type?: Database['public']['Enums']['task_type'];
