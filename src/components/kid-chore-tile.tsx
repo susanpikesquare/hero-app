@@ -58,6 +58,14 @@ type Props = {
   /** Whether the inline checklist submission is in flight. */
   busy?: boolean;
   /**
+   * Optional "undo" handler. When provided AND the chore is done, the
+   * tile shows a small Undo button and the card body is no longer
+   * tappable (so an accidental re-tap can't re-mark it). Used for
+   * self-attest checklist chores so a mis-tap is reversible
+   * (Susan QA, 2026-06-08).
+   */
+  onUndo?: () => void;
+  /**
    * Per-kid voice (CTA labels, waiting/retry phrasing). Defaults to the
    * 6-12 "kid" voice. Pass the teen or peer voice for older kids so the
    * surface doesn't read babyish. See src/lib/kid-mode.ts.
@@ -90,6 +98,7 @@ export function KidChoreTile({
   tips,
   verification,
   busy = false,
+  onUndo,
   voice,
 }: Props) {
   const theme = useTheme();
@@ -97,6 +106,10 @@ export function KidChoreTile({
   const v = voice ?? DEFAULT_VOICE;
   const isDone = status === 'done';
   const showCTA = status === 'not_yet' || status === 'try_again';
+  // A done chore that can be undone (self-attest checklist). When true,
+  // the card body stops being tappable so an accidental re-tap can't
+  // re-mark it — the explicit Undo button is the only action.
+  const canUndo = isDone && !!onUndo;
   // We show the status badge for everything EXCEPT the default open state
   // (where the green CTA below carries the message instead). This was the
   // source of Erica's "what's the difference between 'Ready when you are'
@@ -125,10 +138,15 @@ export function KidChoreTile({
   return (
     <Pressable
       onPress={onPress}
+      // When a self-attest chore is done, the card body is inert — only
+      // the Undo button does anything. Prevents the "tapped it 3 times,
+      // logged 3 completions" bug (Susan QA, 2026-06-08).
+      disabled={canUndo}
       style={({ pressed }) => [
         KidStyles.card,
         {
-          backgroundColor: pressed ? theme.accentSoft : theme.backgroundElement,
+          backgroundColor:
+            pressed && !canUndo ? theme.accentSoft : theme.backgroundElement,
           borderColor: isOptional ? theme.info : theme.border,
           opacity: isDone ? 0.82 : 1,
         },
@@ -221,18 +239,42 @@ export function KidChoreTile({
       )}
 
       {/* Status badge — hidden for the default "ready" state so the green
-          CTA below isn't redundant. */}
+          CTA below isn't redundant. When the chore is done and undoable,
+          the badge + Undo button sit on one row. */}
       {showStatusBadge && (
-        <View
-          style={[
-            styles.statusBadge,
-            { backgroundColor: statusBg, borderColor: theme.border },
-          ]}
-        >
-          <Text style={[styles.statusEmoji, { color: statusFg }]}>{meta.emoji}</Text>
-          <Text style={[styles.statusLabel, { color: statusFg }]}>
-            {isDone && isOptional ? `Bonus ${meta.label.toLowerCase()}` : meta.label}
-          </Text>
+        <View style={styles.statusRow}>
+          <View
+            style={[
+              styles.statusBadge,
+              { backgroundColor: statusBg, borderColor: theme.border },
+            ]}
+          >
+            <Text style={[styles.statusEmoji, { color: statusFg }]}>{meta.emoji}</Text>
+            <Text style={[styles.statusLabel, { color: statusFg }]}>
+              {isDone && isOptional ? `Bonus ${meta.label.toLowerCase()}` : meta.label}
+            </Text>
+          </View>
+
+          {/* Undo — only for a done, undoable (self-attest) chore. Small
+              and secondary so it reads as a safety net, not a primary
+              action. Reverses an accidental mark-done. */}
+          {canUndo && (
+            <Pressable
+              onPress={onUndo}
+              disabled={busy}
+              hitSlop={8}
+              style={[
+                styles.undoBtn,
+                { borderColor: theme.border, opacity: busy ? 0.5 : 1 },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={`Undo ${title} — mark it not done`}
+            >
+              <Text style={[styles.undoLabel, { color: theme.textSecondary }]}>
+                {busy ? 'Undoing…' : '↩ Undo'}
+              </Text>
+            </Pressable>
+          )}
         </View>
       )}
 
@@ -360,6 +402,12 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -369,6 +417,16 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     borderRadius: Radius.pill,
     borderWidth: 1,
+  },
+  undoBtn: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+  },
+  undoLabel: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   statusEmoji: {
     fontSize: 16,

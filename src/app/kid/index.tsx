@@ -20,7 +20,7 @@ import { scheduleForKid } from '@/lib/kid-reminders';
 import { useKidSession } from '@/lib/kid-session';
 import { resolveKidMode, VOICE } from '@/lib/kid-mode';
 import { overrideKidMessage } from '@/lib/override-copy';
-import { choreStatusToday } from '@/lib/progress-stats';
+import { choreStatusToday, localDateKey } from '@/lib/progress-stats';
 import {
   descriptorFor,
   earnedCountFor,
@@ -72,6 +72,12 @@ export default function KidHomeScreen() {
   const [markingDoneId, setMarkingDoneId] = useState<string | null>(null);
   const markChoreDone = async (choreId: string) => {
     if (state.status !== 'ready' || markingDoneId) return;
+    // Idempotency guard: a self-attest chore can only be completed once
+    // per day. If it's already done today, do nothing (Susan QA,
+    // 2026-06-08 — tapping a done tile logged duplicate completions).
+    if (choreStatusToday(choreId, state.kid.id, submissions) === 'done') {
+      return;
+    }
     setMarkingDoneId(choreId);
     try {
       const { error: insertErr } = await supabase.from('submissions').insert({
@@ -87,6 +93,37 @@ export default function KidHomeScreen() {
       await reloadChores();
     } catch (err) {
       console.error('mark chore done failed:', err);
+    } finally {
+      setMarkingDoneId(null);
+    }
+  };
+
+  // Undo an accidental mark-done. Deletes TODAY's self-attest
+  // submission(s) for this chore (photo_path null = self-reported, never
+  // a photo submission). Reuses the in-flight markingDoneId guard so the
+  // tile shows "Undoing…" and double-taps are blocked.
+  const undoChoreDone = async (choreId: string) => {
+    if (state.status !== 'ready' || markingDoneId) return;
+    setMarkingDoneId(choreId);
+    try {
+      const todayKey = localDateKey(new Date());
+      const toDelete = submissions.filter(
+        (s) =>
+          s.chore_id === choreId &&
+          s.submitted_by === state.kid.id &&
+          s.photo_path === null &&
+          localDateKey(new Date(s.submitted_at)) === todayKey
+      );
+      for (const s of toDelete) {
+        const { error: delErr } = await supabase
+          .from('submissions')
+          .delete()
+          .eq('id', s.id);
+        if (delErr) throw delErr;
+      }
+      await reloadChores();
+    } catch (err) {
+      console.error('undo chore done failed:', err);
     } finally {
       setMarkingDoneId(null);
     }
@@ -264,6 +301,11 @@ export default function KidHomeScreen() {
                     ? () => markChoreDone(chore.id)
                     : () => router.push(`/kid/submit/${chore.id}`)
                 }
+                onUndo={
+                  isChecklist && status === 'done'
+                    ? () => undoChoreDone(chore.id)
+                    : undefined
+                }
                 isOptional={false}
                 referenceUrl={refUrl}
                 tips={chore.coaching_tips}
@@ -318,6 +360,11 @@ export default function KidHomeScreen() {
                   isChecklist
                     ? () => markChoreDone(chore.id)
                     : () => router.push(`/kid/submit/${chore.id}`)
+                }
+                onUndo={
+                  isChecklist && status === 'done'
+                    ? () => undoChoreDone(chore.id)
+                    : undefined
                 }
                 isOptional
                 referenceUrl={refUrl}
