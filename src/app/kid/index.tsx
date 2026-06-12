@@ -17,6 +17,7 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { ensureToday } from '@/lib/chore-instances';
 import { scheduleForKid } from '@/lib/kid-reminders';
+import { registerPushToken } from '@/lib/push-token';
 import { useKidSession } from '@/lib/kid-session';
 import { resolveKidMode, VOICE } from '@/lib/kid-mode';
 import { overrideKidMessage } from '@/lib/override-copy';
@@ -57,6 +58,15 @@ export default function KidHomeScreen() {
       void scheduleForKid({ kidId: kidIdForEffect, kidName: kidNameForEffect });
     }
   }, [kidIdForEffect, kidNameForEffect]);
+
+  // Register this device's Expo push token against the kid's member id
+  // so a parent's nudge can reach the kid as a real push notification.
+  // Native + real-device only; no-op on web/simulator. Best-effort.
+  useEffect(() => {
+    if (kidIdForEffect) {
+      void registerPushToken(kidIdForEffect);
+    }
+  }, [kidIdForEffect]);
   // Batch-fetch signed URLs for every chore's reference photo so the tiles
   // can show "what 'done' looks like" inline. Returns empty map until the
   // chores load, which is fine — KidChoreTile falls back to a 📸 placeholder.

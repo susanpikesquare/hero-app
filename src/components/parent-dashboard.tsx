@@ -1024,14 +1024,21 @@ function NudgeRow({
 }) {
   const { count, bump } = useNudgeCount(kidId);
   const [busy, setBusy] = useState(false);
+  // Feedback after a nudge: did it actually reach a device, or is the
+  // kid not set up on their own device yet? Cleared on the next nudge.
+  const [lastResult, setLastResult] = useState<
+    null | { pushed: number }
+  >(null);
   const overThreshold = count >= NUDGE_METACOGNITION_THRESHOLD;
 
   const onNudge = async () => {
     if (busy) return;
     setBusy(true);
+    setLastResult(null);
     try {
-      await recordNudge({ familyId, parentId, kidId });
+      const res = await recordNudge({ familyId, parentId, kidId });
       bump();
+      if (res.ok) setLastResult({ pushed: res.pushed ?? 0 });
     } finally {
       setBusy(false);
     }
@@ -1079,6 +1086,17 @@ function NudgeRow({
           disabled={busy}
         />
       </View>
+
+      {/* Delivery feedback. A nudge always logs; whether it reached the
+          kid's phone depends on them having opened the app on their own
+          device and allowed notifications. Tell the parent honestly. */}
+      {lastResult && (
+        <ThemedText type="small" themeColor="textMuted">
+          {lastResult.pushed > 0
+            ? `✓ Sent to ${kidName}'s ${lastResult.pushed === 1 ? 'device' : `${lastResult.pushed} devices`}.`
+            : `Logged. ${kidName} will get a push once they’ve opened Home Hero on their own device and allowed notifications.`}
+        </ThemedText>
+      )}
     </View>
   );
 }

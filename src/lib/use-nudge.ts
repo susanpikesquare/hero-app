@@ -47,7 +47,7 @@ export async function recordNudge(opts: {
   familyId: string;
   parentId: string;
   kidId: string;
-}): Promise<{ ok: boolean; error?: string }> {
+}): Promise<{ ok: boolean; error?: string; pushed?: number }> {
   const { error } = await supabase.from('parent_nudges').insert({
     family_id: opts.familyId,
     parent_id: opts.parentId,
@@ -56,7 +56,25 @@ export async function recordNudge(opts: {
   if (error) {
     return { ok: false, error: error.message };
   }
-  return { ok: true };
+
+  // Fire the push to the kid's device(s). Best-effort: the log above is
+  // the source of truth for the metacognition callout, so a push failure
+  // (or zero registered devices) never fails the nudge. `sent` tells the
+  // parent whether it actually reached a device.
+  let pushed = 0;
+  try {
+    const { data } = await supabase.functions.invoke('send-nudge', {
+      body: { kid_id: opts.kidId },
+    });
+    if (data && typeof (data as { sent?: number }).sent === 'number') {
+      pushed = (data as { sent: number }).sent;
+    }
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('send-nudge invoke failed', err);
+  }
+
+  return { ok: true, pushed };
 }
 
 /**

@@ -117,6 +117,41 @@ export type Database = {
         };
         Relationships: [];
       };
+      device_push_tokens: {
+        Row: {
+          created_at: string;
+          expo_push_token: string;
+          id: string;
+          member_id: string;
+          platform: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          expo_push_token: string;
+          id?: string;
+          member_id: string;
+          platform?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          expo_push_token?: string;
+          id?: string;
+          member_id?: string;
+          platform?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'device_push_tokens_member_id_fkey';
+            columns: ['member_id'];
+            isOneToOne: false;
+            referencedRelation: 'family_members';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       families: {
         Row: {
           created_at: string;
