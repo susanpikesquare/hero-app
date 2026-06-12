@@ -68,18 +68,22 @@ export default function KidSetupScreen() {
     [kid?.age]
   );
 
-  // Pre-select all suggestions that haven't already been added for this kid.
+  // Start with EVERYTHING unchecked so the parent makes a deliberate
+  // pick rather than inheriting "all of them" (Susan QA, 2026-06-08:
+  // pre-selecting everything pushed parents toward overload — the
+  // ceiling warning fired immediately on render, which was scolding).
+  // The recommended count is surfaced as a prompt above the list
+  // instead.
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   useEffect(() => {
     if (!kid) return;
     const next: Record<string, boolean> = {};
     for (const s of bucket.chores) {
-      next[s.title] = !existingTitlesLower.has(s.title.toLowerCase());
+      next[s.title] = false;
     }
     setSelected(next);
-    // bucket changes when age changes; existingTitlesLower changes when
-    // chores reload — both should re-seed the selection.
-  }, [bucket, existingTitlesLower, kid]);
+    // bucket changes when age changes; reset to all-unchecked.
+  }, [bucket, kid]);
 
   const [customChores, setCustomChores] = useState<CustomChore[]>([]);
   const [customDraft, setCustomDraft] = useState('');
@@ -270,8 +274,12 @@ export default function KidSetupScreen() {
             <BrandHeading level="h2" style={styles.cardTitle}>
               Suggested for {bucket.label.toLowerCase()}
             </BrandHeading>
-            <ThemedText type="small" themeColor="textMuted">
-              Tap to deselect anything that doesn’t fit your home.
+            <ThemedText type="default" themeColor="text" style={{ lineHeight: 24 }}>
+              {(() => {
+                const { min, max } = bucket.dailyTaskCeiling;
+                const range = min === max ? `${min}` : `${min}–${max}`;
+                return `Published guidance suggests ${range} daily chores at ${bucket.label.toLowerCase()}. Tap the ones you want to start with — you can always add more later.`;
+              })()}
             </ThemedText>
 
             <View style={styles.suggList}>
