@@ -74,3 +74,9 @@ fastlane/*.p12
 build/*.ipa
 build/*.xcarchive
 build/*.app.dSYM.zip
+
+# Local test photos saved into assets/images while QA-testing chores.
+# Real app images are committed individually; these scratch shots are not.
+/assets/images/9 year old boy bed made.png
+/assets/images/boys bed made-9-kid attempt.png
+/assets/images/boys bed made-9.png
