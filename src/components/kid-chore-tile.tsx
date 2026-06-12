@@ -19,9 +19,11 @@
  *      For "ready" we hide the badge — the green CTA is enough signal.
  */
 
+import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { KidStyles } from '@/components/kid-shell';
+import { PhotoViewer } from '@/components/photo-viewer';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { ChoreTodayStatus } from '@/lib/progress-stats';
@@ -102,6 +104,7 @@ export function KidChoreTile({
   voice,
 }: Props) {
   const theme = useTheme();
+  const [exampleOpen, setExampleOpen] = useState(false);
   const meta = STATUS_META[status];
   const v = voice ?? DEFAULT_VOICE;
   const isDone = status === 'done';
@@ -152,15 +155,26 @@ export function KidChoreTile({
         },
       ]}
     >
-      {/* Top row: reference thumbnail + title block */}
+      {/* Top row: reference thumbnail + title block. The thumbnail is
+          tappable so the kid can zoom in on the example and match it
+          (Susan QA, 2026-06-12). A magnify badge signals it's tappable. */}
       <View style={styles.topRow}>
         {referenceUrl ? (
-          <Image
-            source={{ uri: referenceUrl }}
-            style={[styles.thumb, { borderColor: theme.border }]}
-            resizeMode="cover"
-            accessibilityLabel={`What ${title.toLowerCase()} looks like when done`}
-          />
+          <Pressable
+            onPress={() => setExampleOpen(true)}
+            accessibilityRole="imagebutton"
+            accessibilityLabel={`See a bigger picture of what ${title.toLowerCase()} looks like when done`}
+            style={styles.thumbWrap}
+          >
+            <Image
+              source={{ uri: referenceUrl }}
+              style={[styles.thumb, { borderColor: theme.border }]}
+              resizeMode="cover"
+            />
+            <View style={[styles.zoomBadge, { backgroundColor: theme.accent }]}>
+              <Text style={styles.zoomBadgeText}>🔍</Text>
+            </View>
+          </Pressable>
         ) : (
           <View
             style={[
@@ -309,6 +323,15 @@ export function KidChoreTile({
           </Text>
         </View>
       )}
+
+      {/* Fullscreen zoom of the example photo — opened by tapping the
+          thumbnail. Lets the kid study what "done" looks like. */}
+      <PhotoViewer
+        visible={exampleOpen}
+        uri={referenceUrl}
+        alt={`What ${title.toLowerCase()} looks like when done`}
+        onClose={() => setExampleOpen(false)}
+      />
     </Pressable>
   );
 }
@@ -319,11 +342,30 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: Spacing.three,
   },
+  thumbWrap: {
+    width: 84,
+    height: 84,
+  },
   thumb: {
     width: 84,
     height: 84,
     borderRadius: Radius.md,
     borderWidth: 1,
+  },
+  zoomBadge: {
+    position: 'absolute',
+    bottom: -4,
+    right: -4,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  zoomBadgeText: {
+    fontSize: 12,
   },
   thumbPlaceholder: {
     alignItems: 'center',
