@@ -36,6 +36,7 @@ import type { Database } from '@/lib/database.types';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import { useFamily } from '@/lib/use-family';
+import { useAppGates } from './_layout';
 
 type Answer = Database['public']['Enums']['week_one_answer'];
 
@@ -63,8 +64,9 @@ const OPTIONS: { value: Answer; label: string; hint: string }[] = [
 export default function WeekOneCheckinScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { session } = useAuth();
-  const { family, loading } = useFamily(!!session);
+  const { session, signOut } = useAuth();
+  const { family, loading, error, reload } = useFamily(!!session);
+  const { recheck } = useAppGates();
   const [selected, setSelected] = useState<Answer | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -72,16 +74,20 @@ export default function WeekOneCheckinScreen() {
     if (!family || !selected || saving) return;
     setSaving(true);
     try {
-      const { error } = await supabase
+      const { error: updErr } = await supabase
         .from('families')
         .update({
           week_one_checkin_answer: selected,
           week_one_checkin_answered_at: new Date().toISOString(),
         })
         .eq('id', family.id);
-      if (error) {
-        console.error('Could not save week-1 answer:', error);
+      if (updErr) {
+        console.error('Could not save week-1 answer:', updErr);
       }
+      // Re-read the gate state BEFORE navigating so the layout doesn't
+      // bounce us straight back here (same stale-gate redirect loop that
+      // crashed the Welcome screen on iOS — see _layout.tsx / iOS-1 fix).
+      await recheck();
       router.replace('/app');
     } finally {
       setSaving(false);
@@ -100,18 +106,47 @@ export default function WeekOneCheckinScreen() {
           week_one_checkin_answered_at: new Date().toISOString(),
         })
         .eq('id', family.id);
+      await recheck();
       router.replace('/app');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading || !family) {
+  if (loading) {
     return (
       <View style={[styles.center, { backgroundColor: theme.background }]}>
         <ThemedText type="default" themeColor="textSecondary">
           One moment…
         </ThemedText>
+      </View>
+    );
+  }
+
+  // Don't strand the parent on an infinite spinner if the family load
+  // fails (consistency with the Welcome screen's escape — QA C4).
+  if (!family) {
+    return (
+      <View style={[styles.center, { backgroundColor: theme.background, padding: Spacing.four }]}>
+        <View style={{ maxWidth: ReadableContentWidth, gap: Spacing.three, alignItems: 'flex-start' }}>
+          <BrandHeading level="h2">We hit a snag loading your family.</BrandHeading>
+          <ThemedText type="default" themeColor="textSecondary">
+            {error
+              ? `Details: ${error}`
+              : "Try reloading — if that doesn't work, sign out and back in."}
+          </ThemedText>
+          <View style={{ flexDirection: 'row', gap: Spacing.three, flexWrap: 'wrap' }}>
+            <BrandButton label="Try again" onPress={reload} />
+            <BrandButton
+              variant="ghost"
+              label="Sign out"
+              onPress={async () => {
+                await signOut();
+                router.replace('/login');
+              }}
+            />
+          </View>
+        </View>
       </View>
     );
   }

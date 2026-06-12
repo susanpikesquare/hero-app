@@ -11,7 +11,7 @@
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AgeGuidanceCard } from '@/components/age-guidance-card';
@@ -84,16 +84,30 @@ export default function KidSettingsScreen() {
     }
   };
 
-  const copyCode = async () => {
-    if (!generatedCode) return;
+  // Share or copy the join code. On the native app the OS share sheet is
+  // the right move — the parent wants to TEXT the code to their kid, not
+  // just copy it. On web (no Share sheet) we fall back to clipboard.
+  // The old version called navigator.clipboard unconditionally, which is
+  // undefined on iOS, so "Copy code" silently did nothing on the phone
+  // (Susan QA, 2026-06-12).
+  const shareOrCopyCode = async () => {
+    if (!generatedCode || !kid) return;
+    const message =
+      `${kid.display_name}'s Home Hero join code: ${generatedCode}\n\n` +
+      `Open Home Hero on your device, tap "I'm a kid", and enter this code. ` +
+      `It expires in 24 hours.`;
     try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard) {
-        await navigator.clipboard.writeText(generatedCode);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+      if (Platform.OS === 'web') {
+        if (typeof navigator !== 'undefined' && navigator.clipboard) {
+          await navigator.clipboard.writeText(generatedCode);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }
+        return;
       }
+      await Share.share({ message });
     } catch {
-      // ignore
+      // User dismissed the share sheet, or clipboard unavailable — no-op.
     }
   };
 
@@ -543,8 +557,14 @@ export default function KidSettingsScreen() {
                   }}
                 >
                   <BrandButton
-                    label={copied ? '✓ Copied' : 'Copy code'}
-                    onPress={copyCode}
+                    label={
+                      Platform.OS === 'web'
+                        ? copied
+                          ? '✓ Copied'
+                          : 'Copy code'
+                        : 'Share code'
+                    }
+                    onPress={shareOrCopyCode}
                   />
                   <ThemedText type="small" themeColor="textMuted">
                     Expires in 24 hours
