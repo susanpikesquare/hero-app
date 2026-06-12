@@ -22,7 +22,6 @@ import {
   longestStreak,
   perChoreBreakdown,
   weeklyBuckets,
-  winRate,
 } from '@/lib/progress-stats';
 import {
   descriptorFor,
@@ -56,7 +55,6 @@ export default function KidProgressScreen() {
   const next = nextBadge(totalEarned);
   const longest = longestStreak(buckets);
   const current = currentStreak(buckets);
-  const rate = winRate(buckets);
   const choreBreakdown = useMemo(
     () => (kid ? perChoreBreakdown(submissions, kid.id, WINDOW_DAYS) : new Map()),
     [submissions, kid]
@@ -84,9 +82,15 @@ export default function KidProgressScreen() {
     );
   }
 
-  const winsThisWindow = buckets.reduce((sum, b) => sum + b.wins, 0);
-  const totalThisWindow = buckets.reduce((sum, b) => sum + b.total, 0);
-  const ratePct = Math.round(rate * 100);
+  // "This week" replaces the old win-rate stat. Win rate was misleading
+  // here: self-attest chores auto-pass so the rate is always ~100%, and
+  // a pass/fail scorecard fights the brand (connection over correction,
+  // not productivity). Recent activity is the more useful, gentler
+  // signal (Susan QA, 2026-06-12).
+  const winsThisWeek = buckets.slice(-7).reduce((sum, b) => sum + b.wins, 0);
+  const activeDaysThisWeek = buckets
+    .slice(-7)
+    .filter((b) => b.wins > 0).length;
 
   return (
     <ScrollView
@@ -133,12 +137,12 @@ export default function KidProgressScreen() {
             />
             <StatCard
               theme={theme}
-              eyebrow="Win rate"
-              value={`${ratePct}%`}
+              eyebrow="This week"
+              value={String(winsThisWeek)}
               caption={
-                totalThisWindow > 0
-                  ? `${winsThisWindow} wins of ${totalThisWindow} submissions in 91 days`
-                  : 'No submissions yet'
+                winsThisWeek > 0
+                  ? `${descriptor.unitPlural} on ${activeDaysThisWeek} day${activeDaysThisWeek === 1 ? '' : 's'} in the last 7`
+                  : 'Nothing logged this week yet'
               }
             />
             <StatCard
