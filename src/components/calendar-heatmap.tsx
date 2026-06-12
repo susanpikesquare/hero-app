@@ -67,18 +67,16 @@ export function CalendarHeatmap({
   return (
     <View>
       <View style={styles.gridRow}>
-        {/* Day-of-week labels column */}
+        {/* Day-of-week labels column — one initial per row, like a
+            standard calendar week header (S M T W T F S). Showing all
+            seven (was every-other, which left confusing blank rows). */}
         <View style={styles.labelsCol}>
           {DAY_LABELS.map((l, i) => (
             <ThemedText
               key={`d-${i}`}
               type="small"
               themeColor="textMuted"
-              style={[
-                styles.dayLabel,
-                // Show only odd rows (M W F S) to reduce visual noise
-                { opacity: i % 2 === 1 || i === 6 ? 1 : 0 },
-              ]}
+              style={styles.dayLabel}
             >
               {l}
             </ThemedText>
