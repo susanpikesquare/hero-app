@@ -146,7 +146,7 @@ export default function KidHomeScreen() {
   const remaining = requiredChores.length - doneToday;
 
   return (
-    <KidShell>
+    <KidShell showMascot={voice.showMascot}>
       <View style={styles.greeting}>
         <Text style={[KidStyles.greetingEyebrow, { color: theme.accent }]}>
           {voice.greetingEyebrow(kid.display_name)}

@@ -16,9 +16,21 @@ import { useTheme } from '@/hooks/use-theme';
 type Props = {
   children: ReactNode;
   back?: { href: '/app' | (string & {}); label: string };
+  /**
+   * Whether to show the bunny mascot. Defaults to true (the 6–12 "kid"
+   * voice). Teen + peer modes pass false — the whole point of those
+   * modes is to drop the mascot so the surface doesn't read babyish
+   * (see src/lib/kid-mode.ts → VOICE[mode].showMascot). Susan QA found
+   * the bunny was showing for every age because the shell ignored it.
+   */
+  showMascot?: boolean;
 };
 
-export function KidShell({ children, back = { href: '/app', label: 'Back to grown-ups' } }: Props) {
+export function KidShell({
+  children,
+  back = { href: '/app', label: 'Back to grown-ups' },
+  showMascot = true,
+}: Props) {
   const theme = useTheme();
   const router = useRouter();
 
@@ -31,9 +43,11 @@ export function KidShell({ children, back = { href: '/app', label: 'Back to grow
         <View style={styles.page}>
           <View style={styles.nav}>
             <View style={styles.wordmarkWrap}>
-              <Text style={styles.bunny} accessibilityLabel="bunny">
-                🐰
-              </Text>
+              {showMascot && (
+                <Text style={styles.bunny} accessibilityLabel="bunny">
+                  🐰
+                </Text>
+              )}
               <Text style={[styles.wordmark, { color: theme.text }]}>
                 Home Hero
               </Text>

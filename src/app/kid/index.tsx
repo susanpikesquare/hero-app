@@ -176,7 +176,10 @@ export default function KidHomeScreen() {
   const remaining = requiredChores.length - doneToday;
 
   return (
-    <KidShell back={{ href: '/kid/join', label: 'Switch user' }}>
+    <KidShell
+      back={{ href: '/kid/join', label: 'Switch user' }}
+      showMascot={voice.showMascot}
+    >
       <View style={styles.greeting}>
         <Text style={[KidStyles.greetingEyebrow, { color: theme.accent }]}>
           {voice.greetingEyebrow(kid.display_name)}

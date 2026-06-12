@@ -41,6 +41,7 @@ import {
 import { KidShell, KidStyles } from '@/components/kid-shell';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { resolveKidMode, VOICE } from '@/lib/kid-mode';
 import { useKidSession } from '@/lib/kid-session';
 import { type Picked, pickFromCamera, pickFromLibrary } from '@/lib/photo-pick';
 import { supabase } from '@/lib/supabase';
@@ -80,6 +81,11 @@ export default function KidSelfSubmitScreen() {
   const kid = ready ? state.kid : null;
   const family = ready ? state.family : null;
   const chore = chores.find((c) => c.id === params.chore_id) ?? null;
+  // Drop the bunny for teen/peer kids so the submit surface matches the
+  // home surface (Susan QA). Defaults to showing it until the kid resolves.
+  const showMascot = kid
+    ? VOICE[resolveKidMode({ setting: kid.kid_mode, age: kid.age })].showMascot
+    : true;
 
   /** Stop any in-flight polling. */
   const stopPolling = useCallback(() => {
@@ -291,7 +297,7 @@ export default function KidSelfSubmitScreen() {
 
   if (!ready) {
     return (
-      <KidShell back={{ href: '/kid', label: 'Back to chores' }}>
+      <KidShell back={{ href: '/kid', label: 'Back to chores' }} showMascot={showMascot}>
         <Text style={[KidStyles.greetingSub, { color: theme.textSecondary }]}>
           One sec…
         </Text>
@@ -301,7 +307,7 @@ export default function KidSelfSubmitScreen() {
 
   if (!chore) {
     return (
-      <KidShell back={{ href: '/kid', label: 'Back to chores' }}>
+      <KidShell back={{ href: '/kid', label: 'Back to chores' }} showMascot={showMascot}>
         <Text style={[KidStyles.greetingTitle, { color: theme.text }]}>
           We couldn’t find that chore.
         </Text>
@@ -312,7 +318,7 @@ export default function KidSelfSubmitScreen() {
   // ─── Final success state — kid confirmed the photo. ─────────────
   if (mode === 'sent') {
     return (
-      <KidShell back={{ href: '/kid', label: 'Back to chores' }}>
+      <KidShell back={{ href: '/kid', label: 'Back to chores' }} showMascot={showMascot}>
         <View
           style={[
             KidStyles.card,
@@ -351,7 +357,7 @@ export default function KidSelfSubmitScreen() {
   // ─── Loading existing submission. ────────────────────────────────
   if (mode === 'loading') {
     return (
-      <KidShell back={{ href: '/kid', label: 'Back to chores' }}>
+      <KidShell back={{ href: '/kid', label: 'Back to chores' }} showMascot={showMascot}>
         <View
           style={{
             paddingVertical: Spacing.eight,
@@ -371,7 +377,7 @@ export default function KidSelfSubmitScreen() {
   // ─── Waiting on AI after upload. ─────────────────────────────────
   if (mode === 'waiting_ai' && existing) {
     return (
-      <KidShell back={{ href: '/kid', label: 'Back to chores' }}>
+      <KidShell back={{ href: '/kid', label: 'Back to chores' }} showMascot={showMascot}>
         <View style={styles.heading}>
           <Text style={[KidStyles.greetingEyebrow, { color: theme.accent }]}>
             {kid!.display_name} · {chore.title}
@@ -434,7 +440,7 @@ export default function KidSelfSubmitScreen() {
       : `We sent your ${chore.title.toLowerCase()} photo to your grown-up. They’ll have a look.`;
 
     return (
-      <KidShell back={{ href: '/kid', label: 'Back to chores' }}>
+      <KidShell back={{ href: '/kid', label: 'Back to chores' }} showMascot={showMascot}>
         <View style={styles.heading}>
           <Text style={[KidStyles.greetingEyebrow, { color: theme.accent }]}>
             {kid!.display_name} · {chore.title}
@@ -536,7 +542,7 @@ export default function KidSelfSubmitScreen() {
 
   // ─── Pick a photo (initial state, or after retake). ─────────────
   return (
-    <KidShell back={{ href: '/kid', label: 'Back to chores' }}>
+    <KidShell back={{ href: '/kid', label: 'Back to chores' }} showMascot={showMascot}>
       <View style={styles.heading}>
         <Text style={[KidStyles.greetingEyebrow, { color: theme.accent }]}>
           {kid!.display_name} · {chore.title}
