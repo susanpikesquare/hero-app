@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { Celebration } from '@/components/celebration';
 import { KidChoreTile } from '@/components/kid-chore-tile';
 import { KidShell, KidStyles } from '@/components/kid-shell';
 import { Radius, Spacing } from '@/constants/theme';
@@ -9,6 +10,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth-context';
 import { resolveKidMode, VOICE } from '@/lib/kid-mode';
 import { overrideKidMessage } from '@/lib/override-copy';
+import { hapticSuccess } from '@/lib/haptics';
 import { choreStatusToday, localDateKey } from '@/lib/progress-stats';
 import {
   descriptorFor,
@@ -40,6 +42,8 @@ export default function KidHomeScreen() {
   // difference here is submitted_by comes from the URL param, not the
   // anonymous kid session.
   const [markingDoneId, setMarkingDoneId] = useState<string | null>(null);
+  // Bump to fire the confetti celebration. 0 = idle.
+  const [celebrate, setCelebrate] = useState(0);
   const markChoreDone = async (choreId: string) => {
     if (markingDoneId) return;
     // Idempotency guard: a self-attest chore can only be completed once
@@ -61,6 +65,8 @@ export default function KidHomeScreen() {
       });
       if (insertErr) throw insertErr;
       await reloadChores();
+      hapticSuccess();
+      setCelebrate((c) => c + 1);
     } catch (err) {
       console.error('mark chore done failed:', err);
     } finally {
@@ -373,6 +379,12 @@ export default function KidHomeScreen() {
           </Text>
         </View>
       )}
+
+      <Celebration
+        trigger={celebrate}
+        emoji={voice.showMascot ? '🐰' : '🎉'}
+        label={voice.showMascot ? 'Nice hop!' : 'Nice work!'}
+      />
     </KidShell>
   );
 }

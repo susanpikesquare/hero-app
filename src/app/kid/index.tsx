@@ -11,11 +11,13 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { Celebration } from '@/components/celebration';
 import { KidChoreTile } from '@/components/kid-chore-tile';
 import { KidShell, KidStyles } from '@/components/kid-shell';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { ensureToday } from '@/lib/chore-instances';
+import { hapticSuccess } from '@/lib/haptics';
 import { scheduleForKid } from '@/lib/kid-reminders';
 import { registerPushToken } from '@/lib/push-token';
 import { useKidSession } from '@/lib/kid-session';
@@ -78,6 +80,8 @@ export default function KidHomeScreen() {
   // AI-approved photo would: counts for rewards, fills the heatmap, doesn't
   // sit in the parent's review queue.
   const [markingDoneId, setMarkingDoneId] = useState<string | null>(null);
+  // Bump to fire the confetti celebration. 0 = idle.
+  const [celebrate, setCelebrate] = useState(0);
   const markChoreDone = async (choreId: string) => {
     if (state.status !== 'ready' || markingDoneId) return;
     // Idempotency guard: a self-attest chore can only be completed once
@@ -99,6 +103,9 @@ export default function KidHomeScreen() {
       });
       if (insertErr) throw insertErr;
       await reloadChores();
+      // The dopamine moment — buzz + confetti on a successful complete.
+      hapticSuccess();
+      setCelebrate((c) => c + 1);
     } catch (err) {
       console.error('mark chore done failed:', err);
     } finally {
@@ -404,6 +411,12 @@ export default function KidHomeScreen() {
           </Text>
         </View>
       )}
+
+      <Celebration
+        trigger={celebrate}
+        emoji={voice.showMascot ? '🐰' : '🎉'}
+        label={voice.showMascot ? 'Nice hop!' : 'Nice work!'}
+      />
     </KidShell>
   );
 }

@@ -38,9 +38,11 @@ import {
   View,
 } from 'react-native';
 
+import { Celebration } from '@/components/celebration';
 import { KidShell, KidStyles } from '@/components/kid-shell';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { hapticSuccess, hapticTap } from '@/lib/haptics';
 import { resolveKidMode, VOICE } from '@/lib/kid-mode';
 import { useKidSession } from '@/lib/kid-session';
 import { type Picked, pickFromCamera, pickFromLibrary } from '@/lib/photo-pick';
@@ -72,6 +74,8 @@ export default function KidSelfSubmitScreen() {
   const [picked, setPicked] = useState<Picked | null>(null);
   const [existing, setExisting] = useState<ExistingSubmission | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Bump to fire confetti. 0 = idle.
+  const [celebrate, setCelebrate] = useState(0);
 
   // Hold on to interval ids so unmount cleans them up.
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -117,6 +121,11 @@ export default function KidSelfSubmitScreen() {
               : prev
           );
           setMode('reviewing');
+          // The dopamine moment — confetti + buzz when the AI says great.
+          if (data.ai_verdict === 'pass') {
+            hapticSuccess();
+            setCelebrate((c) => c + 1);
+          }
         }
       }, AI_POLL_INTERVAL_MS);
 
@@ -292,6 +301,7 @@ export default function KidSelfSubmitScreen() {
   /** Confirm the current submission. No DB write — the row is already
    * in pending_parent state. This just navigates back. */
   const handleConfirmSend = () => {
+    hapticTap();
     setMode('sent');
   };
 
@@ -536,6 +546,12 @@ export default function KidSelfSubmitScreen() {
             Try a different photo
           </Text>
         </Pressable>
+
+        <Celebration
+          trigger={celebrate}
+          emoji={showMascot ? '🐰' : '🎉'}
+          label={showMascot ? 'Nice hop!' : 'Nice work!'}
+        />
       </KidShell>
     );
   }
