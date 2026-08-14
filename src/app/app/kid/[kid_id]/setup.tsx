@@ -326,10 +326,10 @@ export default function KidSetupScreen() {
                 // build a win) rather than the full span.
                 if (hasProfiles) {
                   const startCount = min;
-                  return `With the support profile you set, published guidance points to starting small — around ${startCount} ${startCount === 1 ? 'chore' : 'chores'} at ${ageLabel}, then adding more once it's sticking. Pick from the two groups below.`;
+                  return `Self-care habits are unlimited — brush teeth, shower, and the like are healthy routines, not chore load. For home chores, with the support profile you set, published guidance points to starting small — around ${startCount} ${startCount === 1 ? 'chore' : 'chores'} at ${ageLabel}, then adding more once it's sticking. Pick from the two groups below.`;
                 }
                 const range = min === max ? `${min}` : `${min}–${max}`;
-                return `Published guidance suggests ${range} daily chores at ${ageLabel}. Pick from the two groups below — you can always add more later.`;
+                return `Self-care habits are unlimited — they're healthy routines, not chore load. For home chores, published guidance suggests ${range} a day at ${ageLabel}. Pick from the two groups below — you can always add more later.`;
               })()}
             </ThemedText>
 
@@ -497,13 +497,27 @@ export default function KidSetupScreen() {
               to the midpoint of the range (start small, build the win)
               so the warning fires sooner (Susan QA, 2026-06-08). */}
           {(() => {
-            const selectedCount =
-              countSelections(selected, customChores) + existingTitlesLower.size;
+            // The task-load ceiling applies to HOME CHORES only. Self-care
+            // habits (brush teeth, shower, deodorant) are healthy routines,
+            // not contribution load — a kid can have as many as makes sense
+            // without it "counting against them" (Erica, 2026-07-25). So we
+            // count only household selections + custom chores + existing
+            // non-checklist chores.
+            const householdSelected = householdChores.filter(
+              (s) => selected[s.title]
+            ).length;
+            const existingHousehold = kid
+              ? choresForKid(chores, kid.id).filter(
+                  (c) => c.verification_kind !== 'checklist'
+                ).length
+              : 0;
+            const choreCount =
+              householdSelected + customChores.length + existingHousehold;
             const { min, max } = bucket.dailyTaskCeiling;
             const ceiling = hasProfiles
               ? Math.max(min, Math.ceil((min + max) / 2))
               : max;
-            if (selectedCount <= ceiling) return null;
+            if (choreCount <= ceiling) return null;
             return (
               <View
                 style={[
@@ -522,7 +536,7 @@ export default function KidSetupScreen() {
                   Heads up
                 </ThemedText>
                 <ThemedText type="default" themeColor="text">
-                  That’s {selectedCount} chores for {bucket.label.toLowerCase()}.
+                  That’s {choreCount} home chores for {bucket.label.toLowerCase()} (self-care habits don’t count toward this).
                   {hasProfiles
                     ? ` With the support profile you set, starting closer to ${ceiling} tends to work better — fewer chores done consistently beats more chores half-done.`
                     : ` Published guidance generally suggests ${min}–${max} at this age.`}
