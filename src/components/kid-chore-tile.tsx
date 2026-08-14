@@ -181,7 +181,11 @@ export function KidChoreTile({
               </Text>
             </View>
           </Pressable>
-        ) : (
+        ) : verification === 'photo' ? (
+          // Photo chore with no reference set yet — show the camera
+          // placeholder. Checklist habits (brush teeth, etc.) need no
+          // photo, so we render NOTHING rather than a misleading camera
+          // placeholder (Susan + Erica QA, 2026-07-25).
           <View
             style={[
               styles.thumb,
@@ -196,7 +200,7 @@ export function KidChoreTile({
               📸
             </Text>
           </View>
-        )}
+        ) : null}
         <View style={styles.headerContent}>
           <View style={styles.headerTitleRow}>
             <Text style={[KidStyles.choreTitle, { color: theme.text, flex: 1 }]}>

@@ -302,7 +302,7 @@ export default function ChoreDetailScreen() {
                     type="default"
                     style={{ color: !isOptional ? theme.background : theme.text }}
                   >
-                    Required (daily)
+                    Required
                   </ThemedText>
                 </Pressable>
                 <Pressable

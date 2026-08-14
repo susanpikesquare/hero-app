@@ -220,7 +220,7 @@ export default function NewChoreScreen() {
               type="default"
               style={{ color: !isOptional ? theme.background : theme.text }}
             >
-              Required (daily)
+              Required
             </ThemedText>
           </Pressable>
           <Pressable
