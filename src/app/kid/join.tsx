@@ -28,18 +28,22 @@ import {
 import { supabase } from '@/lib/supabase';
 
 /**
- * Format a kid join code as the user types. Codes look like ABCDE-FGHJK
- * (5 letters, dash, 5 letters). We:
- *   - strip everything that isn't a letter
+ * Format a kid join code as the user types. Codes look like AB3DE-F9HJK —
+ * the generator's alphabet is A–Z (minus I/O for legibility) PLUS the
+ * digits 2–9 (generate_kid_join_code), so codes can and do contain
+ * numbers. We:
+ *   - keep letters AND digits (previously stripped digits, which silently
+ *     dropped them so a code with a number never matched — Susan QA,
+ *     2026-06-22)
  *   - uppercase
- *   - cap at 10 letters
- *   - insert the dash after the 5th letter automatically, so the kid
+ *   - cap at 10 characters
+ *   - insert the dash after the 5th character automatically, so the kid
  *     never has to find a dash key on a phone keyboard
  */
 function formatJoinCode(raw: string): string {
-  const letters = raw.replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 10);
-  if (letters.length <= 5) return letters;
-  return `${letters.slice(0, 5)}-${letters.slice(5)}`;
+  const chars = raw.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 10);
+  if (chars.length <= 5) return chars;
+  return `${chars.slice(0, 5)}-${chars.slice(5)}`;
 }
 
 export default function KidJoinScreen() {
@@ -139,7 +143,7 @@ export default function KidJoinScreen() {
         <Text style={[KidStyles.greetingSub, { color: theme.textSecondary }]}>
           {alreadyLinked
             ? "Tap the button below to head to your chores."
-            : "Your grown-up made a code for you. Type it in below — it has 5 letters, a dash, and 5 more letters."}
+            : "Your grown-up made a code for you. Type it in below — it has 5 letters or numbers, a dash, and 5 more."}
         </Text>
       </View>
 

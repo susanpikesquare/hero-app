@@ -29,12 +29,32 @@ import { supabase } from './supabase';
 const EAS_PROJECT_ID = 'c57d21d9-4a51-4d3d-b657-2dd4cb045b5a';
 
 /**
+ * Feature gate. The iOS build currently ships WITHOUT the `aps-environment`
+ * (push) entitlement — ios/HomeHero/HomeHero.entitlements is empty. On a
+ * real device, Notifications.getExpoPushTokenAsync() then calls
+ * registerForRemoteNotifications, which iOS rejects with a NATIVE
+ * exception that a JS try/catch cannot catch — crashing the app the moment
+ * the kid opens their own-device home (Susan + Erica QA, 2026-07-25:
+ * "can't log in as kid").
+ *
+ * Remote push was never going to work without that entitlement anyway, so
+ * we hard-disable token registration until it's provisioned. To re-enable:
+ *   1. Add `aps-environment` to HomeHero.entitlements (+ the Push
+ *      Notifications capability) and an APNs key in App Store Connect.
+ *   2. Flip this to true.
+ * Local reminders (kid-reminders.ts) are unaffected — they don't touch
+ * remote registration.
+ */
+const PUSH_TOKENS_ENABLED = false;
+
+/**
  * Register (or refresh) this device's Expo push token for the given kid
  * member. Idempotent — upserts on (member_id, expo_push_token). Best
  * effort: any failure is logged and swallowed so it never blocks the
  * kid's home screen from rendering.
  */
 export async function registerPushToken(memberId: string): Promise<void> {
+  if (!PUSH_TOKENS_ENABLED) return;
   if (Platform.OS === 'web') return;
   if (!Device.isDevice) return;
   if (!memberId) return;
