@@ -32,6 +32,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -600,9 +601,11 @@ export default function KidSelfSubmitScreen() {
       </View>
 
       <View style={styles.pickRow}>
-        {/* Camera first — taking a photo of the finished chore right now
-            is the primary path. Shown on every platform (web uses the
-            browser camera). */}
+        {/* Camera ONLY for the kid — a live photo of the finished chore
+            right now, no library upload of an old/borrowed shot (Erica,
+            2026-07-25: "require a live photo and no upload for the kid").
+            On web (no reliable rear camera; not the primary kid surface)
+            we still allow choosing a file so a web test isn't blocked. */}
         <Pressable
           style={[
             KidStyles.bigButton,
@@ -616,19 +619,21 @@ export default function KidSelfSubmitScreen() {
             📸 Take a photo
           </Text>
         </Pressable>
-        <Pressable
-          style={[
-            KidStyles.bigButton,
-            styles.pickBtn,
-            { backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.border },
-          ]}
-          onPress={() => handlePick('library')}
-          disabled={mode === 'submitting'}
-        >
-          <Text style={[KidStyles.bigButtonLabel, { color: theme.text }]}>
-            🖼️ Choose from photos
-          </Text>
-        </Pressable>
+        {Platform.OS === 'web' && (
+          <Pressable
+            style={[
+              KidStyles.bigButton,
+              styles.pickBtn,
+              { backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.border },
+            ]}
+            onPress={() => handlePick('library')}
+            disabled={mode === 'submitting'}
+          >
+            <Text style={[KidStyles.bigButtonLabel, { color: theme.text }]}>
+              🖼️ Choose a file
+            </Text>
+          </Pressable>
+        )}
       </View>
 
       {error && (

@@ -32,6 +32,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -589,6 +590,8 @@ export default function SubmitScreen() {
       </View>
 
       <View style={styles.pickRow}>
+        {/* Camera ONLY for the kid — live photo, no library upload
+            (Erica, 2026-07-25). Web keeps a file picker as a fallback. */}
         <Pressable
           style={[
             KidStyles.bigButton,
@@ -602,19 +605,21 @@ export default function SubmitScreen() {
             📸 Take a photo
           </Text>
         </Pressable>
-        <Pressable
-          style={[
-            KidStyles.bigButton,
-            styles.pickBtn,
-            { backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.border },
-          ]}
-          onPress={() => handlePick('library')}
-          disabled={mode === 'submitting'}
-        >
-          <Text style={[KidStyles.bigButtonLabel, { color: theme.text }]}>
-            🖼️ Choose from photos
-          </Text>
-        </Pressable>
+        {Platform.OS === 'web' && (
+          <Pressable
+            style={[
+              KidStyles.bigButton,
+              styles.pickBtn,
+              { backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.border },
+            ]}
+            onPress={() => handlePick('library')}
+            disabled={mode === 'submitting'}
+          >
+            <Text style={[KidStyles.bigButtonLabel, { color: theme.text }]}>
+              🖼️ Choose a file
+            </Text>
+          </Pressable>
+        )}
       </View>
 
       {error && (
