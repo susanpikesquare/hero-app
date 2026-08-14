@@ -31,7 +31,9 @@ const CONFETTI_COLORS = [
   '#A8BDA5',
 ];
 const NUM_PIECES = 16;
+const NUM_PIECES_BIG = 34;
 const DURATION_MS = 1500;
+const DURATION_MS_BIG = 2100;
 
 type Piece = {
   left: number; // % across the screen
@@ -42,8 +44,8 @@ type Piece = {
   spin: number; // rotations
 };
 
-function makePieces(): Piece[] {
-  return Array.from({ length: NUM_PIECES }, () => ({
+function makePieces(count: number): Piece[] {
+  return Array.from({ length: count }, () => ({
     left: Math.random() * 100,
     size: 7 + Math.random() * 8,
     color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
@@ -60,21 +62,23 @@ type Props = {
   emoji?: string;
   /** Optional label under the emoji (e.g. "Nice hop!"). */
   label?: string;
+  /** Bigger, longer burst — for milestone/badge unlocks. */
+  big?: boolean;
 };
 
-export function Celebration({ trigger, emoji = '🎉', label }: Props) {
+export function Celebration({ trigger, emoji = '🎉', label, big = false }: Props) {
   const [visible, setVisible] = useState(false);
   const [pieces, setPieces] = useState<Piece[]>([]);
   const driver = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (!trigger) return;
-    setPieces(makePieces());
+    setPieces(makePieces(big ? NUM_PIECES_BIG : NUM_PIECES));
     setVisible(true);
     driver.setValue(0);
     const anim = Animated.timing(driver, {
       toValue: 1,
-      duration: DURATION_MS,
+      duration: big ? DURATION_MS_BIG : DURATION_MS,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     });
@@ -139,8 +143,10 @@ export function Celebration({ trigger, emoji = '🎉', label }: Props) {
             { opacity: badgeOpacity, transform: [{ scale: badgeScale }] },
           ]}
         >
-          <Text style={styles.emoji}>{emoji}</Text>
-          {label ? <Text style={styles.label}>{label}</Text> : null}
+          <Text style={[styles.emoji, big && styles.emojiBig]}>{emoji}</Text>
+          {label ? (
+            <Text style={[styles.label, big && styles.labelBig]}>{label}</Text>
+          ) : null}
         </Animated.View>
       </View>
     </Modal>
@@ -170,10 +176,16 @@ const styles = StyleSheet.create({
     fontSize: 84,
     textAlign: 'center',
   },
+  emojiBig: {
+    fontSize: 112,
+  },
   label: {
     fontSize: 24,
     fontWeight: '800',
     color: '#3C4A3C',
     textAlign: 'center',
+  },
+  labelBig: {
+    fontSize: 30,
   },
 });

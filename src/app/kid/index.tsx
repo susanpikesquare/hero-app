@@ -80,8 +80,13 @@ export default function KidHomeScreen() {
   // AI-approved photo would: counts for rewards, fills the heatmap, doesn't
   // sit in the parent's review queue.
   const [markingDoneId, setMarkingDoneId] = useState<string | null>(null);
-  // Bump to fire the confetti celebration. 0 = idle.
-  const [celebrate, setCelebrate] = useState(0);
+  // Celebration config — bump `trigger` to fire. `big` = a badge unlock.
+  const [celebration, setCelebration] = useState({
+    trigger: 0,
+    emoji: '🐰',
+    label: 'Nice hop!',
+    big: false,
+  });
   const markChoreDone = async (choreId: string) => {
     if (state.status !== 'ready' || markingDoneId) return;
     // Idempotency guard: a self-attest chore can only be completed once
@@ -105,7 +110,30 @@ export default function KidHomeScreen() {
       await reloadChores();
       // The dopamine moment — buzz + confetti on a successful complete.
       hapticSuccess();
-      setCelebrate((c) => c + 1);
+      // Did this completion cross a badge threshold? If so, celebrate
+      // bigger with the badge itself. (submissions here is the pre-reload
+      // snapshot, so earnedBefore + this chore's weight = the new total.)
+      const weight = chores.find((c) => c.id === choreId)?.reward_weight ?? 1;
+      const earnedBefore = earnedCountFor(state.kid.id, submissions, chores);
+      const badgeBefore = latestBadge(earnedBefore);
+      const badgeAfter = latestBadge(earnedBefore + weight);
+      const unlocked =
+        badgeAfter && badgeAfter.threshold !== badgeBefore?.threshold
+          ? badgeAfter
+          : null;
+      const mascot = VOICE[
+        resolveKidMode({ setting: state.kid.kid_mode, age: state.kid.age })
+      ].showMascot;
+      setCelebration((c) => ({
+        trigger: c.trigger + 1,
+        emoji: unlocked ? unlocked.emoji : mascot ? '🐰' : '🎉',
+        label: unlocked
+          ? `${unlocked.label} unlocked!`
+          : mascot
+            ? 'Nice hop!'
+            : 'Nice work!',
+        big: !!unlocked,
+      }));
     } catch (err) {
       console.error('mark chore done failed:', err);
     } finally {
@@ -413,9 +441,10 @@ export default function KidHomeScreen() {
       )}
 
       <Celebration
-        trigger={celebrate}
-        emoji={voice.showMascot ? '🐰' : '🎉'}
-        label={voice.showMascot ? 'Nice hop!' : 'Nice work!'}
+        trigger={celebration.trigger}
+        emoji={celebration.emoji}
+        label={celebration.label}
+        big={celebration.big}
       />
     </KidShell>
   );

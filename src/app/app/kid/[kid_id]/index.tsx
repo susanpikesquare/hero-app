@@ -42,8 +42,13 @@ export default function KidHomeScreen() {
   // difference here is submitted_by comes from the URL param, not the
   // anonymous kid session.
   const [markingDoneId, setMarkingDoneId] = useState<string | null>(null);
-  // Bump to fire the confetti celebration. 0 = idle.
-  const [celebrate, setCelebrate] = useState(0);
+  // Celebration config — bump `trigger` to fire. `big` = a badge unlock.
+  const [celebration, setCelebration] = useState({
+    trigger: 0,
+    emoji: '🐰',
+    label: 'Nice hop!',
+    big: false,
+  });
   const markChoreDone = async (choreId: string) => {
     if (markingDoneId) return;
     // Idempotency guard: a self-attest chore can only be completed once
@@ -66,7 +71,31 @@ export default function KidHomeScreen() {
       if (insertErr) throw insertErr;
       await reloadChores();
       hapticSuccess();
-      setCelebrate((c) => c + 1);
+      // Badge-crossing detection (submissions is the pre-reload snapshot).
+      const weight = chores.find((c) => c.id === choreId)?.reward_weight ?? 1;
+      const earnedBefore = earnedCountFor(kidId, submissions, chores);
+      const badgeBefore = latestBadge(earnedBefore);
+      const badgeAfter = latestBadge(earnedBefore + weight);
+      const unlocked =
+        badgeAfter && badgeAfter.threshold !== badgeBefore?.threshold
+          ? badgeAfter
+          : null;
+      const thisKid = kids.find((k) => k.id === kidId);
+      const mascot = thisKid
+        ? VOICE[
+            resolveKidMode({ setting: thisKid.kid_mode, age: thisKid.age })
+          ].showMascot
+        : true;
+      setCelebration((c) => ({
+        trigger: c.trigger + 1,
+        emoji: unlocked ? unlocked.emoji : mascot ? '🐰' : '🎉',
+        label: unlocked
+          ? `${unlocked.label} unlocked!`
+          : mascot
+            ? 'Nice hop!'
+            : 'Nice work!',
+        big: !!unlocked,
+      }));
     } catch (err) {
       console.error('mark chore done failed:', err);
     } finally {
@@ -381,9 +410,10 @@ export default function KidHomeScreen() {
       )}
 
       <Celebration
-        trigger={celebrate}
-        emoji={voice.showMascot ? '🐰' : '🎉'}
-        label={voice.showMascot ? 'Nice hop!' : 'Nice work!'}
+        trigger={celebration.trigger}
+        emoji={celebration.emoji}
+        label={celebration.label}
+        big={celebration.big}
       />
     </KidShell>
   );
