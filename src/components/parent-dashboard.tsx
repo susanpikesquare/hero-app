@@ -139,19 +139,13 @@ export function ParentDashboard() {
     >
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.page}>
+          {/* Top nav: just utility (Settings, Sign out). Coaching +
+              Articles moved to a resources row at the BOTTOM so the
+              dashboard leads with the family, not the reading material
+              (Erica, 2026-07-25 — "want to see everything"). */}
           <View style={styles.nav}>
             <BrandLogo height={96} />
             <View style={styles.navActions}>
-              <BrandButton
-                variant="ghost"
-                label="Coaching"
-                onPress={() => router.push('/app/coaching/parent-says')}
-              />
-              <BrandButton
-                variant="ghost"
-                label="Articles"
-                onPress={() => router.push('/app/articles')}
-              />
               <BrandButton
                 variant="ghost"
                 label="Settings"
@@ -729,6 +723,20 @@ export function ParentDashboard() {
               </View>
             )}
           </Card>
+
+          {/* Resources — coaching + articles live at the bottom now. */}
+          <View style={styles.resourcesRow}>
+            <BrandButton
+              variant="ghost"
+              label="Coaching library"
+              onPress={() => router.push('/app/coaching/parent-says')}
+            />
+            <BrandButton
+              variant="ghost"
+              label="Articles"
+              onPress={() => router.push('/app/articles')}
+            />
+          </View>
         </View>
       </SafeAreaView>
     </ScrollView>
@@ -1368,6 +1376,14 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: Spacing.four,
     flexWrap: 'wrap',
+  },
+  resourcesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.four,
+    flexWrap: 'wrap',
+    marginTop: Spacing.two,
   },
   actionBtn: {
     paddingHorizontal: Spacing.four,
