@@ -197,6 +197,15 @@ export default function KidHomeScreen() {
   const allKidChores = choresForKid(chores, kidId);
   const requiredChores = allKidChores.filter((c) => !c.is_optional);
   const optionalChores = allKidChores.filter((c) => c.is_optional);
+  // Split the daily required list into healthy habits (self-care, no
+  // photo) and home chores, so the kid sees personal care distinct from
+  // contribution (Erica, 2026-07-25 — "separate personal care vs chores").
+  const requiredHabits = requiredChores.filter(
+    (c) => c.verification_kind === 'checklist'
+  );
+  const requiredChoreItems = requiredChores.filter(
+    (c) => c.verification_kind !== 'checklist'
+  );
 
   const descriptor = descriptorFor(family.reward_mode);
   const earned = earnedCountFor(kidId, submissions, chores);
@@ -209,6 +218,59 @@ export default function KidHomeScreen() {
     (c) => choreStatusToday(c.id, kidId, submissions) === 'done'
   ).length;
   const remaining = requiredChores.length - doneToday;
+
+  // Shared tile renderer so habits / chores / extras all render the same
+  // tile without duplicating ~40 lines three times.
+  const renderTile = (chore: (typeof chores)[number], isOptional: boolean) => {
+    const subs = submissionsForChore(submissions, chore.id);
+    const last = subs[0];
+    const lastOverride = last
+      ? overrideKidMessage(last.parent_override, last.parent_override_reason)
+      : null;
+    const status = choreStatusToday(chore.id, kidId, submissions);
+    const refUrls = choreReferencePaths(chore)
+      .map((p) => referenceUrls[p])
+      .filter((u): u is string => !!u);
+    const isChecklist = chore.verification_kind === 'checklist';
+    return (
+      <KidChoreTile
+        key={chore.id}
+        title={chore.title}
+        subtitle={
+          last
+            ? `Last hop: ${new Date(last.submitted_at).toLocaleString(undefined, {
+                weekday: 'short',
+                hour: 'numeric',
+                minute: '2-digit',
+              })}`
+            : isOptional
+              ? 'Pick it up when you want to!'
+              : isChecklist
+                ? 'Tap when you’re done — no photo needed.'
+                : 'No hops yet — ready when you are.'
+        }
+        overrideLine={lastOverride}
+        status={status}
+        rewardWeight={chore.reward_weight}
+        onPress={
+          isChecklist
+            ? () => markChoreDone(chore.id)
+            : () => router.push(`/kid/submit/${chore.id}`)
+        }
+        onUndo={
+          isChecklist && status === 'done'
+            ? () => undoChoreDone(chore.id)
+            : undefined
+        }
+        isOptional={isOptional}
+        referenceUrls={refUrls}
+        tips={chore.coaching_tips}
+        verification={chore.verification_kind}
+        busy={markingDoneId === chore.id}
+        voice={voice}
+      />
+    );
+  };
 
   return (
     <KidShell
@@ -311,56 +373,31 @@ export default function KidHomeScreen() {
         </View>
       )}
 
-      {requiredChores.length > 0 && (
+      {requiredHabits.length > 0 && (
         <View style={{ gap: Spacing.three }}>
-          {requiredChores.map((chore) => {
-            const subs = submissionsForChore(submissions, chore.id);
-            const last = subs[0];
-            const lastOverride = last
-              ? overrideKidMessage(last.parent_override, last.parent_override_reason)
-              : null;
-            const status = choreStatusToday(chore.id, kidId, submissions);
-            const refUrls = choreReferencePaths(chore)
-              .map((p) => referenceUrls[p])
-              .filter((u): u is string => !!u);
-            const isChecklist = chore.verification_kind === 'checklist';
-            return (
-              <KidChoreTile
-                key={chore.id}
-                title={chore.title}
-                subtitle={
-                  last
-                    ? `Last hop: ${new Date(last.submitted_at).toLocaleString(undefined, {
-                        weekday: 'short',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      })}`
-                    : isChecklist
-                      ? 'Tap when you’re done — no photo needed.'
-                      : 'No hops yet — ready when you are.'
-                }
-                overrideLine={lastOverride}
-                status={status}
-                rewardWeight={chore.reward_weight}
-                onPress={
-                  isChecklist
-                    ? () => markChoreDone(chore.id)
-                    : () => router.push(`/kid/submit/${chore.id}`)
-                }
-                onUndo={
-                  isChecklist && status === 'done'
-                    ? () => undoChoreDone(chore.id)
-                    : undefined
-                }
-                isOptional={false}
-                referenceUrls={refUrls}
-                tips={chore.coaching_tips}
-                verification={chore.verification_kind}
-                busy={markingDoneId === chore.id}
-                voice={voice}
-              />
-            );
-          })}
+          <View style={styles.sectionHeader}>
+            <Text style={[KidStyles.greetingEyebrow, { color: theme.accent }]}>
+              Healthy habits
+            </Text>
+            <Text style={[KidStyles.choreBody, { color: theme.textSecondary }]}>
+              Taking care of you. Tap when you’re done — no photo needed.
+            </Text>
+          </View>
+          {requiredHabits.map((chore) => renderTile(chore, false))}
+        </View>
+      )}
+
+      {requiredChoreItems.length > 0 && (
+        <View style={{ gap: Spacing.three }}>
+          <View style={styles.sectionHeader}>
+            <Text style={[KidStyles.greetingEyebrow, { color: theme.accent }]}>
+              Chores
+            </Text>
+            <Text style={[KidStyles.choreBody, { color: theme.textSecondary }]}>
+              Helping out at home.
+            </Text>
+          </View>
+          {requiredChoreItems.map((chore) => renderTile(chore, false))}
         </View>
       )}
 
@@ -374,53 +411,7 @@ export default function KidHomeScreen() {
               Want to do more? These are optional — pick what you like.
             </Text>
           </View>
-
-          {optionalChores.map((chore) => {
-            const subs = submissionsForChore(submissions, chore.id);
-            const last = subs[0];
-            const lastOverride = last
-              ? overrideKidMessage(last.parent_override, last.parent_override_reason)
-              : null;
-            const status = choreStatusToday(chore.id, kidId, submissions);
-            const refUrls = choreReferencePaths(chore)
-              .map((p) => referenceUrls[p])
-              .filter((u): u is string => !!u);
-            const isChecklist = chore.verification_kind === 'checklist';
-            return (
-              <KidChoreTile
-                key={chore.id}
-                title={chore.title}
-                subtitle={
-                  last
-                    ? `Last hop: ${new Date(last.submitted_at).toLocaleString(undefined, {
-                        weekday: 'short',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      })}`
-                    : 'Pick it up when you want to!'
-                }
-                overrideLine={lastOverride}
-                status={status}
-                rewardWeight={chore.reward_weight}
-                onPress={
-                  isChecklist
-                    ? () => markChoreDone(chore.id)
-                    : () => router.push(`/kid/submit/${chore.id}`)
-                }
-                onUndo={
-                  isChecklist && status === 'done'
-                    ? () => undoChoreDone(chore.id)
-                    : undefined
-                }
-                isOptional
-                referenceUrls={refUrls}
-                tips={chore.coaching_tips}
-                verification={chore.verification_kind}
-                busy={markingDoneId === chore.id}
-                voice={voice}
-              />
-            );
-          })}
+          {optionalChores.map((chore) => renderTile(chore, true))}
         </View>
       )}
 
