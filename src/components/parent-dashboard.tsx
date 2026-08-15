@@ -148,6 +148,11 @@ export function ParentDashboard() {
             <View style={styles.navActions}>
               <BrandButton
                 variant="ghost"
+                label="Review queue"
+                onPress={() => router.push('/app/queue')}
+              />
+              <BrandButton
+                variant="ghost"
                 label="Settings"
                 onPress={() => router.push('/app/settings')}
               />
